@@ -1,0 +1,24 @@
+{
+  "short_name": "Voxly AI",
+  "name": "Voxly AI - AI-Powered Mock Interviews",
+  "description": "Practice job interviews with AI-powered feedback and real-time coaching",
+  "icons": [
+    {
+      "src": "/main.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/main.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
+  "orientation": "portrait",
+  "scope": "/",
+  "categories": ["education", "productivity", "business"]
+}

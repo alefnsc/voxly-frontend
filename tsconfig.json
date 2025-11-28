@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+      "typeRoots": ["./node_modules/@types", "./src/types"],
+      "esModuleInterop": true,
+      "allowSyntheticDefaultImports": true,
+      "baseUrl": "src",
+      "resolveJsonModule": true,
+      "moduleResolution": "node",
+      "jsx": "react-jsx",
+      "types": ["jest", "node"]
+    },
+    "include": ["src/**/*"],
+    "exclude": ["node_modules"]
+  }
