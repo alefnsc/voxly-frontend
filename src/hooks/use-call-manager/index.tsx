@@ -2,6 +2,9 @@ import { useState, useCallback, useRef } from 'react';
 import { useUser } from '@clerk/clerk-react';
 import APIService from 'services/APIService';
 
+// Minimum interview duration in ms before going to feedback (20 seconds)
+const MIN_INTERVIEW_DURATION_MS = 20000;
+
 export const useCallManager = (body, navigate) => {
     const { user } = useUser();
     const [callId, setCallId] = useState('');
@@ -11,6 +14,7 @@ export const useCallManager = (body, navigate) => {
     const [audioSamples, setAudioSamples] = useState(null);
     const callIdRef = useRef(''); // Store call_id in ref for immediate access
     const incompatibilityDetectedRef = useRef(false); // Track if interview ended due to incompatibility
+    const callStartTimeRef = useRef<number | null>(null); // Track when call actually started
 
     const startCall = useCallback(async (eventHandlers) => {
         setIsCalling(true);
@@ -71,6 +75,13 @@ export const useCallManager = (body, navigate) => {
         await new Promise(resolve => setTimeout(resolve, 4000));
         setIsCalling(false);
 
+        // Calculate call duration
+        const callDuration = callStartTimeRef.current 
+            ? Date.now() - callStartTimeRef.current 
+            : 0;
+        
+        console.log(`📊 Call duration: ${Math.round(callDuration / 1000)} seconds`);
+
         // Check if interview ended due to incompatibility
         if (incompatibilityDetectedRef.current) {
             console.log('🚫 Interview ended due to incompatibility - restoring credit and redirecting to home');
@@ -90,6 +101,30 @@ export const useCallManager = (body, navigate) => {
                 state: { 
                     message: 'Your resume and the job position were not compatible. Your interview credit has been restored.',
                     type: 'incompatibility'
+                } 
+            });
+            return;
+        }
+
+        // Check if interview was too short (< 20 seconds) - restore credit and go home
+        if (callDuration < MIN_INTERVIEW_DURATION_MS) {
+            console.log('⚠️ Interview ended too early (< 20 seconds) - restoring credit and redirecting to home');
+            
+            // Restore credit
+            if (user?.id) {
+                try {
+                    await APIService.restoreCredit(user.id, 'early_interruption', callIdRef.current);
+                    console.log('✅ Credit restored for early interruption');
+                } catch (error) {
+                    console.error('❌ Failed to restore credit:', error);
+                }
+            }
+
+            // Redirect to home with message
+            navigate('/', { 
+                state: { 
+                    message: 'Interview ended too early. Your interview credit has been restored.',
+                    type: 'early_interruption'
                 } 
             });
             return;
@@ -122,6 +157,8 @@ export const useCallManager = (body, navigate) => {
                 console.log('      1. Retell agent has a VOICE configured');
                 console.log('      2. Custom LLM is sending responses');
                 console.log('═══════════════════════════════════════════════════');
+                // Record call start time for duration tracking
+                callStartTimeRef.current = Date.now();
                 startTimer();
             },
             call_ended: () => {

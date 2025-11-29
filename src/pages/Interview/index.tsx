@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { DefaultLayout } from 'components/default-layout';
 import Loading from 'components/loading';
@@ -18,6 +18,9 @@ const Interview = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { body } = location.state || {};
+    
+    // Track if call has been started to prevent double initialization
+    const callStartedRef = useRef(false);
 
     // Use validation hooks
     useTokenValidation(navigate);
@@ -52,11 +55,12 @@ const Interview = () => {
 
     // Initialize call after mic permission granted
     useEffect(() => {
-        if (micPermissionGranted && body?.metadata && callId === '') {
+        if (micPermissionGranted && body?.metadata && !callStartedRef.current) {
+            callStartedRef.current = true;
             const handlers = getCallHandlers(startTimer);
             startCall(handlers);
         }
-    }, [micPermissionGranted, callId, body, startCall, getCallHandlers, startTimer]);
+    }, [micPermissionGranted, body, startCall, getCallHandlers, startTimer]);
 
     // Handle modal toggle
     const toggleQuitModal = () => {

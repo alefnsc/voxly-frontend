@@ -7,9 +7,8 @@ export interface CreditPackage {
   id: string;
   name: string;
   credits: number;
-  price: number;
-  currency: string;
-  currencySymbol: string;
+  priceUSD: number;      // Display price in USD
+  priceBRL: number;      // Payment price in BRL (for MercadoPago)
   description: string;
   features: string[];
   popular?: boolean;
@@ -21,9 +20,8 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     id: 'professional',
     name: 'Professional',
     credits: 15,
-    price: 40.00,
-    currency: 'BRL',
-    currencySymbol: 'R$',
+    priceUSD: 7.99,       // Display in USD
+    priceBRL: 47.94,      // ~7.99 * 6.0 BRL for MercadoPago
     description: 'Ideal for regular practice',
     features: [
       '15 interview sessions',
@@ -39,9 +37,8 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     id: 'intermediate',
     name: 'Intermediate',
     credits: 10,
-    price: 28.00,
-    currency: 'BRL',
-    currencySymbol: 'R$',
+    priceUSD: 5.99,       // Display in USD
+    priceBRL: 35.94,      // ~5.99 * 6.0 BRL for MercadoPago
     description: 'Great for focused preparation',
     features: [
       '10 interview sessions',
@@ -55,9 +52,8 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     id: 'starter',
     name: 'Starter',
     credits: 5,
-    price: 15.00,
-    currency: 'BRL',
-    currencySymbol: 'R$',
+    priceUSD: 3.99,       // Display in USD
+    priceBRL: 23.94,      // ~3.99 * 6.0 BRL for MercadoPago
     description: 'Perfect to get started',
     features: [
       '5 interview sessions',
@@ -105,7 +101,8 @@ class MercadoPagoService {
         packageId,
         userId,
         package: selectedPackage.name,
-        price: `${selectedPackage.currencySymbol} ${selectedPackage.price.toFixed(2)}`
+        priceUSD: `$${selectedPackage.priceUSD.toFixed(2)}`,
+        priceBRL: `R$ ${selectedPackage.priceBRL.toFixed(2)}`
       });
 
       const response = await fetch(`${this.backendUrl}/create-payment-preference`, {
@@ -143,7 +140,7 @@ class MercadoPagoService {
   }
 
   /**
-   * Get payment redirect URL (for manual redirect flow)
+   * Get payment redirect URL and preference ID (for manual redirect flow)
    */
   async getPaymentUrl(packageId: string, userId: string, userEmail: string): Promise<string> {
     try {
@@ -172,9 +169,11 @@ class MercadoPagoService {
       const data = await response.json();
       
       if (data.status === 'success' && data.preference) {
-        // Use sandbox URL in development, production URL otherwise
-        const isDev = process.env.NODE_ENV === 'development';
-        return isDev ? data.preference.sandboxInitPoint : data.preference.initPoint;
+        // Store preference ID for polling
+        this.lastPreferenceId = data.preference.preferenceId;
+        // Always use init_point - with test credentials, this is the correct URL for testing
+        // sandbox_init_point is deprecated and may cause issues
+        return data.preference.initPoint;
       }
 
       throw new Error('Failed to get payment URL');
@@ -183,6 +182,16 @@ class MercadoPagoService {
       throw error;
     }
   }
+
+  /**
+   * Get the last created preference ID
+   */
+  getLastPreferenceId(): string | null {
+    return this.lastPreferenceId;
+  }
+
+  // Store for last preference ID
+  private lastPreferenceId: string | null = null;
 
   /**
    * Verify payment status (called after payment completion)

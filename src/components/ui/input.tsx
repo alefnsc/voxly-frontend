@@ -18,7 +18,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       >
         <input
           type={type}
-          className="outline-none w-full h-full bg-transparent placeholder-text-muted-foreground"
+          className="outline-none w-full h-full bg-transparent placeholder:text-muted-foreground"
           ref={ref}
           {...props}
         />

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Modal } from 'components/ui/modal';
 import { Button } from 'components/ui/button';
-import { AlertTriangle, Info, XCircle, ArrowLeft, LogOut } from 'lucide-react';
+import { AlertTriangle, Info, XCircle, CheckCircle, ArrowLeft, LogOut } from 'lucide-react';
 
 interface QuitInterviewModalProps {
     isOpen: boolean;
@@ -14,7 +14,7 @@ const QuitInterviewModal: React.FC<QuitInterviewModalProps> = ({
     isOpen,
     onClose,
     onQuit,
-    message = "This action can't be undone and your interview credits will be consumed."
+    message = "Your interview will end and you'll be redirected."
 }) => {
     return (
         <Modal 
@@ -42,8 +42,12 @@ const QuitInterviewModal: React.FC<QuitInterviewModalProps> = ({
                     </h3>
                     <ul className="text-gray-600 space-y-2 text-sm">
                         <li className="flex items-start">
+                            <CheckCircle className="mr-2 mt-0.5 text-green-500 flex-shrink-0 w-4 h-4" />
+                            <span>If under 20 seconds, your credit will be restored</span>
+                        </li>
+                        <li className="flex items-start">
                             <XCircle className="mr-2 mt-0.5 text-red-500 flex-shrink-0 w-4 h-4" />
-                            <span>Your interview credit will be marked as used</span>
+                            <span>If over 20 seconds, your credit will be consumed</span>
                         </li>
                         <li className="flex items-start">
                             <XCircle className="mr-2 mt-0.5 text-red-500 flex-shrink-0 w-4 h-4" />

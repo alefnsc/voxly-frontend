@@ -28,24 +28,30 @@ const Feedback = () => {
   const [feedback, setFeedback] = useState('');
   const [score, setScore] = useState('3');
   const [rating, setRating] = useState(0);
+  const [retryCount, setRetryCount] = useState(0);
+  const MAX_RETRIES = 5;
+  const RETRY_DELAY = 3000; // 3 seconds
   
   // Prevent double fetching
   const hasFetched = useRef(false);
 
-  const fetchFeedback = useCallback(async () => {
-    if (!state?.call_id || hasFetched.current) {
-      if (!state?.call_id) {
-        setError('No interview data found. Please complete an interview first.');
-        setIsLoading(false);
-      }
+  const fetchFeedback = useCallback(async (retry = 0) => {
+    if (!state?.call_id) {
+      setError('No interview data found. Please complete an interview first.');
+      setIsLoading(false);
       return;
     }
 
-    hasFetched.current = true;
+    // Only set hasFetched on first attempt
+    if (retry === 0) {
+      if (hasFetched.current) return;
+      hasFetched.current = true;
+    }
 
     try {
       setIsLoading(true);
       setError(null);
+      setRetryCount(retry);
       
       const response = await APIService.getFeedback(state.call_id);
       
@@ -58,7 +64,13 @@ const Feedback = () => {
       
       const json = await response.json();
 
+      // Handle transcript not ready - retry with delay
       if (!response.ok) {
+        if (json.message?.includes('transcript not available') && retry < MAX_RETRIES) {
+          console.log(`⏳ Transcript not ready, retrying in ${RETRY_DELAY/1000}s... (attempt ${retry + 1}/${MAX_RETRIES})`);
+          setTimeout(() => fetchFeedback(retry + 1), RETRY_DELAY);
+          return;
+        }
         throw new Error(json.message || `Error: ${json.status}`);
       }
 
@@ -89,6 +101,7 @@ const Feedback = () => {
         setScore(String(json.score || 3));
       }
       
+      setRetryCount(0); // Reset on success
     } catch (err: any) {
       console.error("Failed to fetch feedback:", err);
       setError(err.message || 'Failed to load feedback. Please try again.');
@@ -192,7 +205,22 @@ const Feedback = () => {
 
   // Loading state
   if (isLoading) {
-    return <Loading />;
+    return (
+      <DefaultLayout className="flex flex-col items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-100 min-h-screen">
+        <Card className="max-w-md p-8 text-center bg-white border-gray-200">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-purple-100 flex items-center justify-center">
+            <div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Generating Feedback</h2>
+          <p className="text-gray-600 mb-2">
+            {retryCount > 0 
+              ? `Waiting for transcript... (attempt ${retryCount + 1}/${MAX_RETRIES})`
+              : 'Analyzing your interview performance...'}
+          </p>
+          <p className="text-sm text-gray-400">This may take a few seconds</p>
+        </Card>
+      </DefaultLayout>
+    );
   }
 
   // Error state
