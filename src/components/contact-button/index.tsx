@@ -22,15 +22,10 @@ const ContactButton: React.FC = () => {
   const allowedPaths = ['/', '/feedback'];
   const shouldShow = allowedPaths.includes(location.pathname);
 
-  // Don't render if not on allowed pages or user not signed in
-  if (!shouldShow || !isSignedIn) {
-    return null;
-  }
-
   const userName = user?.fullName || user?.firstName || 'User';
   const userEmail = user?.primaryEmailAddress?.emailAddress || '';
 
-  // Validation
+  // Validation - must be called before any conditional returns
   const messageLength = message.trim().length;
   const validation = useMemo(() => {
     const errors: string[] = [];
@@ -52,6 +47,12 @@ const ContactButton: React.FC = () => {
       errors,
     };
   }, [messageLength, userEmail]);
+
+  // Don't render if not on allowed pages or user not signed in
+  // This check must come AFTER all hooks are called
+  if (!shouldShow || !isSignedIn) {
+    return null;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
