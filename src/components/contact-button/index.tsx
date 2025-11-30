@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
-import { MessageCircle, X, Send, Loader2, CheckCircle } from 'lucide-react';
+import { MessageCircle, X, Send, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 
 const FORMSPREE_ENDPOINT = 'https://formspree.io/f/mqaregzo';
+
+// Validation constants matching Formspree settings
+const MESSAGE_MIN_LENGTH = 50;
+const MESSAGE_MAX_LENGTH = 250;
 
 const ContactButton: React.FC = () => {
   const location = useLocation();
@@ -12,6 +16,7 @@ const ContactButton: React.FC = () => {
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [touched, setTouched] = useState(false);
 
   // Only show on home (/) and feedback (/feedback) pages
   const allowedPaths = ['/', '/feedback'];
@@ -25,10 +30,34 @@ const ContactButton: React.FC = () => {
   const userName = user?.fullName || user?.firstName || 'User';
   const userEmail = user?.primaryEmailAddress?.emailAddress || '';
 
+  // Validation
+  const messageLength = message.trim().length;
+  const validation = useMemo(() => {
+    const errors: string[] = [];
+    
+    if (!userEmail) {
+      errors.push('Email is required');
+    }
+    
+    if (messageLength === 0) {
+      errors.push('Message is required');
+    } else if (messageLength < MESSAGE_MIN_LENGTH) {
+      errors.push(`Message must be at least ${MESSAGE_MIN_LENGTH} characters (${MESSAGE_MIN_LENGTH - messageLength} more needed)`);
+    } else if (messageLength > MESSAGE_MAX_LENGTH) {
+      errors.push(`Message must be less than ${MESSAGE_MAX_LENGTH} characters (${messageLength - MESSAGE_MAX_LENGTH} over limit)`);
+    }
+    
+    return {
+      isValid: errors.length === 0 && messageLength >= MESSAGE_MIN_LENGTH && messageLength <= MESSAGE_MAX_LENGTH && !!userEmail,
+      errors,
+    };
+  }, [messageLength, userEmail]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setTouched(true);
     
-    if (!message.trim()) return;
+    if (!validation.isValid) return;
 
     setIsSubmitting(true);
     setSubmitStatus('idle');
@@ -38,6 +67,7 @@ const ContactButton: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: JSON.stringify({
           name: userName,
@@ -50,11 +80,14 @@ const ContactButton: React.FC = () => {
       if (response.ok) {
         setSubmitStatus('success');
         setMessage('');
+        setTouched(false);
         // Redirect to thank you page after brief delay
         setTimeout(() => {
           window.location.href = '/contact/thank-you';
         }, 500);
       } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Formspree error:', errorData);
         setSubmitStatus('error');
       }
     } catch (error) {
@@ -69,6 +102,23 @@ const ContactButton: React.FC = () => {
     setIsOpen(false);
     setMessage('');
     setSubmitStatus('idle');
+    setTouched(false);
+  };
+
+  const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newValue = e.target.value;
+    // Prevent typing beyond max length
+    if (newValue.length <= MESSAGE_MAX_LENGTH + 10) { // Allow slight overflow for UX
+      setMessage(newValue);
+    }
+  };
+
+  // Character count color
+  const getCharCountColor = () => {
+    if (messageLength === 0) return 'text-gray-400';
+    if (messageLength < MESSAGE_MIN_LENGTH) return 'text-amber-500';
+    if (messageLength > MESSAGE_MAX_LENGTH) return 'text-red-500';
+    return 'text-green-500';
   };
 
   return (
@@ -139,27 +189,76 @@ const ContactButton: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="email"
                     value={userEmail}
                     disabled
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-600 cursor-not-allowed"
+                    className={`w-full px-4 py-2.5 bg-gray-50 border rounded-xl text-gray-600 cursor-not-allowed ${
+                      !userEmail && touched ? 'border-red-300' : 'border-gray-200'
+                    }`}
                   />
+                  {!userEmail && touched && (
+                    <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" />
+                      Email is required
+                    </p>
+                  )}
                 </div>
               </div>
 
               {/* Message Input */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Message <span className="text-red-500">*</span>
+                </label>
                 <textarea
                   value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Share your feedback, questions, or suggestions..."
+                  onChange={handleMessageChange}
+                  onBlur={() => setTouched(true)}
+                  placeholder="Share your feedback, questions, or suggestions... (minimum 50 characters)"
                   rows={4}
                   required
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none transition-all"
+                  minLength={MESSAGE_MIN_LENGTH}
+                  maxLength={MESSAGE_MAX_LENGTH + 10}
+                  className={`w-full px-4 py-3 border rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none transition-all ${
+                    touched && !validation.isValid && messageLength > 0
+                      ? messageLength < MESSAGE_MIN_LENGTH
+                        ? 'border-amber-300 bg-amber-50/50'
+                        : messageLength > MESSAGE_MAX_LENGTH
+                        ? 'border-red-300 bg-red-50/50'
+                        : 'border-gray-200'
+                      : 'border-gray-200'
+                  }`}
                 />
+                {/* Character count and validation feedback */}
+                <div className="mt-1 flex items-center justify-between">
+                  <div className="flex-1">
+                    {touched && messageLength > 0 && messageLength < MESSAGE_MIN_LENGTH && (
+                      <p className="text-xs text-amber-600 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {MESSAGE_MIN_LENGTH - messageLength} more characters needed
+                      </p>
+                    )}
+                    {messageLength > MESSAGE_MAX_LENGTH && (
+                      <p className="text-xs text-red-500 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {messageLength - MESSAGE_MAX_LENGTH} characters over limit
+                      </p>
+                    )}
+                    {messageLength >= MESSAGE_MIN_LENGTH && messageLength <= MESSAGE_MAX_LENGTH && (
+                      <p className="text-xs text-green-600 flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3" />
+                        Message looks good!
+                      </p>
+                    )}
+                  </div>
+                  <span className={`text-xs font-medium ${getCharCountColor()}`}>
+                    {messageLength}/{MESSAGE_MAX_LENGTH}
+                  </span>
+                </div>
               </div>
 
               {/* Error Message */}
@@ -172,7 +271,7 @@ const ContactButton: React.FC = () => {
               {/* Submit Button */}
               <button
                 type="submit"
-                disabled={isSubmitting || !message.trim()}
+                disabled={isSubmitting || !validation.isValid}
                 className={`
                   w-full py-3 px-6 rounded-xl font-bold text-base
                   flex items-center justify-center gap-2
