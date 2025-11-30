@@ -1,6 +1,6 @@
 import React from 'react';
 import { ClerkProvider } from '@clerk/clerk-react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './components/layout';
 import Home from './pages/Home';
 import Interview from './pages/Interview';
