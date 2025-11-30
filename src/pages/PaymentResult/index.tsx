@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom'
 import { useUser } from '@clerk/clerk-react'
 import { DefaultLayout } from 'components/default-layout'
 import { Button } from 'components/ui/button'
-import { Check, X, Clock, Loader2 } from 'lucide-react'
+import { Check, X, Clock, Loader2, RefreshCw, Sparkles } from 'lucide-react'
 
 type PaymentStatus = 'success' | 'failure' | 'pending' | 'loading'
 
@@ -30,6 +30,42 @@ export default function PaymentResult() {
   const { user, isLoaded } = useUser()
   const [status, setStatus] = useState<PaymentStatus>('loading')
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetails>({})
+  const [creditsVerified, setCreditsVerified] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [pollAttempts, setPollAttempts] = useState(0)
+
+  // Poll for credits update
+  const pollForCredits = useCallback(async () => {
+    if (!user || creditsVerified) return
+
+    try {
+      setIsRefreshing(true)
+      await user.reload()
+      const currentCredits = (user.publicMetadata?.credits as number) || 0
+      
+      console.log(`Polling credits: attempt ${pollAttempts + 1}, credits: ${currentCredits}`)
+      
+      // If credits > 0, consider it verified (webhook processed)
+      if (currentCredits > 0) {
+        setCreditsVerified(true)
+        console.log('✅ Credits verified:', currentCredits)
+      }
+      
+      setPollAttempts(prev => prev + 1)
+    } catch (error) {
+      console.error('Error polling credits:', error)
+    } finally {
+      setIsRefreshing(false)
+    }
+  }, [user, creditsVerified, pollAttempts])
+
+  // Auto-poll on success page
+  useEffect(() => {
+    if (status === 'success' && !creditsVerified && pollAttempts < 12) {
+      const timer = setTimeout(pollForCredits, 3000) // Poll every 3 seconds
+      return () => clearTimeout(timer)
+    }
+  }, [status, creditsVerified, pollAttempts, pollForCredits])
 
   // Determine status from URL path
   useEffect(() => {
@@ -71,73 +107,113 @@ export default function PaymentResult() {
     navigate('/')
   }
 
+  const handleManualRefresh = async () => {
+    await pollForCredits()
+  }
+
   const getStatusContent = () => {
     switch (status) {
       case 'success':
         return {
-          icon: <Check className="w-16 h-16 text-green-500" />,
+          icon: <Check className="w-16 h-16 text-emerald-400" />,
           title: 'Payment Successful!',
-          message: 'Your credits have been added to your account. You can now start your interview practice.',
-          bgColor: 'bg-green-50',
-          borderColor: 'border-green-200',
-          textColor: 'text-green-800'
+          message: creditsVerified 
+            ? 'Your credits have been added to your account. You can now start your interview practice.'
+            : 'Processing your payment... Credits will be added shortly.',
+          bgGradient: 'bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900',
+          borderColor: 'border-purple-500/30',
+          titleColor: 'text-white',
+          iconBg: 'bg-emerald-500/20'
         }
       case 'failure':
         return {
-          icon: <X className="w-16 h-16 text-red-500" />,
+          icon: <X className="w-16 h-16 text-red-400" />,
           title: 'Payment Failed',
           message: 'Unfortunately, your payment could not be processed. Please try again or use a different payment method.',
-          bgColor: 'bg-red-50',
-          borderColor: 'border-red-200',
-          textColor: 'text-red-800'
+          bgGradient: 'bg-gradient-to-br from-gray-900 via-red-900/30 to-gray-900',
+          borderColor: 'border-red-500/30',
+          titleColor: 'text-white',
+          iconBg: 'bg-red-500/20'
         }
       case 'pending':
         return {
-          icon: <Clock className="w-16 h-16 text-amber-500" />,
+          icon: <Clock className="w-16 h-16 text-amber-400" />,
           title: 'Payment Pending',
           message: 'Your payment is being processed. Credits will be added to your account once the payment is confirmed.',
-          bgColor: 'bg-amber-50',
-          borderColor: 'border-amber-200',
-          textColor: 'text-amber-800'
+          bgGradient: 'bg-gradient-to-br from-gray-900 via-amber-900/30 to-gray-900',
+          borderColor: 'border-amber-500/30',
+          titleColor: 'text-white',
+          iconBg: 'bg-amber-500/20'
         }
       default:
         return {
-          icon: <Loader2 className="w-16 h-16 text-purple-500 animate-spin" />,
+          icon: <Loader2 className="w-16 h-16 text-purple-400 animate-spin" />,
           title: 'Processing...',
           message: 'Please wait while we verify your payment.',
-          bgColor: 'bg-purple-50',
-          borderColor: 'border-purple-200',
-          textColor: 'text-purple-800'
+          bgGradient: 'bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900',
+          borderColor: 'border-purple-500/30',
+          titleColor: 'text-white',
+          iconBg: 'bg-purple-500/20'
         }
     }
   }
 
   const content = getStatusContent()
+  const currentCredits = (user?.publicMetadata?.credits as number) || 0
 
   return (
-    <DefaultLayout className="flex flex-col items-center justify-center min-h-screen bg-white">
-      <div className={`max-w-md w-full mx-4 p-8 rounded-2xl border-2 ${content.bgColor} ${content.borderColor} shadow-lg`}>
+    <DefaultLayout className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-950 via-purple-950/50 to-gray-950">
+      <div className={`max-w-md w-full mx-4 p-8 rounded-2xl border ${content.borderColor} ${content.bgGradient} shadow-2xl shadow-purple-500/10 backdrop-blur-sm`}>
         <div className="flex flex-col items-center text-center space-y-6">
           {/* Icon */}
-          <div className="p-4 rounded-full bg-white shadow-md">
+          <div className={`p-5 rounded-full ${content.iconBg} ring-2 ring-white/10`}>
             {content.icon}
           </div>
 
           {/* Title */}
-          <h1 className={`text-2xl font-bold ${content.textColor}`}>
+          <h1 className={`text-2xl font-bold ${content.titleColor}`}>
             {content.title}
           </h1>
 
           {/* Message */}
-          <p className="text-gray-600 leading-relaxed">
+          <p className="text-gray-300 leading-relaxed">
             {content.message}
           </p>
 
-          {/* Payment Details (for debugging, can be removed in production) */}
+          {/* Credits Display (for success) */}
+          {status === 'success' && (
+            <div className="w-full p-4 bg-purple-500/10 rounded-xl border border-purple-500/20">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Sparkles className="w-5 h-5 text-purple-400" />
+                <span className="text-sm text-purple-300 font-medium">Your Credits</span>
+              </div>
+              <p className="text-3xl font-bold text-white">
+                {currentCredits}
+              </p>
+              {!creditsVerified && pollAttempts < 12 && (
+                <div className="flex items-center justify-center gap-2 mt-3">
+                  <Loader2 className="w-4 h-4 animate-spin text-purple-400" />
+                  <span className="text-xs text-purple-300">Verifying credits...</span>
+                </div>
+              )}
+              {!creditsVerified && pollAttempts >= 12 && (
+                <button
+                  onClick={handleManualRefresh}
+                  disabled={isRefreshing}
+                  className="flex items-center justify-center gap-2 mt-3 text-xs text-purple-300 hover:text-purple-200 transition-colors"
+                >
+                  <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  <span>Refresh credits</span>
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Payment Reference */}
           {paymentDetails.payment_id && (
-            <div className="w-full p-4 bg-white rounded-lg border border-gray-200 text-left">
-              <p className="text-sm text-gray-500 mb-2">Payment Reference:</p>
-              <p className="text-sm font-mono text-gray-700 break-all">
+            <div className="w-full p-4 bg-white/5 rounded-xl border border-white/10 text-left">
+              <p className="text-xs text-gray-400 mb-1">Payment Reference:</p>
+              <p className="text-xs font-mono text-gray-300 break-all">
                 {paymentDetails.payment_id}
               </p>
             </div>
@@ -146,14 +222,14 @@ export default function PaymentResult() {
           {/* Action Button */}
           <Button
             onClick={handleGoHome}
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-semibold transition-colors"
+            className="w-full bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white py-3 rounded-xl font-semibold transition-all shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40"
           >
             {status === 'failure' ? 'Try Again' : 'Go to Home'}
           </Button>
 
           {/* User info */}
           {isLoaded && user && (
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-gray-500">
               Logged in as {user.primaryEmailAddress?.emailAddress}
             </p>
           )}

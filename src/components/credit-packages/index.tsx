@@ -320,14 +320,14 @@ const CreditPackages: React.FC<CreditPackagesProps> = ({ onPurchaseComplete }) =
 
       {/* Error Message */}
       {error && (
-        <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-lg text-center">
+        <div className="mb-10 p-4 bg-red-50 border border-red-200 rounded-lg text-center">
           <p className="text-red-600">{error}</p>
         </div>
       )}
 
       {/* Payment Status Message */}
       {paymentStatus && (
-        <div className="mb-8 p-4 bg-purple-50 border border-purple-200 rounded-lg text-center">
+        <div className="mb-12 p-4 bg-purple-50 border border-purple-200 rounded-lg text-center">
           <div className="flex items-center justify-center gap-3">
             <Loader2 className="w-5 h-5 animate-spin text-purple-600" />
             <p className="text-purple-700 font-medium">{paymentStatus}</p>
