@@ -115,45 +115,45 @@ export default function PaymentResult() {
     switch (status) {
       case 'success':
         return {
-          icon: <Check className="w-16 h-16 text-emerald-400" />,
+          icon: <Check className="w-16 h-16 text-emerald-600" />,
           title: 'Payment Successful!',
           message: creditsVerified 
             ? 'Your credits have been added to your account. You can now start your interview practice.'
             : 'Processing your payment... Credits will be added shortly.',
-          bgGradient: 'bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900',
-          borderColor: 'border-purple-500/30',
-          titleColor: 'text-white',
-          iconBg: 'bg-emerald-500/20'
+          containerBg: 'bg-white',
+          borderColor: 'border-gray-200',
+          titleColor: 'text-gray-900',
+          iconBg: 'bg-emerald-100'
         }
       case 'failure':
         return {
-          icon: <X className="w-16 h-16 text-red-400" />,
+          icon: <X className="w-16 h-16 text-red-600" />,
           title: 'Payment Failed',
           message: 'Unfortunately, your payment could not be processed. Please try again or use a different payment method.',
-          bgGradient: 'bg-gradient-to-br from-gray-900 via-red-900/30 to-gray-900',
-          borderColor: 'border-red-500/30',
-          titleColor: 'text-white',
-          iconBg: 'bg-red-500/20'
+          containerBg: 'bg-white',
+          borderColor: 'border-gray-200',
+          titleColor: 'text-gray-900',
+          iconBg: 'bg-red-100'
         }
       case 'pending':
         return {
-          icon: <Clock className="w-16 h-16 text-amber-400" />,
+          icon: <Clock className="w-16 h-16 text-amber-600" />,
           title: 'Payment Pending',
           message: 'Your payment is being processed. Credits will be added to your account once the payment is confirmed.',
-          bgGradient: 'bg-gradient-to-br from-gray-900 via-amber-900/30 to-gray-900',
-          borderColor: 'border-amber-500/30',
-          titleColor: 'text-white',
-          iconBg: 'bg-amber-500/20'
+          containerBg: 'bg-white',
+          borderColor: 'border-gray-200',
+          titleColor: 'text-gray-900',
+          iconBg: 'bg-amber-100'
         }
       default:
         return {
-          icon: <Loader2 className="w-16 h-16 text-purple-400 animate-spin" />,
+          icon: <Loader2 className="w-16 h-16 text-purple-600 animate-spin" />,
           title: 'Processing...',
           message: 'Please wait while we verify your payment.',
-          bgGradient: 'bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900',
-          borderColor: 'border-purple-500/30',
-          titleColor: 'text-white',
-          iconBg: 'bg-purple-500/20'
+          containerBg: 'bg-white',
+          borderColor: 'border-gray-200',
+          titleColor: 'text-gray-900',
+          iconBg: 'bg-purple-100'
         }
     }
   }
@@ -162,11 +162,11 @@ export default function PaymentResult() {
   const currentCredits = (user?.publicMetadata?.credits as number) || 0
 
   return (
-    <DefaultLayout className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-950 via-purple-950/50 to-gray-950">
-      <div className={`max-w-md w-full mx-4 p-8 rounded-2xl border ${content.borderColor} ${content.bgGradient} shadow-2xl shadow-purple-500/10 backdrop-blur-sm`}>
+    <DefaultLayout className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
+      <div className={`max-w-md w-full mx-4 p-8 rounded-2xl border ${content.borderColor} ${content.containerBg} shadow-xl`}>
         <div className="flex flex-col items-center text-center space-y-6">
           {/* Icon */}
-          <div className={`p-5 rounded-full ${content.iconBg} ring-2 ring-white/10`}>
+          <div className={`p-5 rounded-full ${content.iconBg}`}>
             {content.icon}
           </div>
 
@@ -176,31 +176,31 @@ export default function PaymentResult() {
           </h1>
 
           {/* Message */}
-          <p className="text-gray-300 leading-relaxed">
+          <p className="text-gray-600 leading-relaxed">
             {content.message}
           </p>
 
           {/* Credits Display (for success) */}
           {status === 'success' && (
-            <div className="w-full p-4 bg-purple-500/10 rounded-xl border border-purple-500/20">
+            <div className="w-full p-4 bg-purple-50 rounded-xl border border-purple-200">
               <div className="flex items-center justify-center gap-2 mb-2">
-                <Sparkles className="w-5 h-5 text-purple-400" />
-                <span className="text-sm text-purple-300 font-medium">Your Credits</span>
+                <Sparkles className="w-5 h-5 text-purple-600" />
+                <span className="text-sm text-purple-700 font-medium">Your Credits</span>
               </div>
-              <p className="text-3xl font-bold text-white">
+              <p className="text-3xl font-bold text-gray-900">
                 {currentCredits}
               </p>
               {!creditsVerified && pollAttempts < 12 && (
                 <div className="flex items-center justify-center gap-2 mt-3">
-                  <Loader2 className="w-4 h-4 animate-spin text-purple-400" />
-                  <span className="text-xs text-purple-300">Verifying credits...</span>
+                  <Loader2 className="w-4 h-4 animate-spin text-purple-600" />
+                  <span className="text-xs text-purple-600">Verifying credits...</span>
                 </div>
               )}
               {!creditsVerified && pollAttempts >= 12 && (
                 <button
                   onClick={handleManualRefresh}
                   disabled={isRefreshing}
-                  className="flex items-center justify-center gap-2 mt-3 text-xs text-purple-300 hover:text-purple-200 transition-colors"
+                  className="flex items-center justify-center gap-2 mt-3 text-xs text-purple-600 hover:text-purple-700 transition-colors"
                 >
                   <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                   <span>Refresh credits</span>
@@ -211,9 +211,9 @@ export default function PaymentResult() {
 
           {/* Payment Reference */}
           {paymentDetails.payment_id && (
-            <div className="w-full p-4 bg-white/5 rounded-xl border border-white/10 text-left">
-              <p className="text-xs text-gray-400 mb-1">Payment Reference:</p>
-              <p className="text-xs font-mono text-gray-300 break-all">
+            <div className="w-full p-4 bg-gray-50 rounded-xl border border-gray-200 text-left">
+              <p className="text-xs text-gray-500 mb-1">Payment Reference:</p>
+              <p className="text-xs font-mono text-gray-700 break-all">
                 {paymentDetails.payment_id}
               </p>
             </div>

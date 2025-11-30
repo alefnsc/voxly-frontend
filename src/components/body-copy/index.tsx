@@ -1,6 +1,7 @@
 import { Link as ScrollLink } from 'react-scroll';
 import TypingTextEffect from 'components/typing-text-effect/TypingTextEffect'
-import { Target, Clock1, UserCheck, BrainCircuit } from 'lucide-react'
+import { Target, Clock1, UserCheck, BrainCircuit, Gift } from 'lucide-react'
+import { useUser } from '@clerk/clerk-react'
 
 import { Button } from 'components/ui/button'
 
@@ -13,12 +14,13 @@ const BodyCopy = (
         isMobile
     }: BodyCopyProps
 ) => {
+    const { isSignedIn } = useUser();
 
     return (
         <div className="flex flex-col h-full overflow-hidden md:w-[45%] items-start w-full mt-8 md:mt-0">
             <div className="flex flex-row items-center justify-center w-full sm:justify-center sm:items-center  ">
 
-                <h1 className='text-primary text-4xl lg:text-5xl font-bold mb-4 lg:mb-8'>Unlock Your Next <span className='text-gray-700'>Famous</span> Job</h1 >
+                <h1 className='text-primary text-4xl lg:text-5xl font-bold mb-4 lg:mb-8'>Unlock Your Next <span className='text-gray-700'>Dream</span> Job</h1 >
 
             </div>
 

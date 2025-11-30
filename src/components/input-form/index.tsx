@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback, useMemo } from 'react'
 import { Button } from 'components/ui/button'
 import { Textarea } from 'components/ui/textarea'
 import { Input } from 'components/ui/input'
-import { Coins, LogIn } from 'lucide-react'
+import { Coins, LogIn, Gift } from 'lucide-react'
 import pdfToText from "react-pdftotext";
 import { useNavigate } from 'react-router-dom';
 import { Checkbox } from 'components/ui/checkbox';
@@ -165,11 +165,12 @@ const InputForm: React.FC<InputFormProps> = ({ isMobile, credits }) => {
             localStorage.setItem('interviewValidationToken', interviewId);
             localStorage.setItem('tokenExpiration', tokenExpiration.toString());
 
-            // Navigate to interview page with form data including interview_id
+            // Navigate to interview page with form data including interview_id and userId
             // Use firstName and lastName from Clerk session
             navigate('/interview', {
                 state: {
                     body: {
+                        userId: user?.id, // Pass user ID for backend authentication
                         metadata: {
                             first_name: firstName,
                             last_name: lastName,
@@ -201,6 +202,19 @@ const InputForm: React.FC<InputFormProps> = ({ isMobile, credits }) => {
             <div className='flex flex-col items-center justify-center lg:w-[40%] w-[80%] space-y-6 z-10'>
                 <h1 className='flex text-3xl sm:text-4xl lg:text-6xl font-bold text-gradient bg-gradient-to-r from-gray-700 via-gray-500 to-gray-700 text-center'>Get Started</h1>
                 <p className='flex text-lg sm:text-xl font-bold text-gray-700 text-center px-4'>Please sign in to start your AI-powered interview experience.</p>
+
+                {/* Free Trial Banner */}
+                 <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-50 via-violet-50 to-purple-50 border border-purple-100/50 rounded-lg px-4 py-2.5 text-purple-700">
+                    <Gift className="w-6 h-6 text-purple-600" />
+                    <div className="flex flex-col">
+                        <span className="text-sm font-medium">
+                         Free Trial Available!
+                        </span>
+                        <span className="text-xs font-medium">
+                            Get 1 free interview credit when you sign up
+                        </span>
+                    </div>
+                </div>
 
                 <div className="flex flex-col items-center justify-center p-6 sm:p-8 bg-gray-50 rounded-xl gap-4 w-full border border-gray-200 shadow-sm">
                     <div className="flex flex-col items-center space-y-3 text-center">

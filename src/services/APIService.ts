@@ -4,12 +4,19 @@ import { RetellWebClient } from "retell-client-js-sdk";
 // Backend is NOT needed for: Authentication (Clerk), Credits (Clerk metadata), Payments (MercadoPago)
 // Backend IS needed for: Interview calls (Retell API proxy), Feedback generation
 
-// Common headers for all API calls (includes ngrok bypass header)
-const getHeaders = (additionalHeaders: Record<string, string> = {}): Record<string, string> => ({
-    'Content-Type': 'application/json',
-    'ngrok-skip-browser-warning': 'true', // Required for ngrok free tier
-    ...additionalHeaders
-});
+// Get headers with optional user authentication
+const getHeaders = (userId?: string): Record<string, string> => {
+    const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true', // Required for ngrok free tier
+    };
+    
+    if (userId) {
+        headers['x-user-id'] = userId;
+    }
+    
+    return headers;
+};
 
 interface RegisterCallResponse {
     call_id: string;
@@ -28,6 +35,7 @@ interface Metadata {
 
 interface MainInterface {
     metadata: Metadata;
+    userId?: string; // User ID for authentication
 }
 
 interface UserInfo {
@@ -73,12 +81,13 @@ class APIService {
         console.log('📞 Registering call with backend:', {
             candidate: body.metadata.first_name,
             position: body.metadata.job_title,
-            backend_url: process.env.REACT_APP_BACKEND_URL
+            backend_url: process.env.REACT_APP_BACKEND_URL,
+            userId: body.userId ? '✅ Present' : '❌ Missing'
         });
         
         const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/register-call`, {
             method: "POST",
-            headers: getHeaders(),
+            headers: getHeaders(body.userId),
             body: JSON.stringify(body),
         });
         
@@ -145,7 +154,7 @@ class APIService {
         
         const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/restore-credit`, {
             method: 'POST',
-            headers: getHeaders(),
+            headers: getHeaders(userId),
             body: JSON.stringify({ userId, reason, callId })
         });
         
@@ -165,7 +174,7 @@ class APIService {
         
         const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/consume-credit`, {
             method: 'POST',
-            headers: getHeaders(),
+            headers: getHeaders(userId),
             body: JSON.stringify({ userId, callId })
         });
         

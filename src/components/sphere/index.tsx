@@ -57,11 +57,8 @@ function Line(props: LineProps) {
                     mesh.current.visible = true;
                     const spacing = 1.2;
                     const startX = -1.8;
-                    mesh.current.position.set(
-                        startX + props.index * spacing,
-                        0,
-                        0
-                    );
+                    mesh.current.position.x = startX + props.index * spacing;
+                    mesh.current.position.z = 0;
                     mesh.current.rotation.set(0, 0, 0);
                     const baseSize = 0.7;
 
@@ -73,7 +70,11 @@ function Line(props: LineProps) {
                             Math.min(baseSize + expansion, maxScale)
                         );
                         mesh.current.scale.set(scale, scale, scale);
-                        mesh.current.position.y = 0;
+                        
+                        // Move up and down based on audio intensity
+                        const bounceHeight = usedIntensity * 0.3; // Height based on intensity
+                        const phaseOffset = props.index * 0.1; // Each dot has different phase
+                        mesh.current.position.y = Math.sin(time * 1 + phaseOffset) * bounceHeight;
                     } else {
                         const pulse = Math.sin(time * 1.2 + props.index * 0.3) * 0.02 + baseSize;
                         mesh.current.scale.set(pulse, pulse, pulse);
@@ -88,7 +89,7 @@ function Line(props: LineProps) {
                     mesh.current.visible = true;
                     const circleRadius = 2.5;
                     const angle = (props.index / totalCircles) * Math.PI * 2;
-                    rotationRef.current += 0.0006; 
+                    rotationRef.current += 0.0000; 
                     const rotationAngle = rotationRef.current + angle;
                     mesh.current.position.x = Math.cos(rotationAngle) * circleRadius;
                     mesh.current.position.y = Math.sin(rotationAngle) * circleRadius;

@@ -25,3 +25,6 @@ Thumbs.db
 npm-debug.log*
 .vercel
 .env*.local
+
+# Octopus Visualizer
+src/components/octopus-visualizer/
