@@ -28,12 +28,13 @@ const PurchaseButton: React.FC<{
       onClick={onClick}
       disabled={isLoading}
       className={`
-        w-full py-4 px-6 rounded-xl font-bold text-lg
+        w-full py-3 sm:py-4 px-4 sm:px-6 rounded-xl font-bold text-base sm:text-lg
         transition-all duration-300 ease-out
-        flex items-center justify-center gap-3
+        flex items-center justify-center gap-2 sm:gap-3
         shadow-lg hover:shadow-xl
         transform hover:scale-[1.02] active:scale-[0.98]
         disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none
+        touch-manipulation
         ${popular
           ? 'bg-gradient-to-r from-purple-700 via-purple-600 to-violet-600 text-white hover:from-purple-800 hover:via-purple-700 hover:to-violet-700 shadow-purple-500/30'
           : 'bg-gradient-to-r from-purple-900 via-purple-800 to-purple-900 text-white hover:from-purple-950 hover:via-purple-900 hover:to-purple-950 shadow-purple-900/30'
@@ -42,12 +43,12 @@ const PurchaseButton: React.FC<{
     >
       {isLoading ? (
         <>
-          <Loader2 className="w-5 h-5 animate-spin" />
+          <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
           <span>Processing...</span>
         </>
       ) : (
         <>
-          <CreditCard className="w-5 h-5" />
+          <CreditCard className="w-4 h-4 sm:w-5 sm:h-5" />
           <span>Buy {credits} Credits</span>
         </>
       )}
@@ -67,15 +68,15 @@ const PackageCard: React.FC<PackageCardProps> = ({
 
   return (
     <Card
-      className={`relative p-6 sm:p-8 flex flex-col transition-all duration-300 hover:shadow-xl ${pkg.popular
-          ? 'border-2 border-purple-500 shadow-lg shadow-purple-200/50 scale-105'
+      className={`relative p-4 sm:p-6 lg:p-8 flex flex-col transition-all duration-300 hover:shadow-xl ${pkg.popular
+          ? 'border-2 border-purple-500 shadow-lg shadow-purple-200/50 sm:scale-100 lg:scale-105 order-first sm:order-none'
           : 'border border-gray-200 hover:border-purple-300'
         }`}
     >
       {/* Popular Badge */}
       {pkg.popular && (
-        <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-          <span className="bg-gradient-to-r from-purple-700 to-violet-600 text-white px-5 py-1.5 rounded-full text-sm font-bold shadow-lg shadow-purple-500/30">
+        <div className="absolute -top-3 sm:-top-4 left-1/2 transform -translate-x-1/2">
+          <span className="bg-gradient-to-r from-purple-700 to-violet-600 text-white px-3 sm:px-5 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-bold shadow-lg shadow-purple-500/30 whitespace-nowrap">
             ⭐ Most Popular
           </span>
         </div>
@@ -83,16 +84,16 @@ const PackageCard: React.FC<PackageCardProps> = ({
 
       {/* Savings Badge */}
       {pkg.savings && (
-        <div className="absolute top-4 right-4">
-          <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold">
+        <div className="absolute top-3 sm:top-4 right-3 sm:right-4">
+          <span className="bg-green-100 text-green-700 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-semibold">
             {pkg.savings}
           </span>
         </div>
       )}
 
       {/* Icon */}
-      <div className="flex justify-center mb-4">
-        <div className={`p-4 rounded-full ${pkg.popular
+      <div className="flex justify-center mb-3 sm:mb-4 mt-2 sm:mt-0">
+        <div className={`p-3 sm:p-4 rounded-full ${pkg.popular
             ? 'bg-gradient-to-br from-purple-600 to-violet-600 text-white shadow-lg shadow-purple-500/30'
             : 'bg-purple-100 text-purple-700'
           }`}>
@@ -101,44 +102,44 @@ const PackageCard: React.FC<PackageCardProps> = ({
       </div>
 
       {/* Package Name */}
-      <CardHeader className="text-center p-0 mb-4">
-        <CardTitle className="text-2xl font-bold text-gray-900 mb-2">
+      <CardHeader className="text-center p-0 mb-3 sm:mb-4">
+        <CardTitle className="text-xl sm:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">
           {pkg.name}
         </CardTitle>
-        <CardDescription className="text-gray-600">
+        <CardDescription className="text-gray-600 text-sm sm:text-base">
           {pkg.description}
         </CardDescription>
       </CardHeader>
 
       {/* Price - Display in USD */}
-      <div className="text-center mb-6">
+      <div className="text-center mb-4 sm:mb-6">
         <div className="flex items-baseline justify-center">
-          <span className="text-lg text-gray-600 mr-1">$</span>
-          <span className="text-5xl font-extrabold text-gray-900">
+          <span className="text-base sm:text-lg text-gray-600 mr-1">$</span>
+          <span className="text-4xl sm:text-5xl font-extrabold text-gray-900">
             {pkg.priceUSD.toFixed(2).split('.')[0]}
           </span>
-          <span className="text-xl text-gray-600">.{pkg.priceUSD.toFixed(2).split('.')[1]}</span>
-          <span className="text-sm text-gray-500 ml-2">USD</span>
+          <span className="text-lg sm:text-xl text-gray-600">.{pkg.priceUSD.toFixed(2).split('.')[1]}</span>
+          <span className="text-xs sm:text-sm text-gray-500 ml-1 sm:ml-2">USD</span>
         </div>
-        <p className="text-gray-600 mt-2">
-          <span className="font-semibold text-lg">{pkg.credits}</span> Credits
+        <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">
+          <span className="font-semibold text-base sm:text-lg">{pkg.credits}</span> Credits
         </p>
-        <p className="text-sm text-gray-500">
+        <p className="text-xs sm:text-sm text-gray-500">
           ${(pkg.priceUSD / pkg.credits).toFixed(2)} per interview
         </p>
         {/* Show BRL equivalent */}
-        <p className="text-xs text-purple-600 mt-1 font-medium">
+        <p className="text-[10px] sm:text-xs text-purple-600 mt-1 font-medium">
           ≈ R$ {pkg.priceBRL.toFixed(2)} BRL
         </p>
       </div>
 
       {/* Features */}
-      <CardContent className="p-0 mb-6 flex-grow">
-        <ul className="space-y-3">
+      <CardContent className="p-0 mb-4 sm:mb-6 flex-grow">
+        <ul className="space-y-2 sm:space-y-3">
           {pkg.features.map((feature, index) => (
             <li key={index} className="flex items-start">
-              <Check className="w-5 h-5 text-purple-500 mr-2 flex-shrink-0 mt-0.5" />
-              <span className="text-gray-700 text-sm">{feature}</span>
+              <Check className="w-4 h-4 sm:w-5 sm:h-5 text-purple-500 mr-2 flex-shrink-0 mt-0.5" />
+              <span className="text-gray-700 text-xs sm:text-sm">{feature}</span>
             </li>
           ))}
         </ul>
@@ -304,12 +305,12 @@ const CreditPackages: React.FC<CreditPackagesProps> = ({ onPurchaseComplete }) =
   });
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 py-8">
+    <div className="w-full max-w-6xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
 
-      <div className="flex-col items-center justify-center text-center mb-16 text-center">
+      <div className="flex flex-col items-center justify-center text-center mb-8 sm:mb-12 lg:mb-16 px-2">
 
-        <h1 className='flex text-4xl lg:text-6xl font-bold text-gradient bg-gradient-to-r from-gray-700 via-gray-500 to-gray-700'>Choose Your Plan</h1>
-        <p className='flex text-xl font-bold text-gray-700'>          
+        <h1 className='text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-bold text-gradient bg-gradient-to-r from-gray-700 via-gray-500 to-gray-700 leading-tight'>Choose Your Plan</h1>
+        <p className='text-base sm:text-lg lg:text-xl font-bold text-gray-700 mt-2 sm:mt-3 max-w-xl lg:max-w-none'>          
           Get credits to practice interviews with our AI interviewer.
           Pay once, use anytime.
         </p>
@@ -318,23 +319,23 @@ const CreditPackages: React.FC<CreditPackagesProps> = ({ onPurchaseComplete }) =
 
       {/* Error Message */}
       {error && (
-        <div className="mb-10 p-4 bg-red-50 border border-red-200 rounded-lg text-center">
-          <p className="text-red-600">{error}</p>
+        <div className="mb-6 sm:mb-10 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg text-center mx-1 sm:mx-0">
+          <p className="text-red-600 text-sm sm:text-base">{error}</p>
         </div>
       )}
 
       {/* Payment Status Message */}
       {paymentStatus && (
-        <div className="mb-12 p-4 bg-purple-50 border border-purple-200 rounded-lg text-center">
-          <div className="flex items-center justify-center gap-3">
-            <Loader2 className="w-5 h-5 animate-spin text-purple-600" />
-            <p className="text-purple-700 font-medium">{paymentStatus}</p>
+        <div className="mb-8 sm:mb-12 p-3 sm:p-4 bg-purple-50 border border-purple-200 rounded-lg text-center mx-1 sm:mx-0">
+          <div className="flex items-center justify-center gap-2 sm:gap-3 flex-wrap">
+            <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin text-purple-600 flex-shrink-0" />
+            <p className="text-purple-700 font-medium text-sm sm:text-base">{paymentStatus}</p>
           </div>
         </div>
       )}
 
       {/* Package Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 items-stretch px-1 sm:px-0">
         {sortedPackages.map((pkg) => (
           <PackageCard
             key={pkg.id}
@@ -348,16 +349,16 @@ const CreditPackages: React.FC<CreditPackagesProps> = ({ onPurchaseComplete }) =
       </div>
 
       {/* Payment Info */}
-      <div className="mt-12 text-center">
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-50 rounded-full">
-          <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="mt-8 sm:mt-12 text-center px-2">
+        <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-purple-50 rounded-full">
+          <svg className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
           </svg>
-          <span className="text-purple-700 font-medium">
+          <span className="text-purple-700 font-medium text-sm sm:text-base">
             Secure payment powered by MercadoPago
           </span>
         </div>
-        <p className="text-sm text-gray-500 mt-3">
+        <p className="text-xs sm:text-sm text-gray-500 mt-2 sm:mt-3">
           Prices shown in USD • Payment processed in BRL
         </p>
       </div>
