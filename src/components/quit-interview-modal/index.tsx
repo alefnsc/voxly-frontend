@@ -43,11 +43,11 @@ const QuitInterviewModal: React.FC<QuitInterviewModalProps> = ({
                     <ul className="text-gray-600 space-y-2 text-sm">
                         <li className="flex items-start">
                             <CheckCircle className="mr-2 mt-0.5 text-green-500 flex-shrink-0 w-4 h-4" />
-                            <span>If under 20 seconds, your credit will be restored</span>
+                            <span>If under 15 seconds, your credit will be restored</span>
                         </li>
                         <li className="flex items-start">
                             <XCircle className="mr-2 mt-0.5 text-red-500 flex-shrink-0 w-4 h-4" />
-                            <span>If over 20 seconds, your credit will be consumed</span>
+                            <span>If over 15 seconds, your credit will be consumed</span>
                         </li>
                         <li className="flex items-start">
                             <XCircle className="mr-2 mt-0.5 text-red-500 flex-shrink-0 w-4 h-4" />

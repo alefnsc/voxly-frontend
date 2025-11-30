@@ -5,6 +5,10 @@ import APIService from 'services/APIService';
 // Minimum interview duration in ms before going to feedback (45 seconds from first agent speech)
 const MIN_INTERVIEW_DURATION_MS = 45000;
 
+// Grace period for credit restoration if user quits early (15 seconds)
+// Users who quit within this time get their credit back
+const CREDIT_RESTORATION_THRESHOLD_MS = 15000;
+
 export const useCallManager = (body, navigate) => {
     const { user } = useUser();
     const [callId, setCallId] = useState('');
@@ -106,12 +110,15 @@ export const useCallManager = (body, navigate) => {
             return;
         }
 
-        // Check if interview was too short (< 20 seconds) - restore credit and go home
+        // Check if interview was too short - handle based on duration
         if (callDuration < MIN_INTERVIEW_DURATION_MS) {
-            console.log('⚠️ Interview ended too early (< 20 seconds) - restoring credit and redirecting to home');
+            // If within grace period (15s), restore credit
+            const shouldRestoreCredit = callDuration < CREDIT_RESTORATION_THRESHOLD_MS;
             
-            // Restore credit
-            if (user?.id) {
+            console.log(`⚠️ Interview ended too early (${Math.round(callDuration / 1000)}s) - ${shouldRestoreCredit ? 'restoring credit' : 'credit consumed'} and redirecting to home`);
+            
+            // Only restore credit if within grace period (15s)
+            if (shouldRestoreCredit && user?.id) {
                 try {
                     await APIService.restoreCredit(user.id, 'early_interruption', callIdRef.current);
                     console.log('✅ Credit restored for early interruption');
@@ -120,11 +127,16 @@ export const useCallManager = (body, navigate) => {
                 }
             }
 
-            // Redirect to home with message
+            // Redirect to home with appropriate message
+            const message = shouldRestoreCredit
+                ? 'Interview ended too early. Your interview credit has been restored.'
+                : 'Interview ended before completion. Your credit has been consumed.';
+            
             navigate('/', { 
                 state: { 
-                    message: 'Interview ended too early. Your interview credit has been restored.',
-                    type: 'early_interruption'
+                    message,
+                    type: 'early_interruption',
+                    creditRestored: shouldRestoreCredit
                 } 
             });
             return;
