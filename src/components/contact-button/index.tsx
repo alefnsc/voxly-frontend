@@ -64,14 +64,19 @@ const ContactButton: React.FC = () => {
     return null;
   }
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  // Custom submit handler that validates before letting Formspree handle submission
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     setTouched(true);
     
-    if (!validation.isValid) return;
-
-    // Submit using Formspree's handler (handles CAPTCHA automatically)
-    await handleFormspreeSubmit(e);
+    // If validation fails, prevent submission
+    if (!validation.isValid) {
+      e.preventDefault();
+      return;
+    }
+    
+    // Let Formspree's handler take over (don't preventDefault here)
+    // Formspree will handle CAPTCHA and submission
+    handleFormspreeSubmit(e);
   };
 
   const handleClose = () => {
@@ -158,8 +163,9 @@ const ContactButton: React.FC = () => {
               {/* User Info (Read-only but also sent to Formspree) */}
               <div className="space-y-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Name</label>
                   <input
+                    id="name"
                     type="text"
                     name="name"
                     value={userName}
@@ -168,10 +174,11 @@ const ContactButton: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                     Email <span className="text-red-500">*</span>
                   </label>
                   <input
+                    id="email"
                     type="email"
                     name="email"
                     value={userEmail}
@@ -193,10 +200,11 @@ const ContactButton: React.FC = () => {
 
               {/* Message Input */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
                   Message <span className="text-red-500">*</span>
                 </label>
                 <textarea
+                  id="message"
                   name="message"
                   value={message}
                   onChange={handleMessageChange}
