@@ -2,8 +2,8 @@ import { useState, useCallback, useRef } from 'react';
 import { useUser } from '@clerk/clerk-react';
 import APIService from 'services/APIService';
 
-// Minimum interview duration in ms before going to feedback (20 seconds)
-const MIN_INTERVIEW_DURATION_MS = 20000;
+// Minimum interview duration in ms before going to feedback (45 seconds from first agent speech)
+const MIN_INTERVIEW_DURATION_MS = 45000;
 
 export const useCallManager = (body, navigate) => {
     const { user } = useUser();
@@ -157,8 +157,7 @@ export const useCallManager = (body, navigate) => {
                 console.log('      1. Retell agent has a VOICE configured');
                 console.log('      2. Custom LLM is sending responses');
                 console.log('═══════════════════════════════════════════════════');
-                // Record call start time for duration tracking
-                callStartTimeRef.current = Date.now();
+                // Note: callStartTimeRef is set when agent first speaks, not here
                 startTimer();
             },
             call_ended: () => {
@@ -180,6 +179,11 @@ export const useCallManager = (body, navigate) => {
                 console.log('      2. Check system volume');
                 console.log('      3. Try clicking anywhere on the page first');
                 console.log('═══════════════════════════════════════════════════');
+                // Record actual interview start time (when agent first speaks)
+                if (!callStartTimeRef.current) {
+                    callStartTimeRef.current = Date.now();
+                    console.log('📊 Interview timer started from first agent speech');
+                }
                 setIsConnecting(false); // Agent has spoken, no longer connecting
                 setIsAgentTalking(true);
             },

@@ -35,6 +35,7 @@ jest.mock('components/clock', () => ({
 describe('InterviewContent', () => {
     const defaultProps = {
         isAgentTalking: false,
+        isConnecting: false,
         minutes: 30,
         seconds: 0,
         onQuitClick: jest.fn(),

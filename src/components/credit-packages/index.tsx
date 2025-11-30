@@ -34,7 +34,7 @@ const PurchaseButton: React.FC<{
         shadow-lg hover:shadow-xl
         transform hover:scale-[1.02] active:scale-[0.98]
         disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none
-        ${popular 
+        ${popular
           ? 'bg-gradient-to-r from-purple-700 via-purple-600 to-violet-600 text-white hover:from-purple-800 hover:via-purple-700 hover:to-violet-700 shadow-purple-500/30'
           : 'bg-gradient-to-r from-purple-900 via-purple-800 to-purple-900 text-white hover:from-purple-950 hover:via-purple-900 hover:to-purple-950 shadow-purple-900/30'
         }
@@ -56,22 +56,21 @@ const PurchaseButton: React.FC<{
 };
 
 // Individual package card
-const PackageCard: React.FC<PackageCardProps> = ({ 
-  pkg, 
-  getPackageIcon, 
-  onPurchase, 
+const PackageCard: React.FC<PackageCardProps> = ({
+  pkg,
+  getPackageIcon,
+  onPurchase,
   isLoading,
-  loadingPackageId 
+  loadingPackageId
 }) => {
   const isThisLoading = isLoading && loadingPackageId === pkg.id;
 
   return (
     <Card
-      className={`relative p-6 sm:p-8 flex flex-col transition-all duration-300 hover:shadow-xl ${
-        pkg.popular
+      className={`relative p-6 sm:p-8 flex flex-col transition-all duration-300 hover:shadow-xl ${pkg.popular
           ? 'border-2 border-purple-500 shadow-lg shadow-purple-200/50 scale-105'
           : 'border border-gray-200 hover:border-purple-300'
-      }`}
+        }`}
     >
       {/* Popular Badge */}
       {pkg.popular && (
@@ -93,11 +92,10 @@ const PackageCard: React.FC<PackageCardProps> = ({
 
       {/* Icon */}
       <div className="flex justify-center mb-4">
-        <div className={`p-4 rounded-full ${
-          pkg.popular 
-            ? 'bg-gradient-to-br from-purple-600 to-violet-600 text-white shadow-lg shadow-purple-500/30' 
+        <div className={`p-4 rounded-full ${pkg.popular
+            ? 'bg-gradient-to-br from-purple-600 to-violet-600 text-white shadow-lg shadow-purple-500/30'
             : 'bg-purple-100 text-purple-700'
-        }`}>
+          }`}>
           {getPackageIcon(pkg.id)}
         </div>
       </div>
@@ -201,7 +199,7 @@ const CreditPackages: React.FC<CreditPackagesProps> = ({ onPurchaseComplete }) =
         if (currentCredits >= expectedCredits) {
           console.log('✅ Credits updated!');
           setPaymentStatus('Payment successful! Credits added.');
-          
+
           // Close popup if still open
           if (popup && !popup.closed) {
             popup.close();
@@ -267,7 +265,7 @@ const CreditPackages: React.FC<CreditPackagesProps> = ({ onPurchaseComplete }) =
       const popupHeight = 700;
       const left = (window.screen.width - popupWidth) / 2;
       const top = (window.screen.height - popupHeight) / 2;
-      
+
       const popup = window.open(
         paymentUrl,
         'MercadoPago Checkout',
@@ -307,15 +305,15 @@ const CreditPackages: React.FC<CreditPackagesProps> = ({ onPurchaseComplete }) =
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 py-8">
-      {/* Header - matching Interview/Feedback page styles */}
-      <div className="text-center mb-12">
-        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
-          Choose Your Plan
-        </h1>
-        <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto">
+
+      <div className="flex-col items-center justify-center text-center mb-16 text-center">
+
+        <h1 className='flex text-4xl lg:text-6xl font-bold text-gradient bg-gradient-to-r from-gray-700 via-gray-500 to-gray-700'>Choose Your Plan</h1>
+        <p className='flex text-xl font-bold text-gray-700'>          
           Get credits to practice interviews with our AI interviewer.
           Pay once, use anytime.
         </p>
+
       </div>
 
       {/* Error Message */}
