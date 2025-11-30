@@ -4,6 +4,7 @@ import { cn } from 'lib/utils';
 import 'styles/globals.css';
 import Footer from 'components/footer';
 import Metadata from 'components/metadata';
+import ContactButton from 'components/contact-button';
 
 const Layout: React.FC = () => {
   return (
@@ -11,6 +12,7 @@ const Layout: React.FC = () => {
       <Metadata />
       <Outlet />
       <Footer />
+      <ContactButton />
     </div>
   );
 }

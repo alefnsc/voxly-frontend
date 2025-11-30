@@ -1,0 +1,239 @@
+import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { useUser } from '@clerk/clerk-react';
+import { MessageCircle, X, Send, Loader2, CheckCircle } from 'lucide-react';
+
+const FORMSPREE_ENDPOINT = 'https://formspree.io/f/mqaregzo';
+
+const ContactButton: React.FC = () => {
+  const location = useLocation();
+  const { user, isSignedIn } = useUser();
+  const [isOpen, setIsOpen] = useState(false);
+  const [message, setMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  // Only show on home (/) and feedback (/feedback) pages
+  const allowedPaths = ['/', '/feedback'];
+  const shouldShow = allowedPaths.includes(location.pathname);
+
+  // Don't render if not on allowed pages or user not signed in
+  if (!shouldShow || !isSignedIn) {
+    return null;
+  }
+
+  const userName = user?.fullName || user?.firstName || 'User';
+  const userEmail = user?.primaryEmailAddress?.emailAddress || '';
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!message.trim()) return;
+
+    setIsSubmitting(true);
+    setSubmitStatus('idle');
+
+    try {
+      const response = await fetch(FORMSPREE_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: userName,
+          email: userEmail,
+          message: message.trim(),
+          _subject: `Voxly Feedback from ${userName}`,
+        }),
+      });
+
+      if (response.ok) {
+        setSubmitStatus('success');
+        setMessage('');
+        // Redirect to thank you page after brief delay
+        setTimeout(() => {
+          window.location.href = '/contact/thank-you';
+        }, 500);
+      } else {
+        setSubmitStatus('error');
+      }
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      setSubmitStatus('error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleClose = () => {
+    setIsOpen(false);
+    setMessage('');
+    setSubmitStatus('idle');
+  };
+
+  return (
+    <>
+      {/* Floating Button */}
+      <button
+        onClick={() => setIsOpen(true)}
+        className={`
+          fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50
+          w-12 h-12 sm:w-14 sm:h-14
+          bg-gradient-to-r from-purple-700 via-purple-600 to-violet-600
+          hover:from-purple-800 hover:via-purple-700 hover:to-violet-700
+          text-white rounded-full
+          shadow-lg shadow-purple-500/30 hover:shadow-xl hover:shadow-purple-500/40
+          flex items-center justify-center
+          transition-all duration-300 ease-out
+          transform hover:scale-110 active:scale-95
+          touch-manipulation
+          ${isOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}
+        `}
+        aria-label="Contact Us"
+      >
+        <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6" />
+      </button>
+
+      {/* Modal Overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4"
+          onClick={handleClose}
+        >
+          {/* Modal Content */}
+          <div
+            className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md shadow-2xl transform transition-all duration-300 animate-slide-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-violet-600 rounded-full flex items-center justify-center">
+                  <MessageCircle className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-lg sm:text-xl font-bold text-gray-900">Contact Us</h2>
+                  <p className="text-sm text-gray-500">We'd love to hear from you</p>
+                </div>
+              </div>
+              <button
+                onClick={handleClose}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                aria-label="Close"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
+              {/* User Info (Read-only) */}
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                  <input
+                    type="text"
+                    value={userName}
+                    disabled
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-600 cursor-not-allowed"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <input
+                    type="email"
+                    value={userEmail}
+                    disabled
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-600 cursor-not-allowed"
+                  />
+                </div>
+              </div>
+
+              {/* Message Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
+                <textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Share your feedback, questions, or suggestions..."
+                  rows={4}
+                  required
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none transition-all"
+                />
+              </div>
+
+              {/* Error Message */}
+              {submitStatus === 'error' && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-center">
+                  <p className="text-red-600 text-sm">Failed to send message. Please try again.</p>
+                </div>
+              )}
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={isSubmitting || !message.trim()}
+                className={`
+                  w-full py-3 px-6 rounded-xl font-bold text-base
+                  flex items-center justify-center gap-2
+                  transition-all duration-300 ease-out
+                  shadow-lg hover:shadow-xl
+                  transform hover:scale-[1.02] active:scale-[0.98]
+                  disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none
+                  touch-manipulation
+                  ${submitStatus === 'success'
+                    ? 'bg-green-500 text-white'
+                    : 'bg-gradient-to-r from-purple-700 via-purple-600 to-violet-600 text-white hover:from-purple-800 hover:via-purple-700 hover:to-violet-700 shadow-purple-500/30'
+                  }
+                `}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>Sending...</span>
+                  </>
+                ) : submitStatus === 'success' ? (
+                  <>
+                    <CheckCircle className="w-5 h-5" />
+                    <span>Sent!</span>
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-5 h-5" />
+                    <span>Send Message</span>
+                  </>
+                )}
+              </button>
+            </form>
+
+            {/* Footer */}
+            <div className="px-4 sm:px-6 pb-4 sm:pb-6">
+              <p className="text-xs text-center text-gray-400">
+                Your feedback helps us improve Voxly AI
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CSS for animation */}
+      <style>{`
+        @keyframes slide-up {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-slide-up {
+          animation: slide-up 0.3s ease-out;
+        }
+      `}</style>
+    </>
+  );
+};
+
+export default ContactButton;

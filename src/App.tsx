@@ -6,6 +6,7 @@ import Home from './pages/Home';
 import Interview from './pages/Interview';
 import Feedback from './pages/Feedback';
 import PaymentResult from './pages/PaymentResult';
+import ContactThankYou from './pages/ContactThankYou';
 import { ProtectedInterviewRoute } from './components/protected-interview-route';
 import ErrorBoundary from './components/error-boundary';
 
@@ -44,6 +45,8 @@ const App: React.FC = () => {
               <Route path="payment/success" element={<PaymentResult />} />
               <Route path="payment/failure" element={<PaymentResult />} />
               <Route path="payment/pending" element={<PaymentResult />} />
+              {/* Contact thank you page */}
+              <Route path="contact/thank-you" element={<ContactThankYou />} />
             </Route>
           </Routes>
         </Router>
