@@ -1,0 +1,27 @@
+{
+  "files": {
+    "main.css": "/voxly-frontend/static/css/main.23891dc7.css",
+    "main.js": "/voxly-frontend/static/js/main.754d53a7.js",
+    "static/js/518.f1ecb749.chunk.js": "/voxly-frontend/static/js/518.f1ecb749.chunk.js",
+    "static/js/506.9213b93c.chunk.js": "/voxly-frontend/static/js/506.9213b93c.chunk.js",
+    "static/js/239.b0942b14.chunk.js": "/voxly-frontend/static/js/239.b0942b14.chunk.js",
+    "static/js/213.784945d6.chunk.js": "/voxly-frontend/static/js/213.784945d6.chunk.js",
+    "static/js/455.e115a270.chunk.js": "/voxly-frontend/static/js/455.e115a270.chunk.js",
+    "static/js/982.9073585e.chunk.js": "/voxly-frontend/static/js/982.9073585e.chunk.js",
+    "static/js/887.51aad23d.chunk.js": "/voxly-frontend/static/js/887.51aad23d.chunk.js",
+    "index.html": "/voxly-frontend/index.html",
+    "main.23891dc7.css.map": "/voxly-frontend/static/css/main.23891dc7.css.map",
+    "main.754d53a7.js.map": "/voxly-frontend/static/js/main.754d53a7.js.map",
+    "518.f1ecb749.chunk.js.map": "/voxly-frontend/static/js/518.f1ecb749.chunk.js.map",
+    "506.9213b93c.chunk.js.map": "/voxly-frontend/static/js/506.9213b93c.chunk.js.map",
+    "239.b0942b14.chunk.js.map": "/voxly-frontend/static/js/239.b0942b14.chunk.js.map",
+    "213.784945d6.chunk.js.map": "/voxly-frontend/static/js/213.784945d6.chunk.js.map",
+    "455.e115a270.chunk.js.map": "/voxly-frontend/static/js/455.e115a270.chunk.js.map",
+    "982.9073585e.chunk.js.map": "/voxly-frontend/static/js/982.9073585e.chunk.js.map",
+    "887.51aad23d.chunk.js.map": "/voxly-frontend/static/js/887.51aad23d.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.23891dc7.css",
+    "static/js/main.754d53a7.js"
+  ]
+}
