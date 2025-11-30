@@ -107,7 +107,7 @@ export default function Home() {
               <img
                 src='/Main.png'
                 alt="Voxly AI Interview"
-                className="rounded-3xl w-[70%] max-w-[320px] shadow-2xl shadow-purple-200/50"
+                className="w-[80%] max-w-[380px] drop-shadow-[0_20px_40px_rgba(147,51,234,0.35)]"
               />
             </div>
           )}
@@ -122,10 +122,9 @@ export default function Home() {
                 src='/Main.png'
                 alt="Voxly AI Interview"
                 className="
-                  rounded-3xl shadow-2xl shadow-purple-200/50
-                  w-[85%] md:w-[90%] lg:w-[95%] xl:w-full
-                  max-w-[400px] lg:max-w-[450px] xl:max-w-[500px] 2xl:max-w-[550px]
-                  transition-transform duration-300 hover:scale-105
+                  w-[95%] md:w-full lg:w-full xl:w-full
+                  max-w-[450px] lg:max-w-[520px] xl:max-w-[580px] 2xl:max-w-[650px]
+                  drop-shadow-[0_25px_50px_rgba(147,51,234,0.4)]
                 "
               />
             </div>

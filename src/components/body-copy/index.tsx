@@ -26,12 +26,12 @@ const BodyCopy = ({
             <div className="flex flex-row items-center justify-center w-full md:justify-start">
                 <h1 className='
                     text-primary font-bold
-                    text-3xl sm:text-4xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl
+                    text-2xl sm:text-3xl md:text-3xl lg:text-4xl xl:text-5xl 2xl:text-6xl
                     mb-4 md:mb-6 lg:mb-8 xl:mb-10
                     text-center md:text-left
                     leading-tight
                 '>
-                    Unlock Your Next <span className='text-gray-700'>Dream</span> Job
+                    Unlock Your Next <span className='text-gray-700'>Voxly</span> Job
                 </h1>
             </div>
 
