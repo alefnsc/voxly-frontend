@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
 import { useForm, ValidationError } from '@formspree/react';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { MessageCircle, X, Send, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 
 const FORMSPREE_FORM_ID = 'mqaregzo';
@@ -13,7 +14,13 @@ const MESSAGE_MAX_LENGTH = 250;
 const ContactButton: React.FC = () => {
   const location = useLocation();
   const { user, isSignedIn } = useUser();
-  const [state, handleFormspreeSubmit] = useForm(FORMSPREE_FORM_ID);
+  const { executeRecaptcha } = useGoogleReCaptcha();
+  
+  // Pass the executeRecaptcha function to Formspree via the data option
+  // Formspree will execute this function when the form is submitted
+  const [state, handleFormspreeSubmit] = useForm(FORMSPREE_FORM_ID, {
+    data: { 'g-recaptcha-response': executeRecaptcha }
+  });
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState('');
   const [touched, setTouched] = useState(false);
@@ -65,7 +72,7 @@ const ContactButton: React.FC = () => {
   }
 
   // Custom submit handler that validates before letting Formspree handle submission
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     setTouched(true);
     
     // If validation fails, prevent submission
@@ -75,7 +82,7 @@ const ContactButton: React.FC = () => {
     }
     
     // Let Formspree's handler take over
-    // It will handle reCAPTCHA and submission
+    // The reCAPTCHA token is automatically included via the data option in useForm
     handleFormspreeSubmit(e);
   };
 

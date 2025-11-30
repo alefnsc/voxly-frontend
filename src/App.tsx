@@ -1,6 +1,7 @@
 import React from 'react';
 import { ClerkProvider } from '@clerk/clerk-react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 import Layout from './components/layout';
 import Home from './pages/Home';
 import Interview from './pages/Interview';
@@ -11,6 +12,7 @@ import { ProtectedInterviewRoute } from './components/protected-interview-route'
 import ErrorBoundary from './components/error-boundary';
 
 const CLERK_PUBLISHABLE_KEY = process.env.REACT_APP_CLERK_PUBLISHABLE_KEY || '';
+const RECAPTCHA_SITE_KEY = process.env.REACT_APP_RECAPTCHA_SITE_KEY || '';
 
 // Validate required environment variables in development (only log errors)
 if (process.env.NODE_ENV === 'development' && !CLERK_PUBLISHABLE_KEY) {
@@ -24,7 +26,8 @@ const App: React.FC = () => {
   return (
     <ErrorBoundary>
       <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY} afterSignOutUrl="/">
-        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <GoogleReCaptchaProvider reCaptchaKey={RECAPTCHA_SITE_KEY}>
+          <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <Routes>
             <Route path="/" element={<Layout />}>
               <Route index element={<Home />} />
@@ -43,6 +46,7 @@ const App: React.FC = () => {
             </Route>
           </Routes>
         </Router>
+        </GoogleReCaptchaProvider>
       </ClerkProvider>
     </ErrorBoundary>
   );
