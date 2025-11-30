@@ -114,7 +114,7 @@ const ContactButton: React.FC = () => {
       <button
         onClick={() => setIsOpen(true)}
         className={`
-          fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50
+          fixed bottom-4 left-4 sm:bottom-6 sm:left-6 z-50
           w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20
           bg-gradient-to-r from-purple-700 via-purple-600 to-violet-600
           hover:from-purple-800 hover:via-purple-700 hover:to-violet-700
