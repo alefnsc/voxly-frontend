@@ -65,7 +65,7 @@ const ContactButton: React.FC = () => {
   }
 
   // Custom submit handler that validates before letting Formspree handle submission
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     setTouched(true);
     
     // If validation fails, prevent submission
@@ -74,8 +74,8 @@ const ContactButton: React.FC = () => {
       return;
     }
     
-    // Let Formspree's handler take over (don't preventDefault here)
-    // Formspree will handle CAPTCHA and submission
+    // Let Formspree's handler take over
+    // It will handle reCAPTCHA and submission
     handleFormspreeSubmit(e);
   };
 
@@ -157,33 +157,30 @@ const ContactButton: React.FC = () => {
 
             {/* Form - using Formspree's form handling */}
             <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
-              {/* Hidden fields for Formspree */}
+              {/* Hidden fields for Formspree - these ensure values are always submitted */}
               <input type="hidden" name="_subject" value={`Voxly Feedback from ${userName}`} />
+              <input type="hidden" name="name" value={userName} />
+              <input type="hidden" name="email" value={userEmail} />
               
-              {/* User Info (Read-only but also sent to Formspree) */}
+              {/* User Info (Display only - actual values sent via hidden fields above) */}
               <div className="space-y-3">
                 <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
                   <input
-                    id="name"
                     type="text"
-                    name="name"
                     value={userName}
-                    readOnly
+                    disabled
                     className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-600 cursor-not-allowed"
                   />
                 </div>
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Email <span className="text-red-500">*</span>
                   </label>
                   <input
-                    id="email"
                     type="email"
-                    name="email"
                     value={userEmail}
-                    readOnly
-                    required
+                    disabled
                     className={`w-full px-4 py-2.5 bg-gray-50 border rounded-xl text-gray-600 cursor-not-allowed ${
                       !userEmail && touched ? 'border-red-300' : 'border-gray-200'
                     }`}
