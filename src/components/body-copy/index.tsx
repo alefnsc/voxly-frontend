@@ -28,7 +28,7 @@ const BodyCopy = ({
                     text-center md:text-left
                     leading-tight
                 '>
-                    Unlock Your Next <span className='text-4xl sm:text-5xl md:text-5xl lg:text-6xl xl:text-6xl 2xl:text-7xl font-bold text-gradient bg-gradient-to-r from-gray-700 via-gray-500 to-gray-700'>VOXLY</span> Job
+                    Unlock Your Next <span className='text-4xl sm:text-5xl md:text-5xl lg:text-6xl xl:text-6xl 2xl:text-6xl font-bold text-gradient bg-gradient-to-r from-gray-700 via-gray-500 to-gray-700'>VOXLY</span> Job
                 </h1>
             </div>
 
