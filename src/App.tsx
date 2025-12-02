@@ -14,6 +14,8 @@ import About from './pages/About';
 import Contact from './pages/Contact';
 import Credits from './pages/Credits';
 import InterviewSetup from './pages/InterviewSetup';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfUse from './pages/TermsOfUse';
 import { ProtectedInterviewRoute } from './components/protected-interview-route';
 import ErrorBoundary from './components/error-boundary';
 import { InterviewFlowProvider } from './hooks/use-interview-flow';
@@ -53,6 +55,8 @@ const App: React.FC = () => {
                 <Route path="about" element={<About />} />
                 <Route path="contact" element={<Contact />} />
                 <Route path="credits" element={<Credits />} />
+                <Route path="privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="terms-of-use" element={<TermsOfUse />} />
                 {/* Payment result routes */}
                 <Route path="payment/success" element={<PaymentResult />} />
                 <Route path="payment/failure" element={<PaymentResult />} />

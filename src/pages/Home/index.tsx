@@ -125,19 +125,17 @@ const ScoreBadge: React.FC<{ score: number | null }> = ({ score }) => {
 const StatsCard: React.FC<{
   title: string; value: string | number; subtitle?: string; change?: number; icon: React.ReactNode
 }> = ({ title, value, subtitle, change, icon }) => (
-  <div className="stats-card">
-    <div className="flex items-start justify-between">
-      <div>
-        <p className="metric-label">{title}</p>
-        <p className="metric-value mt-1">{value}</p>
-        {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
-        {change !== undefined && (
-          <p className={change >= 0 ? 'metric-change-positive' : 'metric-change-negative'}>
-            {change >= 0 ? '↑' : '↓'} {Math.abs(change)}% from last month
-          </p>
-        )}
-      </div>
-      <div className="p-3 bg-purple-50 rounded-lg text-voxly-purple">{icon}</div>
+  <div className="voxly-card flex items-center gap-3 sm:gap-4 p-3 sm:p-4">
+    <div className="p-2 sm:p-3 bg-purple-100 rounded-xl flex-shrink-0 text-purple-600">{icon}</div>
+    <div className="min-w-0">
+      <p className="text-xs sm:text-sm text-gray-500 truncate">{title}</p>
+      <p className="text-lg sm:text-2xl font-bold text-gray-900">{value}</p>
+      {subtitle && <p className="text-xs text-gray-400 truncate">{subtitle}</p>}
+      {change !== undefined && (
+        <p className={`text-xs ${change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+          {change >= 0 ? '↑' : '↓'} {Math.abs(change)}%
+        </p>
+      )}
     </div>
   </div>
 )
@@ -225,15 +223,18 @@ export default function Home() {
       <DefaultLayout className="flex flex-col overflow-hidden bg-gray-50">
         <div className="page-container py-6 sm:py-8">
           {/* Header with Start Interview Button */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
-            <div>
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6 sm:mb-8">
+            {/* Left Column - Welcome Message */}
+            <div className="flex-1">
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-                Welcome back, {user?.firstName || 'there'}!
+                Welcome back, <span className="text-voxly-purple">{user?.firstName || 'there'}</span>!
               </h1>
               <p className="text-gray-600 mt-1">
                 Here's an overview of your interview practice progress.
               </p>
             </div>
+            
+            {/* Right Column - CTA or No Credits Banner */}
             {(userCredits !== null && userCredits > 0) ? (
               <PurpleButton
                 variant="primary"
@@ -245,38 +246,27 @@ export default function Home() {
                 Start New Interview
               </PurpleButton>
             ) : (
-              <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 rounded-lg">
-                <Coins className="w-5 h-5 text-amber-600" />
-                <span className="text-amber-700 font-medium">No credits available</span>
-              </div>
-            )}
-          </div>
-
-          {/* No Credits Banner - Show when user has 0 credits */}
-          {(userCredits === 0 || userCredits === null) && (
-            <div className="mb-6 sm:mb-8 voxly-card bg-gradient-to-r from-purple-50 via-violet-50 to-purple-50 border-purple-200">
-              <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
-                <div className="p-3 bg-purple-100 rounded-full">
-                  <Coins className="w-8 h-8 text-purple-600" />
+              <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-purple-50 to-violet-50 border border-purple-200 rounded-xl">
+                <div className="p-2 bg-purple-100 rounded-full">
+                  <Coins className="w-5 h-5 text-purple-600" />
                 </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900">You're out of credits!</h3>
-                  <p className="text-gray-600 mt-1">Purchase credits to continue practicing your interview skills with our AI interviewer.</p>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-900">Out of credits</p>
+                  <p className="text-xs text-gray-600">Purchase to continue practicing</p>
                 </div>
                 <PurpleButton
                   variant="primary"
-                  size="lg"
+                  size="sm"
                   onClick={() => {
                     const creditsSection = document.getElementById('credit-packages');
                     if (creditsSection) creditsSection.scrollIntoView({ behavior: 'smooth' });
                   }}
                 >
-                  <Coins className="w-5 h-5" />
                   Buy Credits
                 </PurpleButton>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           {dashboardError && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
@@ -290,7 +280,7 @@ export default function Home() {
           ) : (
             <>
               {/* Stats Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
                 <StatsCard
                   title="Total Interviews"
                   value={stats?.totalInterviews || 0}
@@ -316,7 +306,7 @@ export default function Home() {
               </div>
 
               {/* Charts Section */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
                 <div className="voxly-card">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Score Evolution</h3>
                   <div className="chart-container">
@@ -471,9 +461,11 @@ export default function Home() {
       </DefaultLayout>
       <Separator className="my-0" />
       <div id="form" className="relative flex flex-col w-full items-center justify-center m-auto py-12 md:py-16 lg:py-20 xl:py-24 2xl:py-28 bg-gray-50">
-        <Suspense fallback={<div className="h-40 lg:h-60 flex items-center justify-center text-gray-600">Loading packages...</div>}>
-          <CreditPackages />
-        </Suspense>
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-10">
+          <Suspense fallback={<div className="h-40 lg:h-60 flex items-center justify-center text-gray-600">Loading packages...</div>}>
+            <CreditPackages />
+          </Suspense>
+        </div>
       </div>
     </>
   )

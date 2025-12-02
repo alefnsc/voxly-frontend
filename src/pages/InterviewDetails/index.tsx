@@ -6,6 +6,7 @@ import { useUser } from '@clerk/clerk-react'
 import { DefaultLayout } from 'components/default-layout'
 import Loading from 'components/loading'
 import apiService, { InterviewDetail } from 'services/APIService'
+import { ArrowLeft } from 'lucide-react'
 
 // Score badge component
 const ScoreBadge: React.FC<{ score: number | null; size?: 'sm' | 'lg' }> = ({ score, size = 'sm' }) => {
@@ -133,7 +134,7 @@ export default function InterviewDetails() {
 
   if (error || !interview) {
     return (
-      <DefaultLayout>
+      <DefaultLayout className="bg-gray-50">
         <div className="page-container py-6 sm:py-8">
           <div className="text-center py-12">
             <div className="text-red-500 mb-4">
@@ -160,26 +161,26 @@ export default function InterviewDetails() {
   }
 
   return (
-    <DefaultLayout>
+    <DefaultLayout className="bg-gray-50">
       <div className="page-container py-6 sm:py-8">
-        {/* Header with back button */}
-        <div className="mb-6">
+        {/* Header */}
+        <div className="mb-6 sm:mb-8">
           <button
             onClick={() => navigate('/')}
             className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors mb-4"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Back to Dashboard
+            <ArrowLeft className="w-5 h-5" />
+            <span>Back to Dashboard</span>
           </button>
           
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-                {interview.position}
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                Interview <span className="text-voxly-purple">Details</span>
               </h1>
-              <p className="text-gray-600 mt-1">{interview.company}</p>
+              <p className="text-gray-600">
+                {interview.position} at {interview.company}
+              </p>
               <p className="text-sm text-gray-500 mt-1">
                 {formatDate(interview.createdAt)} • {interview.duration} minutes
               </p>

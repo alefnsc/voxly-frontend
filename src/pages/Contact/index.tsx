@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { useForm, ValidationError } from '@formspree/react'
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
 import { DefaultLayout } from 'components/default-layout'
-import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
+import { CheckCircle, AlertCircle, Loader2, Mail, Clock, HelpCircle, Send } from 'lucide-react'
 
 const FORMSPREE_FORM_ID = process.env.REACT_APP_FORMSPREE_ID || 'mqaregzo'
 
@@ -127,228 +127,225 @@ export default function Contact() {
   }
 
   return (
-    <DefaultLayout>
-      <div className="page-container py-8 sm:py-12">
-        <div className="max-w-4xl mx-auto">
-          {/* Header */}
-          <div className="text-center mb-8 sm:mb-12">
-            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+    <DefaultLayout className="flex flex-col overflow-hidden bg-gray-50">
+      <div className="page-container py-6 sm:py-8">
+        {/* Header */}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6 sm:mb-8">
+          <div className="flex-1">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
               Contact <span className="text-voxly-purple">Us</span>
             </h1>
-            <p className="text-lg text-gray-600">
+            <p className="text-gray-600 mt-1">
               Have questions or feedback? We'd love to hear from you.
             </p>
           </div>
+        </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Contact Information */}
-            <div className="lg:col-span-1 space-y-6">
-              <div className="voxly-card">
-                <div className="p-2 bg-purple-100 rounded-lg w-fit mb-3">
-                  <svg className="w-5 h-5 text-voxly-purple" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <h3 className="font-semibold text-gray-900 mb-1">Email</h3>
-                <a href="mailto:support@voxly.ai" className="text-voxly-purple hover:underline">
-                  support@voxly.ai
-                </a>
-              </div>
-
-              <div className="voxly-card">
-                <div className="p-2 bg-purple-100 rounded-lg w-fit mb-3">
-                  <svg className="w-5 h-5 text-voxly-purple" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <h3 className="font-semibold text-gray-900 mb-1">Response Time</h3>
-                <p className="text-gray-600 text-sm">We typically respond within 24-48 hours.</p>
-              </div>
-
-              <div className="voxly-card">
-                <div className="p-2 bg-purple-100 rounded-lg w-fit mb-3">
-                  <svg className="w-5 h-5 text-voxly-purple" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <h3 className="font-semibold text-gray-900 mb-1">FAQ</h3>
-                <p className="text-gray-600 text-sm">
-                  Check our <a href="/about" className="text-voxly-purple hover:underline">About page</a> for common questions.
-                </p>
-              </div>
+        {/* Quick Info Stats - Same pattern as Credits page */}
+        <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
+          <div className="voxly-card flex items-center gap-3 sm:gap-4 p-3 sm:p-4">
+            <div className="p-2 sm:p-3 bg-purple-100 rounded-xl flex-shrink-0">
+              <Mail className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
             </div>
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm text-gray-500 truncate">Email</p>
+              <a href="mailto:support@voxly.ai" className="text-sm sm:text-base font-bold text-gray-900 hover:text-voxly-purple truncate block">
+                support@voxly.ai
+              </a>
+            </div>
+          </div>
 
-            {/* Contact Form */}
-            <div className="lg:col-span-2">
-              <div className="voxly-card">
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">Send us a Message</h2>
+          <div className="voxly-card flex items-center gap-3 sm:gap-4 p-3 sm:p-4">
+            <div className="p-2 sm:p-3 bg-purple-100 rounded-xl flex-shrink-0">
+              <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm text-gray-500 truncate">Response Time</p>
+              <p className="text-sm sm:text-base font-bold text-gray-900">24-48 hours</p>
+            </div>
+          </div>
+
+          <div className="voxly-card flex items-center gap-3 sm:gap-4 p-3 sm:p-4">
+            <div className="p-2 sm:p-3 bg-purple-100 rounded-xl flex-shrink-0">
+              <HelpCircle className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm text-gray-500 truncate">FAQ</p>
+              <a href="/about" className="text-sm sm:text-base font-bold text-gray-900 hover:text-voxly-purple">
+                About page
+              </a>
+            </div>
+          </div>
+        </div>
+
+        {/* Contact Form Section */}
+        <div>
+          <div className="flex items-center gap-2 mb-3 sm:mb-4">
+            <Send className="w-5 h-5 text-voxly-purple" />
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Send us a Message</h2>
+          </div>
+          
+          <div className="voxly-card">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                    Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    required
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    onBlur={() => handleBlur('name')}
+                    className={`w-full px-3 sm:px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-sm sm:text-base ${getInputBorderClass('name')}`}
+                    placeholder="Your name"
+                  />
+                  <ValidationError prefix="Name" field="name" errors={state.errors} />
+                  {touched.name && validation.errors.name && (
+                    <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" />
+                      {validation.errors.name}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                    Email <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    required
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    onBlur={() => handleBlur('email')}
+                    className={`w-full px-3 sm:px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-sm sm:text-base ${getInputBorderClass('email')}`}
+                    placeholder="your@email.com"
+                  />
+                  <ValidationError prefix="Email" field="email" errors={state.errors} />
+                  {touched.email && validation.errors.email && (
+                    <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" />
+                      {validation.errors.email}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1">
+                  Subject <span className="text-red-500">*</span>
+                </label>
+                <select
+                  id="subject"
+                  name="subject"
+                  required
+                  value={formData.subject}
+                  onChange={handleInputChange}
+                  onBlur={() => handleBlur('subject')}
+                  className={`w-full px-3 sm:px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-sm sm:text-base ${getInputBorderClass('subject')}`}
+                >
+                  <option value="">Select a subject</option>
+                  <option value="general">General Inquiry</option>
+                  <option value="support">Technical Support</option>
+                  <option value="billing">Billing Question</option>
+                  <option value="feedback">Feedback</option>
+                  <option value="partnership">Partnership Opportunity</option>
+                  <option value="other">Other</option>
+                </select>
+                <ValidationError prefix="Subject" field="subject" errors={state.errors} />
+                {touched.subject && validation.errors.subject && (
+                  <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {validation.errors.subject}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
+                  Message <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  id="message"
+                  name="message"
+                  required
+                  rows={4}
+                  minLength={MESSAGE_MIN_LENGTH}
+                  maxLength={MESSAGE_MAX_LENGTH + 10}
+                  value={formData.message}
+                  onChange={handleInputChange}
+                  onBlur={() => handleBlur('message')}
+                  className={`w-full px-3 sm:px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-none text-sm sm:text-base ${
+                    touched.message && messageLength > 0
+                      ? messageLength < MESSAGE_MIN_LENGTH
+                        ? 'border-amber-300 bg-amber-50/50'
+                        : messageLength > MESSAGE_MAX_LENGTH
+                        ? 'border-red-300 bg-red-50/50'
+                        : 'border-green-300'
+                      : 'border-gray-300'
+                  }`}
+                  placeholder={`How can we help you? (min ${MESSAGE_MIN_LENGTH} chars)`}
+                />
+                <ValidationError prefix="Message" field="message" errors={state.errors} />
                 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                        Name <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        id="name"
-                        name="name"
-                        required
-                        value={formData.name}
-                        onChange={handleInputChange}
-                        onBlur={() => handleBlur('name')}
-                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all ${getInputBorderClass('name')}`}
-                        placeholder="Your name"
-                      />
-                      <ValidationError prefix="Name" field="name" errors={state.errors} />
-                      {touched.name && validation.errors.name && (
-                        <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
-                          <AlertCircle className="w-3 h-3" />
-                          {validation.errors.name}
-                        </p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                        Email <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        required
-                        value={formData.email}
-                        onChange={handleInputChange}
-                        onBlur={() => handleBlur('email')}
-                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all ${getInputBorderClass('email')}`}
-                        placeholder="your@email.com"
-                      />
-                      <ValidationError prefix="Email" field="email" errors={state.errors} />
-                      {touched.email && validation.errors.email && (
-                        <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
-                          <AlertCircle className="w-3 h-3" />
-                          {validation.errors.email}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1">
-                      Subject <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      id="subject"
-                      name="subject"
-                      required
-                      value={formData.subject}
-                      onChange={handleInputChange}
-                      onBlur={() => handleBlur('subject')}
-                      className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all ${getInputBorderClass('subject')}`}
-                    >
-                      <option value="">Select a subject</option>
-                      <option value="general">General Inquiry</option>
-                      <option value="support">Technical Support</option>
-                      <option value="billing">Billing Question</option>
-                      <option value="feedback">Feedback</option>
-                      <option value="partnership">Partnership Opportunity</option>
-                      <option value="other">Other</option>
-                    </select>
-                    <ValidationError prefix="Subject" field="subject" errors={state.errors} />
-                    {touched.subject && validation.errors.subject && (
-                      <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
+                <div className="mt-1 flex items-center justify-between">
+                  <div className="flex-1">
+                    {touched.message && messageLength > 0 && messageLength < MESSAGE_MIN_LENGTH && (
+                      <p className="text-xs text-amber-600 flex items-center gap-1">
                         <AlertCircle className="w-3 h-3" />
-                        {validation.errors.subject}
+                        {MESSAGE_MIN_LENGTH - messageLength} more needed
+                      </p>
+                    )}
+                    {messageLength > MESSAGE_MAX_LENGTH && (
+                      <p className="text-xs text-red-500 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {messageLength - MESSAGE_MAX_LENGTH} over limit
+                      </p>
+                    )}
+                    {messageLength >= MESSAGE_MIN_LENGTH && messageLength <= MESSAGE_MAX_LENGTH && (
+                      <p className="text-xs text-green-600 flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3" />
+                        Looks good!
                       </p>
                     )}
                   </div>
-
-                  <div>
-                    <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
-                      Message <span className="text-red-500">*</span>
-                    </label>
-                    <textarea
-                      id="message"
-                      name="message"
-                      required
-                      rows={5}
-                      minLength={MESSAGE_MIN_LENGTH}
-                      maxLength={MESSAGE_MAX_LENGTH + 10}
-                      value={formData.message}
-                      onChange={handleInputChange}
-                      onBlur={() => handleBlur('message')}
-                      className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-none ${
-                        touched.message && messageLength > 0
-                          ? messageLength < MESSAGE_MIN_LENGTH
-                            ? 'border-amber-300 bg-amber-50/50'
-                            : messageLength > MESSAGE_MAX_LENGTH
-                            ? 'border-red-300 bg-red-50/50'
-                            : 'border-green-300'
-                          : 'border-gray-300'
-                      }`}
-                      placeholder={`How can we help you? (minimum ${MESSAGE_MIN_LENGTH} characters)`}
-                    />
-                    <ValidationError prefix="Message" field="message" errors={state.errors} />
-                    
-                    {/* Character count and validation feedback */}
-                    <div className="mt-1 flex items-center justify-between">
-                      <div className="flex-1">
-                        {touched.message && messageLength > 0 && messageLength < MESSAGE_MIN_LENGTH && (
-                          <p className="text-xs text-amber-600 flex items-center gap-1">
-                            <AlertCircle className="w-3 h-3" />
-                            {MESSAGE_MIN_LENGTH - messageLength} more characters needed
-                          </p>
-                        )}
-                        {messageLength > MESSAGE_MAX_LENGTH && (
-                          <p className="text-xs text-red-500 flex items-center gap-1">
-                            <AlertCircle className="w-3 h-3" />
-                            {messageLength - MESSAGE_MAX_LENGTH} characters over limit
-                          </p>
-                        )}
-                        {messageLength >= MESSAGE_MIN_LENGTH && messageLength <= MESSAGE_MAX_LENGTH && (
-                          <p className="text-xs text-green-600 flex items-center gap-1">
-                            <CheckCircle className="w-3 h-3" />
-                            Message looks good!
-                          </p>
-                        )}
-                      </div>
-                      <span className={`text-xs font-medium ${getCharCountColor()}`}>
-                        {messageLength}/{MESSAGE_MAX_LENGTH}
-                      </span>
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={state.submitting || !validation.isValid}
-                    className="w-full btn-voxly py-3 text-base disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  >
-                    {state.submitting ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        Sending...
-                      </>
-                    ) : (
-                      'Send Message'
-                    )}
-                  </button>
-                  
-                  {/* reCAPTCHA notice */}
-                  <p className="text-xs text-gray-400 text-center">
-                    This site is protected by reCAPTCHA and the Google{' '}
-                    <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-600">
-                      Privacy Policy
-                    </a>{' '}
-                    and{' '}
-                    <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-600">
-                      Terms of Service
-                    </a>{' '}
-                    apply.
-                  </p>
-                </form>
+                  <span className={`text-xs font-medium ${getCharCountColor()}`}>
+                    {messageLength}/{MESSAGE_MAX_LENGTH}
+                  </span>
+                </div>
               </div>
-            </div>
+
+              <button
+                type="submit"
+                disabled={state.submitting || !validation.isValid}
+                className="w-full btn-voxly py-2.5 sm:py-3 text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {state.submitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4 sm:w-5 sm:h-5" />
+                    Send Message
+                  </>
+                )}
+              </button>
+              
+              <p className="text-xs text-gray-400 text-center">
+                Protected by reCAPTCHA.{' '}
+                <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-600">Privacy</a>
+                {' & '}
+                <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-600">Terms</a>
+              </p>
+            </form>
           </div>
         </div>
       </div>

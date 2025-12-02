@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useUser, useClerk } from '@clerk/clerk-react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
-import { Check, Sparkles, Crown, Star, Loader2, CreditCard } from 'lucide-react';
+import { Check, Sparkles, Crown, Star, Loader2, CreditCard, Shield } from 'lucide-react';
 import mercadoPagoService, { CREDIT_PACKAGES, CreditPackage } from '../../services/MercadoPagoService';
 import apiService from '../../services/APIService';
 
@@ -17,47 +16,7 @@ interface PackageCardProps {
   loadingPackageId: string | null;
 }
 
-// Custom dark purple purchase button
-const PurchaseButton: React.FC<{
-  onClick: () => void;
-  isLoading: boolean;
-  credits: number;
-  popular?: boolean;
-}> = ({ onClick, isLoading, credits, popular }) => {
-  return (
-    <button
-      onClick={onClick}
-      disabled={isLoading}
-      className={`
-        w-full py-3 sm:py-4 px-4 sm:px-6 rounded-xl font-bold text-base sm:text-lg
-        transition-all duration-300 ease-out
-        flex items-center justify-center gap-2 sm:gap-3
-        shadow-lg hover:shadow-xl
-        transform hover:scale-[1.02] active:scale-[0.98]
-        disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none
-        touch-manipulation
-        ${popular
-          ? 'bg-gradient-to-r from-purple-700 via-purple-600 to-violet-600 text-white hover:from-purple-800 hover:via-purple-700 hover:to-violet-700 shadow-purple-500/30'
-          : 'bg-gradient-to-r from-purple-900 via-purple-800 to-purple-900 text-white hover:from-purple-950 hover:via-purple-900 hover:to-purple-950 shadow-purple-900/30'
-        }
-      `}
-    >
-      {isLoading ? (
-        <>
-          <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
-          <span>Processing...</span>
-        </>
-      ) : (
-        <>
-          <CreditCard className="w-4 h-4 sm:w-5 sm:h-5" />
-          <span>Buy {credits} Credits</span>
-        </>
-      )}
-    </button>
-  );
-};
-
-// Individual package card
+// Individual package card - clean self-contained styling
 const PackageCard: React.FC<PackageCardProps> = ({
   pkg,
   getPackageIcon,
@@ -68,94 +27,121 @@ const PackageCard: React.FC<PackageCardProps> = ({
   const isThisLoading = isLoading && loadingPackageId === pkg.id;
 
   return (
-    <Card
-      className={`relative p-4 sm:p-6 lg:p-8 flex flex-col transition-all duration-300 hover:shadow-xl ${pkg.popular
-          ? 'border-2 border-purple-500 shadow-lg shadow-purple-200/50 sm:scale-100 lg:scale-105 order-first sm:order-none'
-          : 'border border-gray-200 hover:border-purple-300'
-        }`}
+    <div
+      className={`
+        relative bg-white rounded-2xl p-6 flex flex-col h-full
+        transition-all duration-300 hover:shadow-xl
+        ${pkg.popular
+          ? 'border-2 border-purple-500 shadow-lg shadow-purple-100 ring-1 ring-purple-200'
+          : 'border border-gray-200 hover:border-purple-300 shadow-md'
+        }
+      `}
     >
       {/* Popular Badge */}
       {pkg.popular && (
-        <div className="absolute -top-3 sm:-top-4 left-1/2 transform -translate-x-1/2">
-          <span className="bg-gradient-to-r from-purple-700 to-violet-600 text-white px-3 sm:px-5 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-bold shadow-lg shadow-purple-500/30 whitespace-nowrap">
-            ⭐ Most Popular
+        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
+          <span className="bg-gradient-to-r from-purple-600 to-violet-600 text-white px-4 py-1 rounded-full text-xs font-bold shadow-md whitespace-nowrap flex items-center gap-1">
+            <Star className="w-3 h-3 fill-current" />
+            Most Popular
           </span>
         </div>
       )}
 
       {/* Savings Badge */}
       {pkg.savings && (
-        <div className="absolute top-3 sm:top-4 right-3 sm:right-4">
-          <span className="bg-green-100 text-green-700 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-semibold">
+        <div className="absolute top-4 right-4">
+          <span className="bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full text-xs font-semibold">
             {pkg.savings}
           </span>
         </div>
       )}
 
       {/* Icon */}
-      <div className="flex justify-center mb-3 sm:mb-4 mt-2 sm:mt-0">
-        <div className={`p-3 sm:p-4 rounded-full ${pkg.popular
-            ? 'bg-gradient-to-br from-purple-600 to-violet-600 text-white shadow-lg shadow-purple-500/30'
+      <div className="flex justify-center mb-4 mt-2">
+        <div className={`
+          p-4 rounded-2xl
+          ${pkg.popular
+            ? 'bg-gradient-to-br from-purple-600 to-violet-600 text-white shadow-lg shadow-purple-200'
             : 'bg-purple-100 text-purple-700'
-          }`}>
+          }
+        `}>
           {getPackageIcon(pkg.id)}
         </div>
       </div>
 
       {/* Package Name */}
-      <CardHeader className="text-center p-0 mb-3 sm:mb-4">
-        <CardTitle className="text-xl sm:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">
+      <div className="text-center mb-4">
+        <h3 className="text-xl font-bold text-gray-900 mb-1">
           {pkg.name}
-        </CardTitle>
-        <CardDescription className="text-gray-600 text-sm sm:text-base">
+        </h3>
+        <p className="text-gray-500 text-sm">
           {pkg.description}
-        </CardDescription>
-      </CardHeader>
+        </p>
+      </div>
 
-      {/* Price - Display in USD */}
-      <div className="text-center mb-4 sm:mb-6">
+      {/* Price */}
+      <div className="text-center mb-6">
         <div className="flex items-baseline justify-center">
-          <span className="text-base sm:text-lg text-gray-600 mr-1">$</span>
-          <span className="text-4xl sm:text-5xl font-extrabold text-gray-900">
+          <span className="text-lg text-gray-500">$</span>
+          <span className="text-4xl font-extrabold text-gray-900">
             {pkg.priceUSD.toFixed(2).split('.')[0]}
           </span>
-          <span className="text-lg sm:text-xl text-gray-600">.{pkg.priceUSD.toFixed(2).split('.')[1]}</span>
-          <span className="text-xs sm:text-sm text-gray-500 ml-1 sm:ml-2">USD</span>
+          <span className="text-xl text-gray-500">.{pkg.priceUSD.toFixed(2).split('.')[1]}</span>
+          <span className="text-sm text-gray-400 ml-1">USD</span>
         </div>
-        <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">
-          <span className="font-semibold text-base sm:text-lg">{pkg.credits}</span> Credits
+        <p className="text-gray-600 mt-2">
+          <span className="font-bold text-lg text-purple-700">{pkg.credits}</span> Credits
         </p>
-        <p className="text-xs sm:text-sm text-gray-500">
+        <p className="text-xs text-gray-400 mt-1">
           ${(pkg.priceUSD / pkg.credits).toFixed(2)} per interview
         </p>
-        {/* Show BRL equivalent */}
-        <p className="text-[10px] sm:text-xs text-purple-600 mt-1 font-medium">
+        <p className="text-xs text-purple-600 font-medium mt-1">
           ≈ R$ {pkg.priceBRL.toFixed(2)} BRL
         </p>
       </div>
 
       {/* Features */}
-      <CardContent className="p-0 mb-4 sm:mb-6 flex-grow">
-        <ul className="space-y-2 sm:space-y-3">
+      <div className="flex-grow mb-6">
+        <ul className="space-y-2">
           {pkg.features.map((feature, index) => (
-            <li key={index} className="flex items-start">
-              <Check className="w-4 h-4 sm:w-5 sm:h-5 text-purple-500 mr-2 flex-shrink-0 mt-0.5" />
-              <span className="text-gray-700 text-xs sm:text-sm">{feature}</span>
+            <li key={index} className="flex items-start gap-2">
+              <Check className="w-4 h-4 text-purple-500 flex-shrink-0 mt-0.5" />
+              <span className="text-gray-600 text-sm">{feature}</span>
             </li>
           ))}
         </ul>
-      </CardContent>
+      </div>
 
-      {/* Custom Purchase Button */}
-      <CardFooter className="p-0 mt-auto">
-        <PurchaseButton
-          onClick={() => onPurchase(pkg)}
-          isLoading={isThisLoading}
-          credits={pkg.credits}
-          popular={pkg.popular}
-        />
-      </CardFooter>
-    </Card>
+      {/* Purchase Button */}
+      <button
+        onClick={() => onPurchase(pkg)}
+        disabled={isThisLoading}
+        className={`
+          w-full py-3 px-4 rounded-xl font-bold text-base
+          transition-all duration-300 ease-out
+          flex items-center justify-center gap-2
+          shadow-md hover:shadow-lg
+          transform hover:scale-[1.02] active:scale-[0.98]
+          disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none
+          ${pkg.popular
+            ? 'bg-gradient-to-r from-purple-600 to-violet-600 text-white hover:from-purple-700 hover:to-violet-700'
+            : 'bg-gray-900 text-white hover:bg-gray-800'
+          }
+        `}
+      >
+        {isThisLoading ? (
+          <>
+            <Loader2 className="w-5 h-5 animate-spin" />
+            <span>Processing...</span>
+          </>
+        ) : (
+          <>
+            <CreditCard className="w-5 h-5" />
+            <span>Buy {pkg.credits} Credits</span>
+          </>
+        )}
+      </button>
+    </div>
   );
 };
 
@@ -167,75 +153,120 @@ const CreditPackages: React.FC<CreditPackagesProps> = ({ onPurchaseComplete }) =
   const [loadingPackageId, setLoadingPackageId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
-  const [pendingPackage, setPendingPackage] = useState<CreditPackage | null>(null);
 
-  // Effect to handle purchase after sign-in
+  // Storage key for persisting package selection through auth flow
+  const PENDING_PACKAGE_KEY = 'voxly_pending_package';
+
+  // Get pending package from localStorage
+  const getPendingPackage = (): CreditPackage | null => {
+    try {
+      const stored = localStorage.getItem(PENDING_PACKAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        // Find the matching package from CREDIT_PACKAGES to ensure fresh data
+        const pkg = CREDIT_PACKAGES.find(p => p.id === parsed.id);
+        return pkg || null;
+      }
+    } catch (e) {
+      console.warn('Failed to parse pending package:', e);
+    }
+    return null;
+  };
+
+  // Save pending package to localStorage
+  const savePendingPackage = (pkg: CreditPackage) => {
+    try {
+      localStorage.setItem(PENDING_PACKAGE_KEY, JSON.stringify({ id: pkg.id }));
+      console.log('📦 Saved pending package to localStorage:', pkg.id);
+    } catch (e) {
+      console.warn('Failed to save pending package:', e);
+    }
+  };
+
+  // Clear pending package from localStorage
+  const clearPendingPackage = () => {
+    try {
+      localStorage.removeItem(PENDING_PACKAGE_KEY);
+      console.log('🗑️ Cleared pending package from localStorage');
+    } catch (e) {
+      console.warn('Failed to clear pending package:', e);
+    }
+  };
+
+  // Effect to handle purchase after sign-in (restored from localStorage)
   useEffect(() => {
-    if (isSignedIn && user && pendingPackage) {
-      // User just signed in and has a pending package to purchase
-      console.log('🔐 User signed in, proceeding with pending purchase...');
-      const pkg = pendingPackage;
-      setPendingPackage(null);
-      // Small delay to ensure user data is ready - inline the purchase logic
-      setTimeout(async () => {
-        if (!user) {
-          setError('Authentication failed. Please try again.');
-          return;
-        }
-
-        setIsLoading(true);
-        setLoadingPackageId(pkg.id);
-        setError(null);
-        setPaymentStatus('Opening payment window...');
-
-        try {
-          const paymentUrl = await mercadoPagoService.getPaymentUrl(
-            pkg.id,
-            user.id,
-            user.primaryEmailAddress?.emailAddress || ''
-          );
-
-          const popupWidth = 600;
-          const popupHeight = 700;
-          const left = (window.screen.width - popupWidth) / 2;
-          const top = (window.screen.height - popupHeight) / 2;
-
-          const popup = window.open(
-            paymentUrl,
-            'MercadoPago Checkout',
-            `width=${popupWidth},height=${popupHeight},left=${left},top=${top},scrollbars=yes,resizable=yes`
-          );
-
-          if (!popup) {
-            setPaymentStatus('Redirecting to payment...');
-            window.location.href = paymentUrl;
+    if (isSignedIn && user) {
+      const pendingPackage = getPendingPackage();
+      if (pendingPackage) {
+        // User just signed in and has a pending package to purchase
+        console.log('🔐 User signed in, found pending package in localStorage:', pendingPackage.id);
+        
+        // Clear it immediately to prevent duplicate processing
+        clearPendingPackage();
+        
+        // Small delay to ensure user data is ready, then proceed with purchase
+        setTimeout(async () => {
+          if (!user) {
+            setError('Authentication failed. Please try again.');
             return;
           }
 
-          setPaymentStatus('Complete payment in the popup window. This page will update automatically.');
+          setIsLoading(true);
+          setLoadingPackageId(pendingPackage.id);
+          setError(null);
+          setPaymentStatus('Opening payment window...');
 
-          // Get current credits from backend PostgreSQL (source of truth)
-          let currentCredits = 0;
           try {
-            const userResult = await apiService.getCurrentUser(user.id);
-            currentCredits = userResult.user?.credits || 0;
-          } catch (e) {
-            console.warn('Could not fetch current credits, using 0');
-          }
-          const expectedCredits = currentCredits + pkg.credits;
+            console.log(`🛒 Resuming purchase for ${pendingPackage.name}...`);
+            
+            const paymentUrl = await mercadoPagoService.getPaymentUrl(
+              pendingPackage.id,
+              user.id,
+              user.primaryEmailAddress?.emailAddress || ''
+            );
 
-          pollForCreditsChange(currentCredits, expectedCredits, popup);
-        } catch (err) {
-          console.error('❌ Purchase error:', err);
-          setError('Failed to initiate payment. Please try again.');
-          setPaymentStatus(null);
-          setIsLoading(false);
-          setLoadingPackageId(null);
-        }
-      }, 500);
+            const popupWidth = 600;
+            const popupHeight = 700;
+            const left = (window.screen.width - popupWidth) / 2;
+            const top = (window.screen.height - popupHeight) / 2;
+
+            const popup = window.open(
+              paymentUrl,
+              'MercadoPago Checkout',
+              `width=${popupWidth},height=${popupHeight},left=${left},top=${top},scrollbars=yes,resizable=yes`
+            );
+
+            if (!popup) {
+              setPaymentStatus('Redirecting to payment...');
+              window.location.href = paymentUrl;
+              return;
+            }
+
+            setPaymentStatus('Complete payment in the popup window. This page will update automatically.');
+
+            // Get current credits from backend PostgreSQL (source of truth)
+            let currentCredits = 0;
+            try {
+              const userResult = await apiService.getCurrentUser(user.id);
+              currentCredits = userResult.user?.credits || 0;
+            } catch (e) {
+              console.warn('Could not fetch current credits, using 0');
+            }
+            const expectedCredits = currentCredits + pendingPackage.credits;
+
+            pollForCreditsChange(currentCredits, expectedCredits, popup);
+          } catch (err) {
+            console.error('❌ Purchase error:', err);
+            setError('Failed to initiate payment. Please try again.');
+            setPaymentStatus(null);
+            setIsLoading(false);
+            setLoadingPackageId(null);
+          }
+        }, 500);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSignedIn, user, pendingPackage]);
+  }, [isSignedIn, user]);
 
   // Get icon for each package type
   const getPackageIcon = (packageId: string) => {
@@ -382,10 +413,10 @@ const CreditPackages: React.FC<CreditPackagesProps> = ({ onPurchaseComplete }) =
 
   // Handle purchase - open MercadoPago in popup and poll for credits
   const handlePurchase = async (pkg: CreditPackage) => {
-    // If user is not authenticated, prompt sign-in and store pending package
+    // If user is not authenticated, save package to localStorage and prompt sign-in
     if (!user) {
-      console.log('🔐 User not authenticated, prompting sign-in...');
-      setPendingPackage(pkg);
+      console.log('🔐 User not authenticated, saving package and prompting sign-in...');
+      savePendingPackage(pkg);
       setError(null);
       openSignIn({
         afterSignInUrl: window.location.href,
@@ -405,37 +436,26 @@ const CreditPackages: React.FC<CreditPackagesProps> = ({ onPurchaseComplete }) =
   });
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
-
-      <div className="flex flex-col items-center justify-center text-center mb-8 sm:mb-12 lg:mb-16 px-2">
-
-        <h1 className='text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-bold text-gradient bg-gradient-to-r from-gray-700 via-gray-500 to-gray-700 leading-tight'>Choose Your Plan</h1>
-        <p className='text-base sm:text-lg lg:text-xl font-bold text-gray-700 mt-2 sm:mt-3 max-w-xl lg:max-w-none'>          
-          Get credits to practice interviews with our AI interviewer.
-          Pay once, use anytime.
-        </p>
-
-      </div>
-
+    <div className="w-full">
       {/* Error Message */}
       {error && (
-        <div className="mb-6 sm:mb-10 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg text-center mx-1 sm:mx-0">
-          <p className="text-red-600 text-sm sm:text-base">{error}</p>
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-center">
+          <p className="text-red-600 text-sm">{error}</p>
         </div>
       )}
 
       {/* Payment Status Message */}
       {paymentStatus && (
-        <div className="mb-8 sm:mb-12 p-3 sm:p-4 bg-purple-50 border border-purple-200 rounded-lg text-center mx-1 sm:mx-0">
-          <div className="flex items-center justify-center gap-2 sm:gap-3 flex-wrap">
-            <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin text-purple-600 flex-shrink-0" />
-            <p className="text-purple-700 font-medium text-sm sm:text-base">{paymentStatus}</p>
+        <div className="mb-6 p-4 bg-purple-50 border border-purple-200 rounded-xl text-center">
+          <div className="flex items-center justify-center gap-2">
+            <Loader2 className="w-5 h-5 animate-spin text-purple-600" />
+            <p className="text-purple-700 font-medium text-sm">{paymentStatus}</p>
           </div>
         </div>
       )}
 
       {/* Package Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 items-stretch px-1 sm:px-0">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {sortedPackages.map((pkg) => (
           <PackageCard
             key={pkg.id}
@@ -448,18 +468,16 @@ const CreditPackages: React.FC<CreditPackagesProps> = ({ onPurchaseComplete }) =
         ))}
       </div>
 
-      {/* Payment Info */}
-      <div className="mt-8 sm:mt-12 text-center px-2">
-        <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-purple-50 rounded-full">
-          <svg className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-          </svg>
-          <span className="text-purple-700 font-medium text-sm sm:text-base">
-            Secure payment powered by MercadoPago
+      {/* Payment Security Info */}
+      <div className="mt-8 text-center">
+        <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border border-gray-200">
+          <Shield className="w-4 h-4 text-green-600" />
+          <span className="text-gray-600 text-sm font-medium">
+            Secure payment via MercadoPago
           </span>
         </div>
-        <p className="text-xs sm:text-sm text-gray-500 mt-2 sm:mt-3">
-          Prices shown in USD • Payment processed in BRL
+        <p className="text-xs text-gray-400 mt-2">
+          Prices in USD • Payment processed in BRL
         </p>
       </div>
     </div>

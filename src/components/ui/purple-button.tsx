@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from 'lib/utils';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost';
+export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'gradient';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 interface PurpleButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -13,10 +13,11 @@ interface PurpleButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement
 }
 
 const variantStyles: Record<ButtonVariant, string> = {
-  primary: 'bg-voxly-purple hover:bg-voxly-purple-dark text-white shadow-sm',
+  primary: 'bg-voxly-purple hover:bg-voxly-purple-dark text-white shadow-lg shadow-purple-200 hover:shadow-xl transform hover:scale-[1.02]',
   secondary: 'bg-white text-voxly-purple border border-voxly-purple hover:bg-purple-50',
   outline: 'bg-transparent text-voxly-purple border border-voxly-purple hover:bg-purple-50',
   ghost: 'bg-transparent text-voxly-purple hover:bg-purple-50',
+  gradient: 'bg-gradient-to-r from-purple-600 to-violet-600 text-white shadow-lg shadow-purple-200 hover:shadow-xl hover:from-purple-700 hover:to-violet-700 transform hover:scale-[1.02]',
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
