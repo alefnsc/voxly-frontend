@@ -3,12 +3,12 @@ import { useUser } from '@clerk/clerk-react';
 import APIService from 'services/APIService';
 import { config } from 'lib/config';
 
-// Minimum interview duration in ms before going to feedback (30 seconds from first agent speech)
-const MIN_INTERVIEW_DURATION_MS = 30000;
+// Minimum interview duration in ms before going to feedback (from env, default 45 seconds)
+const MIN_INTERVIEW_DURATION_MS = config.minInterviewDurationMs;
 
-// Grace period for credit restoration if user quits early (15 seconds)
+// Grace period for credit restoration if user quits early (from env, default 15 seconds)
 // Users who quit within this time get their credit back
-const CREDIT_RESTORATION_THRESHOLD_MS = 15000;
+const CREDIT_RESTORATION_THRESHOLD_MS = config.creditRestorationThresholdMs;
 
 export const useCallManager = (body, navigate) => {
     const { user } = useUser();
