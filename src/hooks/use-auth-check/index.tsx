@@ -2,11 +2,11 @@ import { useUser } from '@clerk/clerk-react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import apiService from '../../services/APIService';
 
-// Helper function for retry with exponential backoff
+// Helper function for retry with linear backoff (2s, 4s, 6s)
 const retryWithBackoff = async <T,>(
   fn: () => Promise<T>,
   maxRetries: number = 3,
-  baseDelay: number = 1000
+  baseDelay: number = 2000
 ): Promise<T> => {
   let lastError: Error | undefined;
   
@@ -16,7 +16,8 @@ const retryWithBackoff = async <T,>(
     } catch (error) {
       lastError = error as Error;
       if (attempt < maxRetries - 1) {
-        const delay = baseDelay * Math.pow(2, attempt);
+        // Linear backoff: 2s, 4s, 6s
+        const delay = baseDelay * (attempt + 1);
         console.log(`🔄 Retry attempt ${attempt + 1}/${maxRetries} in ${delay}ms...`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
