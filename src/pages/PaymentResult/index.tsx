@@ -32,6 +32,11 @@ const CREDIT_PACKAGES: Record<string, { credits: number; name: string }> = {
   professional: { credits: 15, name: 'Professional' }
 }
 
+// Polling configuration - exponential backoff
+const INITIAL_POLL_DELAY = 3000 // 3 seconds
+const MAX_POLL_DELAY = 30000 // 30 seconds max
+const MAX_POLL_ATTEMPTS = 8 // Will wait up to ~2 minutes total
+
 export default function PaymentResult() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
@@ -50,6 +55,7 @@ export default function PaymentResult() {
   const [purchasedCredits, setPurchasedCredits] = useState<number>(0)
   const [currentCredits, setCurrentCredits] = useState<number>(0)
   const initialCreditsRef = useRef<number | null>(null)
+  const hasVerifiedRef = useRef(false)
   
   // Auto-redirect countdown
   const [countdown, setCountdown] = useState(10)
@@ -103,16 +109,14 @@ export default function PaymentResult() {
   // Store initial credits when component mounts
   useEffect(() => {
     if (userCredits !== null && initialCreditsRef.current === null) {
-      // This is the total AFTER purchase (webhook already processed)
-      // We'll calculate previous credits once we know the package
       initialCreditsRef.current = userCredits
       setCurrentCredits(userCredits)
     }
   }, [userCredits])
 
-  // Poll for credits update from backend PostgreSQL
+  // Poll for credits update from backend PostgreSQL with exponential backoff
   const pollForCredits = useCallback(async () => {
-    if (!user || creditsVerified) return
+    if (!user || hasVerifiedRef.current) return
 
     try {
       setIsRefreshing(true)
@@ -120,44 +124,57 @@ export default function PaymentResult() {
       const result = await apiService.getCurrentUser(user.id)
       const fetchedCredits = result.user?.credits || 0
       
-      console.log(`Polling credits from backend: attempt ${pollAttempts + 1}, credits: ${fetchedCredits}`)
+      const delay = Math.min(INITIAL_POLL_DELAY * Math.pow(2, pollAttempts), MAX_POLL_DELAY)
+      console.log(`📊 Polling credits: attempt ${pollAttempts + 1}/${MAX_POLL_ATTEMPTS}, credits: ${fetchedCredits}, next delay: ${delay}ms`)
       
       setCurrentCredits(fetchedCredits)
       
-      // If we have package info, calculate previous credits
+      // Get package info from URL params
       const pkg = getPackageFromReference(paymentDetails.external_reference)
-      if (pkg && fetchedCredits > 0) {
-        const calculatedPrevious = fetchedCredits - pkg.credits
-        setPreviousCredits(Math.max(0, calculatedPrevious))
+      
+      if (pkg) {
+        // We have package info - calculate previous credits
+        const calculatedPrevious = Math.max(0, fetchedCredits - pkg.credits)
+        setPreviousCredits(calculatedPrevious)
         setPurchasedCredits(pkg.credits)
-        setCreditsVerified(true)
-        console.log('✅ Credits verified:', {
-          previous: calculatedPrevious,
-          purchased: pkg.credits,
-          total: fetchedCredits
-        })
-        invalidateCache()
-        apiService.invalidatePaymentCaches(user.id)
-        await onCreditsPurchased()
-      } else if (fetchedCredits > 0) {
-        // Fallback: credits exist but no package info
-        setCreditsVerified(true)
-        invalidateCache()
-        await onCreditsPurchased()
+        
+        // Mark as verified - we have the data we need
+        if (!hasVerifiedRef.current) {
+          hasVerifiedRef.current = true
+          setCreditsVerified(true)
+          console.log('✅ Credits verified:', {
+            previous: calculatedPrevious,
+            purchased: pkg.credits,
+            total: fetchedCredits
+          })
+          invalidateCache()
+          apiService.invalidatePaymentCaches(user.id)
+          await onCreditsPurchased()
+        }
+      } else if (fetchedCredits > 0 && pollAttempts >= 2) {
+        // Fallback after a few attempts: no package info but credits exist
+        if (!hasVerifiedRef.current) {
+          hasVerifiedRef.current = true
+          setCreditsVerified(true)
+          invalidateCache()
+          await onCreditsPurchased()
+        }
       }
       
       setPollAttempts(prev => prev + 1)
     } catch (error) {
       console.error('Error polling credits from backend:', error)
+      setPollAttempts(prev => prev + 1)
     } finally {
       setIsRefreshing(false)
     }
-  }, [user, creditsVerified, pollAttempts, invalidateCache, onCreditsPurchased, paymentDetails.external_reference, getPackageFromReference])
+  }, [user, pollAttempts, invalidateCache, onCreditsPurchased, paymentDetails.external_reference, getPackageFromReference])
 
-  // Auto-poll on success page
+  // Auto-poll on success page with exponential backoff
   useEffect(() => {
-    if (status === 'success' && !creditsVerified && pollAttempts < 12) {
-      const timer = setTimeout(pollForCredits, 2000)
+    if (status === 'success' && !creditsVerified && pollAttempts < MAX_POLL_ATTEMPTS) {
+      const delay = Math.min(INITIAL_POLL_DELAY * Math.pow(2, pollAttempts), MAX_POLL_DELAY)
+      const timer = setTimeout(pollForCredits, delay)
       return () => clearTimeout(timer)
     }
   }, [status, creditsVerified, pollAttempts, pollForCredits])
@@ -188,10 +205,11 @@ export default function PaymentResult() {
     }
     setPaymentDetails(details)
 
-    // Extract purchased credits from external_reference
+    // Extract purchased credits from external_reference immediately
     const pkg = getPackageFromReference(details.external_reference)
     if (pkg) {
       setPurchasedCredits(pkg.credits)
+      console.log('📦 Package detected from URL:', pkg)
     }
 
     console.log('Payment result:', {
@@ -203,9 +221,10 @@ export default function PaymentResult() {
     })
   }, [location.pathname, searchParams, getPackageFromReference])
 
-  // Auto-redirect countdown for success
+  // Auto-redirect countdown for success - starts when status is success
+  // Don't wait for creditsVerified, just start countdown
   useEffect(() => {
-    if (status === 'success' && creditsVerified) {
+    if (status === 'success') {
       countdownIntervalRef.current = setInterval(() => {
         setCountdown(prev => {
           if (prev <= 1) {
@@ -225,7 +244,7 @@ export default function PaymentResult() {
         clearInterval(countdownIntervalRef.current)
       }
     }
-  }, [status, creditsVerified, navigate])
+  }, [status, navigate])
 
   const handleGoHome = () => {
     if (countdownIntervalRef.current) {
@@ -319,13 +338,14 @@ export default function PaymentResult() {
 
           {/* Credits Breakdown (Success only) */}
           {status === 'success' && (
-            <div className="voxly-card mb-6">
+            <>
               <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <Coins className="w-5 h-5 text-voxly-purple" />
                 Credits Summary
               </h2>
               
-              {creditsVerified ? (
+              <div className="voxly-card mb-6">
+                {/* Always show the credits breakdown - use purchasedCredits from URL */}
                 <div className="space-y-4">
                   {/* Credits Flow */}
                   <div className="flex items-center justify-between gap-2 p-4 bg-gray-50 rounded-xl">
@@ -336,7 +356,7 @@ export default function PaymentResult() {
                         <span className="text-xs text-gray-500">Previous</span>
                       </div>
                       <p className="text-xl sm:text-2xl font-bold text-gray-700">
-                        {previousCredits ?? 0}
+                        {previousCredits !== null ? previousCredits : (currentCredits > 0 ? Math.max(0, currentCredits - purchasedCredits) : '—')}
                       </p>
                     </div>
                     
@@ -354,7 +374,7 @@ export default function PaymentResult() {
                         <span className="text-xs text-gray-500">Purchased</span>
                       </div>
                       <p className="text-xl sm:text-2xl font-bold text-green-600">
-                        +{purchasedCredits}
+                        +{purchasedCredits || '—'}
                       </p>
                     </div>
                     
@@ -370,34 +390,39 @@ export default function PaymentResult() {
                         <span className="text-xs text-gray-500">Total</span>
                       </div>
                       <p className="text-xl sm:text-2xl font-bold text-voxly-purple">
-                        {currentCredits}
+                        {currentCredits > 0 ? currentCredits : (isRefreshing ? '...' : '—')}
                       </p>
                     </div>
                   </div>
                   
+                  {/* Status indicator */}
+                  {!creditsVerified && pollAttempts < MAX_POLL_ATTEMPTS && (
+                    <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Confirming credits...</span>
+                    </div>
+                  )}
+                  
+                  {/* Manual refresh after max attempts */}
+                  {!creditsVerified && pollAttempts >= MAX_POLL_ATTEMPTS && (
+                    <button
+                      onClick={handleManualRefresh}
+                      disabled={isRefreshing}
+                      className="w-full flex items-center justify-center gap-2 text-sm text-voxly-purple hover:text-voxly-purple-dark transition-colors py-2"
+                    >
+                      <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                      <span>Refresh credits</span>
+                    </button>
+                  )}
+                  
                   {/* Auto-redirect countdown */}
-                  <div className="flex items-center justify-center gap-2 pt-2 text-sm text-gray-500">
+                  <div className="flex items-center justify-center gap-2 pt-2 text-sm text-gray-500 border-t border-gray-100">
                     <Clock className="w-4 h-4" />
                     <span>Redirecting to home in {countdown} seconds...</span>
                   </div>
                 </div>
-              ) : (
-                <div className="flex flex-col items-center py-4">
-                  <Loader2 className="w-8 h-8 text-voxly-purple animate-spin mb-3" />
-                  <p className="text-sm text-gray-500">Verifying credits...</p>
-                  {pollAttempts >= 12 && (
-                    <button
-                      onClick={handleManualRefresh}
-                      disabled={isRefreshing}
-                      className="mt-3 flex items-center gap-2 text-sm text-voxly-purple hover:text-voxly-purple-dark transition-colors"
-                    >
-                      <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                      <span>Refresh manually</span>
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
+              </div>
+            </>
           )}
 
           {/* Payment Reference */}
