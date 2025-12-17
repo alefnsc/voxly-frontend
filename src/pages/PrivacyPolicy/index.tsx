@@ -6,28 +6,21 @@ import { ArrowLeft } from 'lucide-react'
 
 export default function PrivacyPolicy() {
   const navigate = useNavigate()
-  
+
   return (
     <DefaultLayout className="bg-gray-50">
       <div className="page-container py-6 sm:py-8">
         {/* Header */}
         <div className="mb-6 sm:mb-8">
-          <button
-            onClick={() => navigate('/about')}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors mb-4"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span>Back to About</span>
-          </button>
-          
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-                Privacy <span className="text-voxly-purple">Policy</span>
-              </h1>
-              <p className="text-gray-600">
-                Last updated: December 1, 2025
-              </p>
+
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6 sm:mb-8">
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-2">
+                <ArrowLeft onClick={() => navigate('/about')} className="w-5 h-5 text-gray-600 hover:text-gray-900 transition-colors" />
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+                  Privacy <span className="text-voxly-purple">Policy</span>
+                </h1>
+              </div>
             </div>
           </div>
         </div>
@@ -37,8 +30,8 @@ export default function PrivacyPolicy() {
           <section className="mb-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">1. Introduction</h2>
             <p className="text-gray-600 mb-4">
-              Welcome to Voxly. We respect your privacy and are committed to protecting your personal data. 
-              This privacy policy will inform you about how we look after your personal data when you visit 
+              Welcome to Voxly. We respect your privacy and are committed to protecting your personal data.
+              This privacy policy will inform you about how we look after your personal data when you visit
               our website and use our services.
             </p>
           </section>
@@ -70,8 +63,8 @@ export default function PrivacyPolicy() {
           <section className="mb-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">4. Data Security</h2>
             <p className="text-gray-600 mb-4">
-              We have implemented appropriate security measures to prevent your personal data from being 
-              accidentally lost, used, or accessed in an unauthorized way. We limit access to your personal 
+              We have implemented appropriate security measures to prevent your personal data from being
+              accidentally lost, used, or accessed in an unauthorized way. We limit access to your personal
               data to those employees and third parties who have a business need to know.
             </p>
           </section>

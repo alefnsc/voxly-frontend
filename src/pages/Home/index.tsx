@@ -11,6 +11,8 @@ import Loading from 'components/loading'
 import PurpleButton from 'components/ui/purple-button'
 import StatsCard from 'components/ui/stats-card'
 import { Plus, Coins, TrendingUp, DollarSign, MessageSquare, ChevronRight } from 'lucide-react'
+import Interview from 'pages/Interview'
+import InterviewReady from 'components/interview-ready'
 
 // Lazy load components for better initial load performance
 const BodyCopy = lazy(() => import('components/body-copy'))
@@ -236,7 +238,7 @@ export default function Home() {
                 />
                 <StatsCard
                   title="Average Score"
-                  value={stats?.averageScore ? stats.averageScore : 0 }
+                  value={stats?.averageScore ? stats.averageScore : 0}
                   change={stats?.scoreChange}
                   icon={<TrendingUp />}
                 />
@@ -339,23 +341,7 @@ export default function Home() {
 
           {/* Start New Interview CTA Section OR Credit Packages */}
           {(userCredits !== null && userCredits > 0) ? (
-            <div className="voxly-card bg-voxly-gradient text-white">
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div>
-                  <h3 className="text-xl font-semibold">Ready for another practice session?</h3>
-                  <p className="text-purple-100 mt-1">Start a new interview to keep improving your skills.</p>
-                </div>
-                <PurpleButton
-                  variant="secondary"
-                  size="lg"
-                  onClick={() => navigate('/interview-setup')}
-                  className="bg-white text-voxly-purple hover:bg-gray-100 border-0"
-                >
-                  <Plus className="w-5 h-5" />
-                  Start Interview
-                </PurpleButton>
-              </div>
-            </div>
+            <InterviewReady />
           ) : (
             <div id="credit-packages" className="mt-6 sm:mt-8">
               <Suspense fallback={<div className="h-96 flex items-center justify-center"><Loading /></div>}>
@@ -376,11 +362,10 @@ export default function Home() {
       <div className="page-container py-6 sm:py-8">
         {/* Notification banner */}
         {notification && (
-          <div className={`mb-6 sm:mb-8 p-4 rounded-xl border shadow-sm ${
-            notification.type === 'incompatibility' ? 'bg-purple-50 border-purple-200 text-purple-800' :
-            notification.type === 'early_interruption' ? 'bg-amber-50 border-amber-200 text-amber-800' :
-            'bg-blue-50 border-blue-200 text-blue-800'
-          }`}>
+          <div className={`mb-6 sm:mb-8 p-4 rounded-xl border shadow-sm ${notification.type === 'incompatibility' ? 'bg-purple-50 border-purple-200 text-purple-800' :
+              notification.type === 'early_interruption' ? 'bg-amber-50 border-amber-200 text-amber-800' :
+                'bg-blue-50 border-blue-200 text-blue-800'
+            }`}>
             <div className="flex items-start gap-3">
               <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -410,9 +395,9 @@ export default function Home() {
         {/* Hero Section - Logo + Mission */}
         <div className="voxly-card mb-6 sm:mb-8">
           <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-8">
-            <img 
-              src="/Main.png" 
-              alt="Voxly" 
+            <img
+              src="/Main.png"
+              alt="Voxly"
               className="w-24 h-24 sm:w-28 sm:h-28 object-contain flex-shrink-0"
             />
             <div className="text-center sm:text-left">
@@ -420,7 +405,7 @@ export default function Home() {
                 Ace Every Interview
               </h2>
               <p className="text-gray-600 text-sm sm:text-base">
-                Practice with our AI interviewer, get instant feedback, and build confidence. 
+                Practice with our AI interviewer, get instant feedback, and build confidence.
                 Each credit gives you one complete AI interview session with detailed feedback.
               </p>
             </div>

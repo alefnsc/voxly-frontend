@@ -329,10 +329,10 @@ export default function Credits() {
                             <span className="font-medium text-gray-900">
                               {payment.packageName}
                             </span>
-                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(payment.status)}`}>
+                            {/* <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(payment.status)}`}>
                               {getStatusIcon(payment.status)}
                               {payment.status}
-                            </span>
+                            </span> */}
                           </div>
                           <div className="flex items-center gap-3 text-sm text-gray-500">
                             <span className="flex items-center gap-1">

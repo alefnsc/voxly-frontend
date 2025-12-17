@@ -6,28 +6,21 @@ import { ArrowLeft } from 'lucide-react'
 
 export default function TermsOfUse() {
   const navigate = useNavigate()
-  
+
   return (
     <DefaultLayout className="bg-gray-50">
       <div className="page-container py-6 sm:py-8">
         {/* Header */}
         <div className="mb-6 sm:mb-8">
-          <button
-            onClick={() => navigate('/about')}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors mb-4"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span>Back to About</span>
-          </button>
-          
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-                Terms of <span className="text-voxly-purple">Use</span>
-              </h1>
-              <p className="text-gray-600">
-                Last updated: December 1, 2025
-              </p>
+
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6 sm:mb-8">
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-2">
+                <ArrowLeft onClick={() => navigate('/about')} className="w-5 h-5 text-gray-600 hover:text-gray-900 transition-colors" />
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+                  Terms of <span className="text-voxly-purple">Use</span>
+                </h1>
+              </div>
             </div>
           </div>
         </div>
@@ -37,8 +30,8 @@ export default function TermsOfUse() {
           <section className="mb-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">1. Acceptance of Terms</h2>
             <p className="text-gray-600 mb-4">
-              By accessing and using Voxly's services, you accept and agree to be bound by the terms and 
-              provisions of this agreement. If you do not agree to abide by these terms, please do not 
+              By accessing and using Voxly's services, you accept and agree to be bound by the terms and
+              provisions of this agreement. If you do not agree to abide by these terms, please do not
               use our services.
             </p>
           </section>
@@ -46,7 +39,7 @@ export default function TermsOfUse() {
           <section className="mb-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">2. Description of Service</h2>
             <p className="text-gray-600 mb-4">
-              Voxly provides an AI-powered interview practice platform that allows users to simulate job 
+              Voxly provides an AI-powered interview practice platform that allows users to simulate job
               interviews and receive personalized feedback. Our service includes:
             </p>
             <ul className="list-disc list-inside text-gray-600 space-y-2 ml-4">
@@ -98,8 +91,8 @@ export default function TermsOfUse() {
           <section className="mb-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">6. Intellectual Property</h2>
             <p className="text-gray-600 mb-4">
-              All content, features, and functionality of our service are owned by Voxly and are protected 
-              by international copyright, trademark, and other intellectual property laws. You retain 
+              All content, features, and functionality of our service are owned by Voxly and are protected
+              by international copyright, trademark, and other intellectual property laws. You retain
               ownership of any data you upload, but grant us a license to use it for providing our services.
             </p>
           </section>
@@ -119,7 +112,7 @@ export default function TermsOfUse() {
           <section className="mb-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">8. Limitation of Liability</h2>
             <p className="text-gray-600 mb-4">
-              Voxly shall not be liable for any indirect, incidental, special, consequential, or punitive 
+              Voxly shall not be liable for any indirect, incidental, special, consequential, or punitive
               damages resulting from your use of or inability to use the service.
             </p>
           </section>
@@ -127,7 +120,7 @@ export default function TermsOfUse() {
           <section className="mb-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">9. Changes to Terms</h2>
             <p className="text-gray-600 mb-4">
-              We reserve the right to modify these terms at any time. We will notify users of any material 
+              We reserve the right to modify these terms at any time. We will notify users of any material
               changes via email or through the service. Continued use after changes constitutes acceptance.
             </p>
           </section>

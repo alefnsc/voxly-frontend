@@ -9,16 +9,16 @@ import ContactButton from 'components/contact-button'
 import PurpleButton from 'components/ui/purple-button'
 import StatsCard from 'components/ui/stats-card'
 import apiService, { InterviewDetail } from 'services/APIService'
-import { 
-  ArrowLeft, 
-  Briefcase, 
-  Building2, 
-  Calendar, 
-  Clock, 
-  CheckCircle, 
-  AlertTriangle, 
-  Lightbulb, 
-  BarChart3, 
+import {
+  ArrowLeft,
+  Briefcase,
+  Building2,
+  Calendar,
+  Clock,
+  CheckCircle,
+  AlertTriangle,
+  Lightbulb,
+  BarChart3,
   MessageSquare,
   FileText,
   Target,
@@ -30,6 +30,7 @@ import {
   ChevronRight,
   Download
 } from 'lucide-react'
+import InterviewReady from 'components/interview-ready'
 
 // Format duration from milliseconds to mm:ss
 const formatDuration = (ms: number | null | undefined): string => {
@@ -75,7 +76,7 @@ export default function InterviewDetails() {
   const { id } = useParams<{ id: string }>()
   const { user, isLoaded, isSignedIn } = useUser()
   const navigate = useNavigate()
-  
+
   const [isLoading, setIsLoading] = useState(true)
   const [interview, setInterview] = useState<InterviewDetail | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -129,7 +130,7 @@ export default function InterviewDetails() {
   // Download resume
   const handleDownloadResume = () => {
     if (!interview?.resumeData || !interview?.resumeFileName) return
-    
+
     try {
       // Decode base64 and create blob
       const byteCharacters = atob(interview.resumeData)
@@ -139,7 +140,7 @@ export default function InterviewDetails() {
       }
       const byteArray = new Uint8Array(byteNumbers)
       const blob = new Blob([byteArray], { type: interview.resumeMimeType || 'application/pdf' })
-      
+
       // Create download link
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
@@ -157,7 +158,7 @@ export default function InterviewDetails() {
   // Download feedback PDF
   const handleDownloadFeedback = () => {
     if (!interview?.feedbackPdf) return
-    
+
     try {
       // Decode base64 and create blob
       const byteCharacters = atob(interview.feedbackPdf)
@@ -167,7 +168,7 @@ export default function InterviewDetails() {
       }
       const byteArray = new Uint8Array(byteNumbers)
       const blob = new Blob([byteArray], { type: 'application/pdf' })
-      
+
       // Create download link
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
@@ -219,8 +220,8 @@ export default function InterviewDetails() {
     )
   }
 
-  const performance = interview.feedback ? getPerformanceLabel(interview.feedback.overallScore) : 
-                       interview.score ? getPerformanceLabel(interview.score) : null
+  const performance = interview.feedback ? getPerformanceLabel(interview.feedback.overallScore) :
+    interview.score ? getPerformanceLabel(interview.score) : null
 
   // Get display values (use correct backend field names)
   const displayPosition = interview.jobTitle || interview.position || 'N/A'
@@ -234,15 +235,17 @@ export default function InterviewDetails() {
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6 sm:mb-8">
           <div className="flex-1">
-            
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-              Interview <span className="text-voxly-purple">Details</span>
-            </h1>
+            <div className="flex items-center gap-3 mb-2">
+              <ArrowLeft onClick={() => navigate('/')} className="w-5 h-5 text-gray-600 hover:text-gray-900 transition-colors" />
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+                Interview <span className="text-voxly-purple">Details</span>
+              </h1>
+            </div>
             <p className="text-gray-600 mt-1">
               Review your interview performance and feedback
             </p>
           </div>
-          
+
           {/* Status Badge and Download Buttons */}
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             {/* Download Resume Button */}
@@ -255,7 +258,7 @@ export default function InterviewDetails() {
                 Resume
               </button>
             )}
-            
+
             {/* Download Feedback Button */}
             {interview.feedbackPdf && (
               <button
@@ -266,39 +269,39 @@ export default function InterviewDetails() {
                 Feedback
               </button>
             )}
-            
+
           </div>
         </div>
 
         {/* Interview Info Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-6 sm:mb-8">
-          <StatsCard 
-            title="Position" 
-            value={displayPosition} 
+          <StatsCard
+            title="Position"
+            value={displayPosition}
             icon={<Briefcase />}
             size="small"
           />
-          <StatsCard 
-            title="Company" 
-            value={displayCompany} 
+          <StatsCard
+            title="Company"
+            value={displayCompany}
             icon={<Building2 />}
             size="small"
           />
-          <StatsCard 
-            title="Date" 
-            value={formatDate(interview.createdAt)} 
+          <StatsCard
+            title="Date"
+            value={formatDate(interview.createdAt)}
             icon={<Calendar />}
             size="small"
           />
-          <StatsCard 
-            title="Duration" 
-            value={displayDuration} 
-            icon={<Clock />} 
+          <StatsCard
+            title="Duration"
+            value={displayDuration}
+            icon={<Clock />}
           />
-          <StatsCard 
-            title="Score" 
-            value={displayScore !== null ? displayScore : 'N/A'} 
-            icon={<Award />} 
+          <StatsCard
+            title="Score"
+            value={displayScore !== null ? displayScore : 'N/A'}
+            icon={<Award />}
           />
         </div>
 
@@ -311,7 +314,7 @@ export default function InterviewDetails() {
                 <Award className="w-5 h-5 text-voxly-purple" />
                 <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Performance Score</h2>
               </div>
-              
+
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
                 {/* Overall Score Card */}
                 <div className="voxly-card flex flex-col items-center justify-center text-center py-8">
@@ -352,27 +355,27 @@ export default function InterviewDetails() {
                     <BarChart3 className="w-5 h-5 text-purple-600" />
                     <h3 className="text-lg font-semibold text-gray-900">Score Breakdown</h3>
                   </div>
-                  <ScoreBar 
-                    label="Content Quality" 
-                    score={interview.feedback.contentScore} 
+                  <ScoreBar
+                    label="Content Quality"
+                    score={interview.feedback.contentScore}
                     icon={<FileText className="w-4 h-4 text-purple-600" />}
                   />
-                  <ScoreBar 
-                    label="Communication" 
-                    score={interview.feedback.communicationScore} 
+                  <ScoreBar
+                    label="Communication"
+                    score={interview.feedback.communicationScore}
                     icon={<MessageSquare className="w-4 h-4 text-purple-600" />}
                   />
-                  <ScoreBar 
-                    label="Confidence" 
-                    score={interview.feedback.confidenceScore} 
+                  <ScoreBar
+                    label="Confidence"
+                    score={interview.feedback.confidenceScore}
                     icon={<TrendingUp className="w-4 h-4 text-purple-600" />}
                   />
-                  <ScoreBar 
-                    label="Technical Knowledge" 
-                    score={interview.feedback.technicalScore} 
+                  <ScoreBar
+                    label="Technical Knowledge"
+                    score={interview.feedback.technicalScore}
                     icon={<Target className="w-4 h-4 text-purple-600" />}
                   />
-                  
+
                   {/* Score Explanation */}
                   <div className="mt-6 pt-4 border-t border-gray-100">
                     <p className="text-xs text-gray-500 leading-relaxed">
@@ -395,7 +398,7 @@ export default function InterviewDetails() {
             </div>
 
             {/* Feedback Sections Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-18 sm:mb-20">
               {/* Strengths */}
               <div>
                 <div className="flex items-center gap-2 mb-3 sm:mb-4">
@@ -475,12 +478,12 @@ export default function InterviewDetails() {
             <div className="voxly-card text-center py-12">
               <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-600 mb-2">
-                {interview.status === 'IN_PROGRESS' 
+                {interview.status === 'IN_PROGRESS'
                   ? 'Feedback will be available once the interview is completed.'
                   : 'No feedback available for this interview.'}
               </p>
               <p className="text-sm text-gray-400">
-                {interview.status === 'IN_PROGRESS' 
+                {interview.status === 'IN_PROGRESS'
                   ? 'Please complete your interview session to receive AI-generated feedback.'
                   : 'This interview may have ended early or encountered an issue.'}
               </p>
@@ -489,25 +492,8 @@ export default function InterviewDetails() {
         )}
 
         {/* CTA Section */}
-        <div className="voxly-card bg-voxly-gradient text-white mt-8 sm:mt-12">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="text-center sm:text-left">
-              <h3 className="text-xl font-semibold">Ready for more practice?</h3>
-              <p className="text-purple-100 mt-1">Continue improving your interview skills with another session.</p>
-            </div>
-            <PurpleButton
-              variant="secondary"
-              size="lg"
-              onClick={() => navigate('/interview-setup')}
-              className="bg-white text-voxly-purple hover:bg-gray-100 border-0 whitespace-nowrap"
-            >
-              <Plus className="w-5 h-5" />
-              Start New Interview                 <ChevronRight className="w-4 h-4" />
-            </PurpleButton>
-          </div>
-        </div>
+       <InterviewReady />
       </div>
-      
       <ContactButton />
     </DefaultLayout>
   )

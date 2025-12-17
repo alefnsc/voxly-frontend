@@ -425,13 +425,20 @@ const CreditPackages: React.FC<CreditPackagesProps> = ({ onPurchaseComplete }) =
 
   // Sort packages: Mobile = Professional first (top), Desktop = Starter first (left)
   // Default to mobile order (Professional first) when isMobile is undefined (SSR/initial render)
+  const mobileOrder: Record<string, number> = { professional: 0, intermediate: 1, starter: 2 };
+  const desktopOrder: Record<string, number> = { starter: 0, professional: 1, intermediate: 2 };
+  const order = isMobile === false ? desktopOrder : mobileOrder;
   const sortedPackages = [...CREDIT_PACKAGES].sort((a, b) => {
-    const mobileOrder: Record<string, number> = { professional: 0, intermediate: 1, starter: 2 };
-    const desktopOrder: Record<string, number> = { starter: 0, intermediate: 1, professional: 2 };
-    // Use mobile order by default (isMobile can be undefined on first render)
-    const order = isMobile === false ? desktopOrder : mobileOrder;
-    return (order[a.id] || 99) - (order[b.id] || 99);
+    // Defensive: If id is missing, put at end
+    const aOrder = order.hasOwnProperty(a.id) ? order[a.id] : 99;
+    const bOrder = order.hasOwnProperty(b.id) ? order[b.id] : 99;
+    return aOrder - bOrder;
   });
+  // Debug: Log the order and sorted package ids
+  if (typeof window !== 'undefined') {
+    // Only log in browser
+    console.log('[CreditPackages] isMobile:', isMobile, '| Sorted order:', sortedPackages.map(p => p.id));
+  }
 
   return (
     <div className="w-full">
