@@ -22,7 +22,6 @@ import SignUp from './pages/SignUp';
 import SignIn from './pages/SignIn';
 import SignInClerk from './pages/SignInClerk';
 import SSOCallback from './pages/SSOCallback';
-import PayPalCallback from './pages/auth/PayPalCallback';
 import Account from './pages/Account';
 import UnderConstruction from './pages/UnderConstruction';
 import { ProtectedInterviewRoute } from './components/protected-interview-route';
@@ -66,7 +65,6 @@ const App: React.FC = () => {
                       <Route path="sign-in" element={<SignIn />} />
                       <Route path="sign-in-clerk/*" element={<SignInClerk />} />
                       <Route path="sso-callback" element={<SSOCallback />} />
-                      <Route path="auth/paypal/callback" element={<PayPalCallback />} />
                       <Route path="under-construction" element={<UnderConstruction />} />
                       
                       <Route path="/" element={<Layout />}>

@@ -2,7 +2,7 @@
  * OAuth Buttons Component
  * 
  * OAuth trigger buttons following Vocaid design.
- * Supports: Google, Apple, Microsoft, LinkedIn
+ * Supports: Google, Apple, Microsoft
  * Clean typography with black text on white backgrounds.
  * Dark purple border on hover. No icons per design standards.
  * 
@@ -12,36 +12,29 @@
 import React, { useState } from 'react';
 import { useSignUp, useSignIn } from '@clerk/clerk-react';
 import { cn } from 'lib/utils';
-import { config } from 'lib/config';
 
 // Clerk OAuth strategy types
 type ClerkOAuthStrategy = 
   | 'oauth_google' 
   | 'oauth_apple' 
-  | 'oauth_microsoft'
-  | 'oauth_linkedin_oidc';
-
-// PayPal uses custom OAuth, not Clerk
-type CustomOAuthProvider = 'paypal';
+  | 'oauth_microsoft';
 
 interface AuthButtonsProps {
   mode: 'signUp' | 'signIn';
   className?: string;
   onError?: (error: string) => void;
-  showPayPal?: boolean; // Optional PayPal button for payment linking
 }
 
 export const AuthButtons: React.FC<AuthButtonsProps> = ({
   mode,
   className,
   onError,
-  showPayPal = false,
 }) => {
   const { signUp } = useSignUp();
   const { signIn } = useSignIn();
   const [loadingProvider, setLoadingProvider] = useState<string | null>(null);
 
-  // Handle Clerk OAuth (Google, Apple, Microsoft, LinkedIn)
+  // Handle Clerk OAuth (Google, Apple, Microsoft)
   const handleClerkOAuth = async (strategy: ClerkOAuthStrategy) => {
     try {
       setLoadingProvider(strategy);
@@ -62,47 +55,6 @@ export const AuthButtons: React.FC<AuthButtonsProps> = ({
     } catch (error: any) {
       console.error('OAuth error:', error);
       onError?.(error.errors?.[0]?.message || 'Authentication failed. Please try again.');
-    } finally {
-      setLoadingProvider(null);
-    }
-  };
-
-  // Handle PayPal custom OAuth (not through Clerk)
-  const handlePayPalOAuth = async () => {
-    try {
-      setLoadingProvider('paypal');
-      
-      // PayPal OAuth is handled by our backend, not Clerk
-      const baseUrl = window.location.origin;
-      const backendUrl = config.backendUrl;
-      
-      // Start PayPal OAuth flow via backend
-      const response = await fetch(`${backendUrl}/api/auth/paypal/start`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          redirectUrl: `${baseUrl}/auth/paypal/callback`,
-          mode,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to start PayPal authentication');
-      }
-
-      const data = await response.json();
-      
-      if (data.authUrl) {
-        // Redirect to PayPal
-        window.location.href = data.authUrl;
-      } else {
-        throw new Error('No PayPal auth URL received');
-      }
-    } catch (error: any) {
-      console.error('PayPal OAuth error:', error);
-      onError?.(error.message || 'PayPal authentication failed. Please try again.');
     } finally {
       setLoadingProvider(null);
     }
@@ -172,42 +124,6 @@ export const AuthButtons: React.FC<AuthButtonsProps> = ({
           'Continue with Microsoft'
         )}
       </button>
-
-      {/* LinkedIn Button */}
-      <button
-        type="button"
-        onClick={() => handleClerkOAuth('oauth_linkedin_oidc')}
-        disabled={loadingProvider !== null}
-        className={getButtonClass('oauth_linkedin_oidc')}
-      >
-        {loadingProvider === 'oauth_linkedin_oidc' ? (
-          <span className="flex items-center gap-2">
-            <span className="w-4 h-4 border-2 border-zinc-400 border-t-transparent rounded-full animate-spin" />
-            Connecting...
-          </span>
-        ) : (
-          'Continue with LinkedIn'
-        )}
-      </button>
-
-      {/* PayPal Button (optional, for payment linking) */}
-      {showPayPal && (
-        <button
-          type="button"
-          onClick={handlePayPalOAuth}
-          disabled={loadingProvider !== null}
-          className={getButtonClass('paypal')}
-        >
-          {loadingProvider === 'paypal' ? (
-            <span className="flex items-center gap-2">
-              <span className="w-4 h-4 border-2 border-zinc-400 border-t-transparent rounded-full animate-spin" />
-              Connecting...
-            </span>
-          ) : (
-            'Continue with PayPal'
-          )}
-        </button>
-      )}
     </div>
   );
 };
