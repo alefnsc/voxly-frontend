@@ -13,7 +13,6 @@ Ensure the following OAuth providers are enabled in your Clerk Dashboard:
 - Google (Social connections → Google)
 - Apple (Social connections → Apple)
 - Microsoft (Social connections → Microsoft)
-- LinkedIn (Social connections → LinkedIn)
 
 ### Environment Variables
 
@@ -22,13 +21,6 @@ Ensure the following OAuth providers are enabled in your Clerk Dashboard:
 REACT_APP_CLERK_PUBLISHABLE_KEY=pk_test_xxx
 REACT_APP_ENV=development
 REACT_APP_BACKEND_URL_DEV=http://localhost:3001
-```
-
-**Backend (.env)**
-```
-PAYPAL_CLIENT_ID=your_paypal_client_id
-PAYPAL_CLIENT_SECRET=your_paypal_client_secret
-PAYPAL_MODE=sandbox
 ```
 
 ---
@@ -80,38 +72,6 @@ PAYPAL_MODE=sandbox
 - Work/School accounts (Azure AD)
 - Some organizations may block OAuth consent
 
-### 2.4 LinkedIn OAuth 💼
-**Strategy:** `oauth_linkedin_oidc` (Clerk)
-
-| Step | Action | Expected Result |
-|------|--------|-----------------|
-| 1 | Navigate to `/sign-in` | Sign-in page loads with OAuth buttons |
-| 2 | Click "Continue with LinkedIn" | Redirects to LinkedIn authorization |
-| 3 | Authorize the application | Redirects back to app |
-| 4 | Check Clerk Dashboard | User created with LinkedIn provider |
-
-**LinkedIn-Specific Considerations:**
-- Uses OIDC protocol (not legacy OAuth)
-- Provides profile and email scopes
-- LinkedIn may require app verification for production
-
-### 2.5 PayPal OAuth 💳
-**Flow:** Custom OAuth (not Clerk)
-
-| Step | Action | Expected Result |
-|------|--------|-----------------|
-| 1 | Sign in with another provider first | User must be authenticated |
-| 2 | Navigate to payment settings or click PayPal button | PayPal OAuth initiated |
-| 3 | Click "Continue with PayPal" | Redirects to PayPal authorization |
-| 4 | Login to PayPal sandbox account | Redirects to `/auth/paypal/callback` |
-| 5 | Callback processes | Shows success/error message, redirects to dashboard |
-| 6 | Check database | `PaymentProviderConnection` created |
-
-**PayPal-Specific Considerations:**
-- Uses sandbox in development (`sandbox.paypal.com`)
-- Links PayPal account for payments, not primary auth
-- Stores access/refresh tokens in `PaymentProviderConnection`
-
 ---
 
 ## 3. Environment Routing Validation
@@ -146,26 +106,19 @@ For local testing without real OAuth providers, use mock endpoints:
 
 ### Available Mock Endpoints
 ```
-POST /auth/mock/google    - Simulate Google OAuth
-POST /auth/mock/apple     - Simulate Apple OAuth
-POST /auth/mock/microsoft - Simulate Microsoft OAuth
-POST /auth/mock/linkedin  - Simulate LinkedIn OAuth
+GET /api/auth/mock/oauth/start?provider=google    - Simulate Google OAuth
+GET /api/auth/mock/oauth/start?provider=apple     - Simulate Apple OAuth
+GET /api/auth/mock/oauth/start?provider=microsoft - Simulate Microsoft OAuth
 ```
 
 ### Usage Example
 ```javascript
-const response = await fetch('http://localhost:3001/auth/mock/google', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    email: 'test@example.com',
-    name: 'Test User',
-  }),
-});
-const { mockClerkId, mockToken } = await response.json();
+const response = await fetch('http://localhost:3001/api/auth/mock/oauth/start?provider=google');
+const { redirectUrl, provider, mock } = await response.json();
+// redirectUrl contains the mock callback URL for testing
 ```
 
-**Note:** Mock endpoints only work when `NODE_ENV !== 'production'`
+**Note:** Mock endpoints only work when `NODE_ENV === 'development'`
 
 ---
 
@@ -199,12 +152,6 @@ model User {
 ### Issue: "Invalid redirect_uri" error
 **Solution:** Add exact callback URL to OAuth provider settings
 
-### Issue: PayPal callback fails
-**Solution:** 
-- Check PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET
-- Verify sandbox mode is enabled for development
-- Confirm user is already authenticated (Clerk session exists)
-
 ### Issue: User not appearing in database
 **Solution:** Check Clerk webhook configuration and logs
 
@@ -215,23 +162,8 @@ model User {
 - [ ] Google OAuth enabled
 - [ ] Apple OAuth enabled (requires Apple Developer account)
 - [ ] Microsoft OAuth enabled
-- [ ] LinkedIn OAuth enabled
 - [ ] Redirect URLs configured correctly
 - [ ] Webhook endpoint configured for user sync
-
----
-
-## 8. Backend Environment Variables Reference
-
-```env
-# PayPal OAuth (for payment linking, not auth)
-PAYPAL_CLIENT_ID=xxx
-PAYPAL_CLIENT_SECRET=xxx
-PAYPAL_MODE=sandbox  # or 'live' for production
-
-# Clerk (for webhook verification)
-CLERK_WEBHOOK_SECRET=whsec_xxx
-```
 
 ---
 
@@ -240,4 +172,4 @@ CLERK_WEBHOOK_SECRET=whsec_xxx
 | Date | Version | Changes |
 |------|---------|---------|
 | 2024-12-21 | 1.0 | Initial OAuth testing guide |
-| 2024-12-22 | 1.1 | Added Microsoft, LinkedIn, PayPal OAuth |
+| 2024-12-22 | 1.1 | Added Microsoft OAuth, removed LinkedIn/PayPal |
