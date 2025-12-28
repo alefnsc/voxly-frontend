@@ -16,7 +16,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useUser } from '@clerk/clerk-react';
-import { DefaultLayout } from 'components/default-layout';
 import { useCreditsWallet, WalletTransaction } from 'hooks/use-credits-wallet';
 import apiService from 'services/APIService';
 
@@ -214,8 +213,8 @@ export default function BillingPage() {
   const isPopular = (pkgId: string) => pkgId === getPopularPackageId();
 
   return (
-    <DefaultLayout className="bg-zinc-50">
-      <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 lg:py-12">
+    <div className="min-h-screen bg-zinc-50">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         <div className="space-y-4 sm:space-y-6 lg:space-y-8">
           
           {/* Header - Brand Pattern: first word black, second word purple */}
@@ -558,6 +557,6 @@ export default function BillingPage() {
           </div>
         </div>
       </div>
-    </DefaultLayout>
+    </div>
   );
 }

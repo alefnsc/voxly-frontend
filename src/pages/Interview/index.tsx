@@ -59,14 +59,14 @@ const Interview = () => {
                     // Check if user has credits
                     if (result.user.credits <= 0) {
                         console.warn('⚠️ User has no credits');
-                        navigate('/', { state: { error: t('interview.errors.noCreditsError') } });
+                        navigate('/app/b2c/dashboard', { state: { error: t('interview.errors.noCreditsError') } });
                     }
                 } else {
                     throw new Error('Validation returned unsuccessful status');
                 }
             } catch (error: any) {
                 console.error('❌ User validation failed:', error);
-                navigate('/', { state: { error: t('interview.errors.sessionValidationFailed') } });
+                navigate('/app/b2c/dashboard', { state: { error: t('interview.errors.sessionValidationFailed') } });
             }
         };
 
@@ -99,7 +99,7 @@ const Interview = () => {
     const handleMicPermission = (granted) => {
         setMicPermissionGranted(granted);
         if (!granted) {
-            navigate('/');
+            navigate('/app/b2c/dashboard');
         }
     };
 

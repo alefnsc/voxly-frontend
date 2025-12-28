@@ -29,7 +29,6 @@ import {
   Loader2,
   ArrowRight,
   Upload,
-  X,
   Check,
   ChevronDown,
   Search,
@@ -43,7 +42,6 @@ import { useWalletBalanceQuery } from 'hooks/queries/useWalletQueries';
 import {
   INTERVIEW_LANGUAGES,
   getAllCountries,
-  type Country,
   type InterviewLanguageCode,
 } from 'lib/geo/languageCountries';
 import { cn } from 'lib/utils';

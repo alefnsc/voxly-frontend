@@ -132,7 +132,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
-      navigate('/')
+      navigate('/')  // Not signed in - go to landing
       return
     }
   }, [isLoaded, isSignedIn, navigate])
@@ -407,7 +407,7 @@ export default function Dashboard() {
               </p>
               {interviews.length === 0 && (
                 <button
-                  onClick={() => navigate('/')}
+                  onClick={() => navigate('/app/b2c/interview/new')}
                   className="btn-Vocaid"
                 >
                   {t('interviews.startFirst')}

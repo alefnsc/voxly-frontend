@@ -149,8 +149,9 @@ async function safeJsonParse<T>(response: Response, endpointName: string): Promi
 
 /**
  * Make a fetch request with safe JSON handling
+ * Note: Kept for potential future use in refactoring API calls
  */
-async function safeFetch<T>(
+async function _safeFetch<T>(
     url: string,
     options: RequestInit,
     endpointName: string
@@ -1196,6 +1197,70 @@ class APIService {
         
         if (!response.ok) {
             throw new Error(`Error checking credits: ${response.status}`);
+        }
+        
+        return response.json();
+    }
+
+    /**
+     * Get user's trial status including promo info
+     */
+    async getTrialStatus(userId: string): Promise<{
+        status: string;
+        message?: string;
+        data?: {
+            trialCreditsGranted: boolean;
+            trialCreditsAmount: number;
+            trialCreditsGrantedAt: string | null;
+            isPromoActive: boolean;
+            promoEndsAt: string;
+            promoRemainingDays: number;
+            currentBalance: number;
+            riskLevel: 'low' | 'medium' | 'high';
+        };
+    }> {
+        console.log('🎁 Getting trial status:', userId);
+        
+        const response = await fetch(`${BACKEND_URL}/api/credits/trial-status`, {
+            method: 'GET',
+            headers: getHeaders(userId),
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            return {
+                status: 'error',
+                message: errorData.message || `Error getting trial status: ${response.status}`
+            };
+        }
+        
+        return response.json();
+    }
+
+    /**
+     * Get current promo information (public endpoint)
+     */
+    async getPromoInfo(): Promise<{
+        status: string;
+        data?: {
+            isPromoActive: boolean;
+            promoEndsAt: string;
+            promoRemainingDays: number;
+            promoCredits: number;
+            standardCredits: number;
+        };
+    }> {
+        console.log('🎉 Getting promo info');
+        
+        const response = await fetch(`${BACKEND_URL}/api/credits/promo-info`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Error getting promo info: ${response.status}`);
         }
         
         return response.json();

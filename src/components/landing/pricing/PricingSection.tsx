@@ -115,7 +115,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ onDemoClick }) =
   return (
     <section
       id="pricing"
-      className="py-24 relative overflow-hidden"
+      className="py-24 relative overflow-hidden scroll-mt-20 md:scroll-mt-24"
       style={{
         background: 'linear-gradient(180deg, rgba(250, 245, 255, 0.5) 0%, rgba(255, 255, 255, 1) 100%)',
       }}
@@ -135,12 +135,6 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ onDemoClick }) =
         >
           {/* Section Header */}
           <div className="text-center mb-12">
-            <motion.span
-              variants={itemVariants}
-              className="inline-block px-3 py-1 text-xs font-semibold text-purple-700 bg-purple-100 rounded-full mb-4"
-            >
-              {t('pricing.badge')}
-            </motion.span>
             <motion.h2
               variants={itemVariants}
               className="text-3xl sm:text-4xl font-bold text-zinc-900 mb-4"

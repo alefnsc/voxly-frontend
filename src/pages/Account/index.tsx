@@ -14,7 +14,6 @@ import { useUser, useClerk } from '@clerk/clerk-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { DefaultLayout } from 'components/default-layout';
 import { cn } from 'lib/utils';
 import { SUPPORTED_LANGUAGES, SupportedLanguageCode } from 'lib/i18n';
 import { useLanguage } from 'hooks/use-language';
@@ -285,17 +284,17 @@ const AccountDashboard: React.FC = () => {
 
   if (!isLoaded) {
     return (
-      <DefaultLayout>
+      <div className="min-h-screen bg-zinc-50">
         <div className="flex items-center justify-center min-h-[50vh]">
           <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
         </div>
-      </DefaultLayout>
+      </div>
     );
   }
 
   return (
-    <DefaultLayout className="bg-zinc-50">
-      <div className="max-w-4xl mx-auto py-8 px-4">
+    <div className="min-h-screen bg-zinc-50">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-zinc-900">
@@ -638,7 +637,7 @@ const AccountDashboard: React.FC = () => {
           </div>
         </div>
       </div>
-    </DefaultLayout>
+    </div>
   );
 };
 

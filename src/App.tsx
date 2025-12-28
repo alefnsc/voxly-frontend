@@ -16,7 +16,6 @@ import { InterviewFlowProvider } from './hooks/use-interview-flow';
 import { UserProvider } from './contexts/UserContext';
 import { WorkspaceProvider } from './contexts/WorkspaceContext';
 import { LanguageProvider } from './hooks/use-language';
-import { FEATURES } from './config/features';
 
 // Eager loaded - Critical path components
 import Home from './pages/Home';
@@ -32,7 +31,6 @@ import SSOCallback from './pages/SSOCallback';
 const Interview = lazy(() => import('./pages/Interview'));
 const Feedback = lazy(() => import('./pages/Feedback'));
 const PaymentResult = lazy(() => import('./pages/PaymentResult'));
-const Dashboard = lazy(() => import('./pages/Dashboard'));
 const InterviewDetails = lazy(() => import('./pages/InterviewDetails'));
 const About = lazy(() => import('./pages/About'));
 const InterviewSetup = lazy(() => import('./pages/InterviewSetup'));
@@ -163,24 +161,16 @@ const App: React.FC = () => {
                           {/* Access Denied page */}
                           <Route path="access-denied" element={<AccessDenied />} />
                           
-                          {/* B2B: Recruiter Interview Platform */}
+                          {/* B2B: Recruiter Interview Platform (coming soon) */}
                           <Route 
                             path="app/b2b/*" 
-                            element={
-                              FEATURES.B2B_RECRUITER_PLATFORM_ENABLED 
-                                ? <ConsentGuard><Dashboard /></ConsentGuard>
-                                : <Navigate to="/under-construction?feature=recruiter" replace />
-                            } 
+                            element={<Navigate to="/under-construction?feature=recruiter" replace />}
                           />
                           
-                          {/* HR: Employee Hub */}
+                          {/* HR: Employee Hub (coming soon) */}
                           <Route 
                             path="app/hr" 
-                            element={
-                              FEATURES.B2B_EMPLOYEE_HUB_ENABLED 
-                                ? <ConsentGuard><Dashboard /></ConsentGuard>
-                                : <Navigate to="/under-construction?feature=hr" replace />
-                            } 
+                            element={<Navigate to="/under-construction?feature=hr" replace />}
                           />
                           
                           {/* Legacy Routes (redirect to new paths) */}

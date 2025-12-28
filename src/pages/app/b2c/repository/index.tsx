@@ -35,7 +35,6 @@ import {
   AlertCircle,
   Loader2,
   Building2,
-  GraduationCap,
   Globe2
 } from 'lucide-react';
 
@@ -164,7 +163,8 @@ const ScoreBadge: React.FC<{ score: number | null }> = ({ score }) => {
   );
 };
 
-const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
+// Note: StatusBadge is defined for future use in interview cards
+const _StatusBadge: React.FC<{ status: string }> = ({ status }) => {
   const { t } = useTranslation();
   
   // Keep semantic colors for status (completed=green, pending=amber, failed=red)

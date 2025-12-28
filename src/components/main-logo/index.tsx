@@ -9,7 +9,7 @@ const MainLogo: React.FC<MainLogoProps> = ({ isMobile }) => {
   const navigate = useNavigate();
 
   const handleNavigateHome = () => {
-    navigate('/');
+    navigate('/app/b2c/dashboard');
   };
 
   const size = 100  ;

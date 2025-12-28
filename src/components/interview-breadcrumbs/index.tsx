@@ -34,7 +34,7 @@ export const InterviewBreadcrumbs: React.FC<InterviewBreadcrumbsProps> = ({
 
   const handleBackToDashboard = () => {
     resetFlow();
-    navigate('/');
+    navigate('/app/b2c/dashboard');
   };
 
   const getStepStatus = (stepIndex: number): 'completed' | 'current' | 'upcoming' => {

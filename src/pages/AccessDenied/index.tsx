@@ -45,7 +45,7 @@ const AccessDenied: React.FC = () => {
           
           <PurpleButton
             variant="primary"
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/app/b2c/dashboard')}
             className="flex items-center gap-2"
           >
             <Home className="w-4 h-4" />

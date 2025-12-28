@@ -17,10 +17,12 @@ import {
   LandingPreviewTabs,
   DashboardPreviewTabs,
   WaitlistModal,
+  LandingHiringCollaborationPreview,
 } from 'components/landing'
 import type { WaitlistModule } from 'components/landing/WaitlistModal'
 import { PricingSection } from 'components/landing/pricing'
 import { FREE_TRIAL_CREDITS } from 'config/credits'
+import { HEADER_OFFSET_CLASSES } from 'config/layout'
 
 export const Landing: React.FC = () => {
   const [demoModalOpen, setDemoModalOpen] = useState(false)
@@ -64,39 +66,57 @@ export const Landing: React.FC = () => {
         />
       </Helmet>
 
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-white overflow-x-hidden">
         <LandingHeader onDemoClick={handleDemoClick} />
         
-        <main>
+        <main className={HEADER_OFFSET_CLASSES.paddingTop}>
           {/* Hero with language badges and dual CTAs */}
           <Hero onDemoClick={handleDemoClick} />
           
-          {/* Interactive 5-tab product preview */}
-          <LandingPreviewTabs />
-          
-          {/* B2C Personal Interview Practice features */}
-          <LandingB2CFeatures />
-          
-          {/* B2B Sections with anchor for navigation */}
-          <div id="organizations">
-            <LandingB2BRecruiting onWaitlistClick={() => handleWaitlistClick('recruiter_platform')} />
-            <LandingB2BEmployeeHub onWaitlistClick={() => handleWaitlistClick('employee_hub')} />
+          {/* Interactive 5-tab product preview - #product anchor */}
+          <div id="product" className={HEADER_OFFSET_CLASSES.scrollMarginTop}>
+            <LandingPreviewTabs />
           </div>
+          
+          {/* Solutions section - B2C + B2B features - #solutions anchor */}
+          <div id="solutions" className={HEADER_OFFSET_CLASSES.scrollMarginTop}>
+            {/* B2C Personal Interview Practice features */}
+            <LandingB2CFeatures />
+            
+            {/* B2B Sections with anchor for navigation */}
+            <div id="organizations">
+              {/* Also add b2b-section id for Hero scroll target compatibility */}
+              <div id="b2b-section" className={HEADER_OFFSET_CLASSES.scrollMarginTop} />
+              <LandingB2BRecruiting onWaitlistClick={() => handleWaitlistClick('recruiter_platform')} />
+              <LandingB2BEmployeeHub onWaitlistClick={() => handleWaitlistClick('employee_hub')} />
+            </div>
+          </div>
+          
+          {/* NEW: Hiring Collaboration Preview (Candidate Voting + Role Marketplace) */}
+          <LandingHiringCollaborationPreview />
           
           {/* Trust/Security section */}
           <LandingTrust />
           
-          {/* Platform showcase and integrations */}
+          {/* Platform showcase and integrations - #integrations anchor */}
           <PlatformShowcase />
-          <Integrations />
+          <div id="integrations" className={HEADER_OFFSET_CLASSES.scrollMarginTop}>
+            <Integrations />
+          </div>
           
           {/* Dashboard preview with API key demo and analytics charts */}
           <DashboardPreviewTabs />
           
-          {/* New segmented Pricing Section (B2C / B2B / HR tabs) */}
-          <PricingSection onDemoClick={handleDemoClick} />
+          {/* Pricing Section - #pricing anchor */}
+          <div id="pricing" className={HEADER_OFFSET_CLASSES.scrollMarginTop}>
+            <PricingSection onDemoClick={handleDemoClick} />
+          </div>
           
-          <FAQAccordion />
+          {/* FAQ Section - #faq anchor */}
+          <div id="faq" className={HEADER_OFFSET_CLASSES.scrollMarginTop}>
+            <FAQAccordion />
+          </div>
+          
           <FinalCTA onDemoClick={handleDemoClick} />
         </main>
         

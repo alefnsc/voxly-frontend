@@ -271,7 +271,7 @@ export const B2B_HR_FEATURES = [
   },
   {
     id: 'segmentation',
-    iconName: 'Shield',
+    iconName: 'Lock',
     title: 'Tenant Isolation',
     description: 'Complete data separation per organization with role-based access controls.',
   },

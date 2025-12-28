@@ -117,7 +117,7 @@ export const AccountMenu: React.FC<AccountMenuProps> = ({
     };
   }, [isOpen]);
 
-  // Handle sign out
+  // Handle sign out - redirect to landing page
   const handleSignOut = async () => {
     setIsOpen(false);
     await signOut();

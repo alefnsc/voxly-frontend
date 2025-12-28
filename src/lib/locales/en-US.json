@@ -1469,8 +1469,8 @@
       }
     },
     "integrations": {
-      "badge": "Vocaid Connect",
-      "title": "From embed → scorecard → webhook in minutes",
+      "titleBlack": "Vocaid Connect:",
+      "titlePurple": "Embed → Webhook → Scorecard",
       "subtitle": "Integrate Vocaid into your existing tools with our developer-friendly SDK and APIs.",
       "tagline": "Designed for tenant isolation, audit trails, and secure integrations.",
       "features": [
@@ -1547,8 +1547,8 @@
       }
     },
     "faq": {
-      "badge": "FAQ",
-      "title": "Frequently asked questions",
+      "titleBlack": "Frequently Asked",
+      "titlePurple": "Questions",
       "subtitle": "Everything you need to know about Vocaid.",
       "items": {
         "whatIsVocaid": {
@@ -1668,7 +1668,8 @@
       }
     },
     "finalCta": {
-      "title": "Ready to level up your interviews?",
+      "titleBlack": "Ready to Level Up",
+      "titlePurple": "Your interviews?",
       "subtitle": "Whether you're a candidate preparing for your dream job, a recruiter building a great team, or an HR manager supporting employees — Vocaid has you covered.",
       "ctaWorkspace": "Start Free",
       "ctaWorkspacePlural": "Start Frees",
@@ -1743,7 +1744,6 @@
       }
     },
     "platformShowcase": {
-      "badge": "Three Platforms",
       "titleBlack": "What Vocaid",
       "titlePurple": "Delivers",
       "subtitle": "Interview tools built for individuals, recruiters, and HR teams. One live today, two launching soon.",
@@ -1825,8 +1825,8 @@
       }
     },
     "dashboardPreview": {
-      "badge": "See It In Action",
-      "title": "Your recruiting command center",
+      "titleBlack": "Your Recruiting",
+      "titlePurple": "Command Center",
       "subtitle": "From candidate pipeline to detailed scorecards and developer integrations—everything you need in one place.",
       "tabs": {
         "pipeline": "Candidate Pipeline",
@@ -1972,7 +1972,6 @@
     "needsImprovement": "Needs Improvement"
   },
   "pricing": {
-    "badge": "Pricing",
     "titleFirst": "Pricing",
     "subtitle": "Start free, upgrade when you're ready. Clear plans, predictable usage, no surprises.",
     "microcopy": "Built for individuals today — ready for teams and internal HR tomorrow.",

@@ -18,7 +18,7 @@ export const useTokenValidation = (navigate: any) => {
         
         // First check if user is authenticated
         if (!isSignedIn) {
-            console.log("User not authenticated. Redirecting to home.");
+            console.log("User not authenticated. Redirecting to landing.");
             navigate('/');
             return;
         }
@@ -26,8 +26,8 @@ export const useTokenValidation = (navigate: any) => {
         const tokenData = getTokenData();
 
         if (!tokenData) {
-            console.log("No valid interview session found. Redirecting to home.");
-            navigate('/');
+            console.log("No valid interview session found. Redirecting to dashboard.");
+            navigate('/app/b2c/dashboard');
             return;
         }
 
@@ -70,14 +70,14 @@ export const useTokenValidation = (navigate: any) => {
             const currentTime = Date.now();
 
             if (isNaN(expTime) || expTime < currentTime) {
-                console.log("Interview session expired. Redirecting to home.");
-                navigate('/');
+                console.log("Interview session expired. Redirecting to dashboard.");
+                navigate('/app/b2c/dashboard');
                 return false;
             }
             return true;
         } catch (e) {
             console.error("Error validating interview session:", e);
-            navigate('/');
+            navigate('/app/b2c/dashboard');
             return false;
         }
     };

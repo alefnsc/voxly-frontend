@@ -5,7 +5,7 @@ export const useStateValidation = (navigate, locationState) => {
         if (!locationState?.body?.metadata) {
             console.log("Missing metadata in state. Attempting recovery...");
             const tokenId = localStorage.getItem('interviewValidationToken');
-            navigate('/', { state: { recoveryAttempt: true, tokenId } });
+            navigate('/app/b2c/dashboard', { state: { recoveryAttempt: true, tokenId } });
             return;
         }
 
@@ -19,8 +19,8 @@ export const useStateValidation = (navigate, locationState) => {
             !metadata.job_description?.trim() ||
             !metadata.interviewee_cv?.trim()
         ) {
-            console.log("Missing required metadata. Redirecting to home.");
-            navigate('/');
+            console.log("Missing required metadata. Redirecting to dashboard.");
+            navigate('/app/b2c/dashboard');
         }
     }, [navigate, locationState]);
 };

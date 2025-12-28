@@ -124,9 +124,7 @@ export const PlatformShowcase: React.FC = () => {
           transition={{ duration: 0.6 }}
           className="text-center mb-8 sm:mb-12 lg:mb-16"
         >
-          <span className="inline-block px-3 py-1 text-xs font-semibold text-purple-700 bg-purple-100 rounded-full mb-3 sm:mb-4">
-            {t('landing.platformShowcase.badge')}
-          </span>
+
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 sm:mb-4">
             <span className="text-zinc-900">{t('landing.platformShowcase.titleBlack')}</span>{' '}
             <span className="text-purple-600">{t('landing.platformShowcase.titlePurple')}</span>

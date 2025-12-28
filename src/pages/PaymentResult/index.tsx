@@ -237,7 +237,7 @@ export default function PaymentResult() {
             if (countdownIntervalRef.current) {
               clearInterval(countdownIntervalRef.current)
             }
-            navigate('/')
+            navigate('/app/b2c/dashboard')
             return 0
           }
           return prev - 1
@@ -256,7 +256,7 @@ export default function PaymentResult() {
     if (countdownIntervalRef.current) {
       clearInterval(countdownIntervalRef.current)
     }
-    navigate('/')
+    navigate('/app/b2c/dashboard')
   }
 
   const handleTryAgain = () => {

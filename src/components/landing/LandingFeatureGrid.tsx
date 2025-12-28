@@ -54,7 +54,7 @@ export const LandingFeatureGrid: React.FC = () => {
   }
 
   return (
-    <section id="product" className="py-24 bg-white">
+    <section id="product" className="py-24 bg-white scroll-mt-20 md:scroll-mt-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           ref={ref}

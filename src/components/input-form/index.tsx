@@ -267,7 +267,7 @@ const InputForm: React.FC<InputFormProps> = ({ isMobile, credits }) => {
                     
                     <SignInButton 
                         mode="modal"
-                        forceRedirectUrl='/'
+                        forceRedirectUrl='/app/b2c/dashboard'
                     >
                         <Button
                             variant="default"

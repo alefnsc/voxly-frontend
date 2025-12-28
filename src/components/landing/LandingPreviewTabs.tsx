@@ -118,9 +118,6 @@ export const LandingPreviewTabs: React.FC = () => {
         >
           {/* Section Header */}
           <motion.div variants={itemVariants} className="text-center mb-8 sm:mb-12">
-            <span className="inline-block px-3 py-1 text-xs font-semibold text-purple-700 bg-purple-100 rounded-full mb-3 sm:mb-4">
-              {t('landing.previewTabs.badge', 'Product Preview')}
-            </span>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-zinc-900 mb-3 sm:mb-4">
               {t('landing.previewTabs.title', 'See Vocaid in')} <span className="text-purple-600">{t('landing.previewTabs.titleHighlight', 'Action')}</span>
             </h2>
