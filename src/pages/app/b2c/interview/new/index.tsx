@@ -132,7 +132,7 @@ const SimpleDropdown: React.FC<SimpleDropdownProps> = ({
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
         className={cn(
-          'w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl border transition-all text-left',
+          'w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl border transition-all text-left min-h-[48px]',
           error
             ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200'
             : 'border-gray-200 bg-white hover:border-purple-300 focus:border-purple-500 focus:ring-purple-200',
@@ -148,7 +148,7 @@ const SimpleDropdown: React.FC<SimpleDropdownProps> = ({
             </span>
           ) : placeholder}
         </span>
-        <ChevronDown className={cn('w-5 h-5 text-gray-400 transition-transform', isOpen && 'rotate-180')} />
+        <ChevronDown className={cn('w-5 h-5 text-gray-400 transition-transform flex-shrink-0', isOpen && 'rotate-180')} />
       </button>
       
       <AnimatePresence>
@@ -169,7 +169,7 @@ const SimpleDropdown: React.FC<SimpleDropdownProps> = ({
                   setIsOpen(false);
                 }}
                 className={cn(
-                  'w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-purple-50 transition-colors',
+                  'w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-purple-50 transition-colors min-h-[48px]',
                   value === option.value && 'bg-purple-50 text-purple-700'
                 )}
               >
@@ -242,7 +242,7 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
         className={cn(
-          'w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl border transition-all text-left',
+          'w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl border transition-all text-left min-h-[48px]',
           error
             ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200'
             : 'border-gray-200 bg-white hover:border-purple-300 focus:border-purple-500 focus:ring-purple-200',
@@ -258,7 +258,7 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
             </span>
           ) : placeholder}
         </span>
-        <ChevronDown className={cn('w-5 h-5 text-gray-400 transition-transform', isOpen && 'rotate-180')} />
+        <ChevronDown className={cn('w-5 h-5 text-gray-400 transition-transform flex-shrink-0', isOpen && 'rotate-180')} />
       </button>
       
       <AnimatePresence>
@@ -271,7 +271,7 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
             className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden"
           >
             {/* Search input */}
-            <div className="p-2 border-b border-gray-100">
+            <div className="p-2 sm:p-3 border-b border-gray-100">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
@@ -597,26 +597,26 @@ const B2CNewInterviewPage: React.FC = () => {
   return (
     <DefaultLayout>
       <div className="min-h-screen bg-gray-50">
-        <div className="max-w-3xl mx-auto px-4 py-8">
+        <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 py-4 sm:py-6 lg:py-8">
           {/* Breadcrumbs */}
           <InterviewBreadcrumbs
             currentStage="details"
             showBackArrow
-            className="mb-8"
+            className="mb-4 sm:mb-8"
           />
           
           {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <div className="text-center mb-6 sm:mb-8">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
               {t('interview.newInterview.title', 'Set Up Your Interview')}
             </h1>
-            <p className="text-gray-600">
+            <p className="text-sm sm:text-base text-gray-600">
               {t('interview.newInterview.subtitle', 'Configure your practice interview details')}
             </p>
           </div>
           
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
             {/* Job Title */}
             <div>
               <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
@@ -629,7 +629,7 @@ const B2CNewInterviewPage: React.FC = () => {
                 onChange={(e) => handleChange('jobTitle', e.target.value)}
                 placeholder={t('interview.jobTitlePlaceholder', 'e.g., Software Engineer')}
                 className={cn(
-                  'w-full px-4 py-3 rounded-xl border transition-all focus:outline-none focus:ring-2',
+                  'w-full px-4 py-3 sm:py-3 rounded-xl border transition-all focus:outline-none focus:ring-2 min-h-[48px]',
                   errors.jobTitle
                     ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200'
                     : 'border-gray-200 bg-white hover:border-purple-300 focus:border-purple-500 focus:ring-purple-200'
@@ -676,7 +676,7 @@ const B2CNewInterviewPage: React.FC = () => {
                 onChange={(e) => handleChange('company', e.target.value)}
                 placeholder={t('interview.targetCompanyPlaceholder', 'e.g., Google, Amazon, Microsoft')}
                 className={cn(
-                  'w-full px-4 py-3 rounded-xl border transition-all focus:outline-none focus:ring-2',
+                  'w-full px-4 py-3 sm:py-3 rounded-xl border transition-all focus:outline-none focus:ring-2 min-h-[48px]',
                   errors.company
                     ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200'
                     : 'border-gray-200 bg-white hover:border-purple-300 focus:border-purple-500 focus:ring-purple-200'

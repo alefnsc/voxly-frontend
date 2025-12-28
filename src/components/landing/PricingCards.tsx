@@ -52,30 +52,30 @@ export const PricingCards: React.FC<PricingCardsProps> = ({ onDemoClick }) => {
   }
 
   return (
-    <section id="pricing" className="py-24 bg-zinc-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="pricing" className="py-12 sm:py-16 lg:py-24 bg-zinc-50">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           ref={ref}
           variants={containerVariants}
           initial="hidden"
           animate={inView ? 'visible' : 'hidden'}
         >
-          <div className="text-center mb-12">
+          <div className="text-center mb-8 sm:mb-10 lg:mb-12">
             <motion.span
               variants={itemVariants}
-              className="inline-block px-3 py-1 text-xs font-semibold text-purple-700 bg-purple-100 rounded-full mb-4"
+              className="inline-block px-3 py-1 text-xs font-semibold text-purple-700 bg-purple-100 rounded-full mb-3 sm:mb-4"
             >
               {t('landing.pricing.badge')}
             </motion.span>
             <motion.h2
               variants={itemVariants}
-              className="text-3xl sm:text-4xl font-bold text-zinc-900 mb-4"
+              className="text-2xl sm:text-3xl lg:text-4xl font-bold text-zinc-900 mb-3 sm:mb-4"
             >
               {t('landing.pricing.title')}
             </motion.h2>
             <motion.p
               variants={itemVariants}
-              className="text-lg text-zinc-600 max-w-2xl mx-auto"
+              className="text-base sm:text-lg text-zinc-600 max-w-2xl mx-auto px-2"
             >
               {t('landing.pricing.subtitle')}
             </motion.p>
@@ -83,7 +83,7 @@ export const PricingCards: React.FC<PricingCardsProps> = ({ onDemoClick }) => {
 
           <motion.div
             variants={containerVariants}
-            className="grid md:grid-cols-3 gap-6 lg:gap-8"
+            className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8"
           >
             {planConfigs.map((plan) => {
               const isDisabled = plan.isB2B && !FEATURES.B2B_RECRUITER_PLATFORM_ENABLED

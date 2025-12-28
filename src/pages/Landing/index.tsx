@@ -16,15 +16,24 @@ import {
   LandingTrust,
   LandingPreviewTabs,
   DashboardPreviewTabs,
+  WaitlistModal,
 } from 'components/landing'
+import type { WaitlistModule } from 'components/landing/WaitlistModal'
 import { PricingSection } from 'components/landing/pricing'
 import { FREE_TRIAL_CREDITS } from 'config/credits'
 
 export const Landing: React.FC = () => {
   const [demoModalOpen, setDemoModalOpen] = useState(false)
+  const [waitlistOpen, setWaitlistOpen] = useState(false)
+  const [preselectedModule, setPreselectedModule] = useState<WaitlistModule | undefined>()
 
   const handleDemoClick = () => {
     setDemoModalOpen(true)
+  }
+
+  const handleWaitlistClick = (module: WaitlistModule) => {
+    setPreselectedModule(module)
+    setWaitlistOpen(true)
   }
 
   const creditsText = FREE_TRIAL_CREDITS === 1 ? '1 Free Credit' : `${FREE_TRIAL_CREDITS} Free Credits`
@@ -70,8 +79,8 @@ export const Landing: React.FC = () => {
           
           {/* B2B Sections with anchor for navigation */}
           <div id="organizations">
-            <LandingB2BRecruiting />
-            <LandingB2BEmployeeHub />
+            <LandingB2BRecruiting onWaitlistClick={() => handleWaitlistClick('recruiter_platform')} />
+            <LandingB2BEmployeeHub onWaitlistClick={() => handleWaitlistClick('employee_hub')} />
           </div>
           
           {/* Trust/Security section */}
@@ -92,6 +101,11 @@ export const Landing: React.FC = () => {
         </main>
         
         <DemoModal open={demoModalOpen} onOpenChange={setDemoModalOpen} />
+        <WaitlistModal
+          open={waitlistOpen}
+          onOpenChange={setWaitlistOpen}
+          preselectedModule={preselectedModule}
+        />
       </div>
     </>
   )

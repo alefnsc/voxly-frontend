@@ -101,9 +101,12 @@ export const LandingHeader: React.FC<LandingHeaderProps> = ({ onDemoClick }) => 
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="md:hidden text-sm font-medium text-zinc-700 hover:text-zinc-900 px-3 py-2 rounded-md hover:bg-zinc-100 transition-colors"
+              className="md:hidden text-sm font-medium text-zinc-700 hover:text-zinc-900 px-3 py-2 rounded-md hover:bg-zinc-100 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+              aria-label={t('landing.nav.menu')}
             >
-              {t('landing.nav.menu')}
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
             </button>
           </div>
         </nav>
@@ -117,12 +120,12 @@ export const LandingHeader: React.FC<LandingHeaderProps> = ({ onDemoClick }) => 
               <BrandMark size="md" linkToHome={false} />
             </DialogTitle>
           </DialogHeader>
-          <div className="flex flex-col gap-2 py-4">
+          <div className="flex flex-col gap-1 py-4">
             {navLinks.map((link) => (
               <button
                 key={link.href}
                 onClick={() => scrollToSection(link.href)}
-                className="text-left px-4 py-3 text-base font-medium text-zinc-700 hover:text-zinc-900 hover:bg-zinc-50 rounded-lg transition-colors"
+                className="text-left px-4 py-3.5 text-base font-medium text-zinc-700 hover:text-zinc-900 hover:bg-zinc-50 rounded-lg transition-colors min-h-[48px]"
               >
                 {link.label}
               </button>
@@ -133,7 +136,7 @@ export const LandingHeader: React.FC<LandingHeaderProps> = ({ onDemoClick }) => 
                 setMobileMenuOpen(false)
                 navigate('/sign-in')
               }}
-              className="text-left px-4 py-3 text-base font-medium text-zinc-700 hover:text-zinc-900 hover:bg-zinc-50 rounded-lg transition-colors"
+              className="text-left px-4 py-3.5 text-base font-medium text-zinc-700 hover:text-zinc-900 hover:bg-zinc-50 rounded-lg transition-colors min-h-[48px]"
             >
               {t('common.login')}
             </button>
@@ -142,7 +145,7 @@ export const LandingHeader: React.FC<LandingHeaderProps> = ({ onDemoClick }) => 
                 setMobileMenuOpen(false)
                 navigate('/sign-up')
               }}
-              className="mx-4 mt-2 bg-purple-600 hover:bg-purple-700 text-white"
+              className="mx-4 mt-2 bg-purple-600 hover:bg-purple-700 text-white min-h-[48px]"
             >
               {t('common.signUp')}
             </Button>

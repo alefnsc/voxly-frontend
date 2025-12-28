@@ -74,30 +74,30 @@ export const FAQAccordion: React.FC = () => {
   }
 
   return (
-    <section id="faq" className="py-24 bg-white">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="faq" className="py-12 sm:py-16 lg:py-24 bg-white">
+      <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           ref={ref}
           variants={containerVariants}
           initial="hidden"
           animate={inView ? 'visible' : 'hidden'}
         >
-          <div className="text-center mb-12">
+          <div className="text-center mb-8 sm:mb-12">
             <motion.span
               variants={itemVariants}
-              className="inline-block px-3 py-1 text-xs font-semibold text-purple-700 bg-purple-100 rounded-full mb-4"
+              className="inline-block px-3 py-1 text-xs font-semibold text-purple-700 bg-purple-100 rounded-full mb-3 sm:mb-4"
             >
               {t('landing.faq.badge')}
             </motion.span>
             <motion.h2
               variants={itemVariants}
-              className="text-3xl sm:text-4xl font-bold text-zinc-900 mb-4"
+              className="text-2xl sm:text-3xl lg:text-4xl font-bold text-zinc-900 mb-3 sm:mb-4"
             >
               {t('landing.faq.title')}
             </motion.h2>
             <motion.p
               variants={itemVariants}
-              className="text-lg text-zinc-600"
+              className="text-base sm:text-lg text-zinc-600 px-2"
             >
               {t('landing.faq.subtitle')}
             </motion.p>

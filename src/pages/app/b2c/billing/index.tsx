@@ -215,16 +215,16 @@ export default function BillingPage() {
 
   return (
     <DefaultLayout className="bg-zinc-50">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        <div className="space-y-8">
+      <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 lg:py-12">
+        <div className="space-y-4 sm:space-y-6 lg:space-y-8">
           
           {/* Header - Brand Pattern: first word black, second word purple */}
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">
               <span className="text-zinc-900">Credits &</span>{' '}
               <span className="text-purple-600">Billing</span>
             </h1>
-            <p className="text-zinc-500 mt-2">
+            <p className="text-sm sm:text-base text-zinc-500 mt-1 sm:mt-2">
               {t('creditsPage.billing.pageSubtitle', 'Manage your credits and purchase more interviews')}
             </p>
           </div>
@@ -247,30 +247,30 @@ export default function BillingPage() {
           )}
 
           {/* Balance Card - Purple Gradient Hero */}
-          <div className="relative overflow-hidden bg-gradient-to-br from-purple-600 via-purple-700 to-purple-900 rounded-2xl p-6 sm:p-8 text-white shadow-xl">
+          <div className="relative overflow-hidden bg-gradient-to-br from-purple-600 via-purple-700 to-purple-900 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 text-white shadow-xl">
             {/* Decorative elements */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+            <div className="absolute top-0 right-0 w-48 sm:w-64 h-48 sm:h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute bottom-0 left-0 w-36 sm:w-48 h-36 sm:h-48 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
             
             <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <p className="text-purple-200 text-sm font-medium uppercase tracking-wide">
+                <p className="text-purple-200 text-xs sm:text-sm font-medium uppercase tracking-wide">
                   {t('creditsPage.billing.currentBalance', 'Current Balance')}
                 </p>
                 <div className="flex items-baseline gap-2 mt-1">
                   {isLoadingBalance ? (
-                    <span className="text-2xl text-purple-200 animate-pulse">{t('billing.loading')}</span>
+                    <span className="text-xl sm:text-2xl text-purple-200 animate-pulse">{t('billing.loading')}</span>
                   ) : (
                     <>
-                      <span className="text-5xl sm:text-6xl font-bold">{balance ?? 0}</span>
-                      <span className="text-purple-200 text-lg font-medium">
+                      <span className="text-4xl sm:text-5xl lg:text-6xl font-bold">{balance ?? 0}</span>
+                      <span className="text-purple-200 text-base sm:text-lg font-medium">
                         {t('creditsPage.billing.credits', 'credits')}
                       </span>
                     </>
                   )}
                 </div>
-                <p className="text-purple-200/80 text-sm mt-2 flex items-center gap-2">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <p className="text-purple-200/80 text-xs sm:text-sm mt-2 flex items-center gap-2">
+                  <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
                   {t('creditsPage.billing.creditsNeverExpire', 'Credits never expire')}
@@ -279,7 +279,7 @@ export default function BillingPage() {
               <button
                 onClick={() => refreshBalance()}
                 disabled={isLoadingBalance}
-                className="px-5 py-2.5 bg-white/15 hover:bg-white/25 backdrop-blur-sm text-white rounded-xl text-sm font-semibold transition-all disabled:opacity-50 border border-white/20"
+                className="px-4 sm:px-5 py-2.5 bg-white/15 hover:bg-white/25 backdrop-blur-sm text-white rounded-xl text-sm font-semibold transition-all disabled:opacity-50 border border-white/20 min-h-[44px]"
               >
                 {isLoadingBalance ? t('billing.refreshing') : t('billing.refresh')}
               </button>
@@ -287,17 +287,17 @@ export default function BillingPage() {
           </div>
 
           {/* Payment Provider Selector */}
-          <div className="bg-white border border-zinc-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="bg-white border border-zinc-200 rounded-xl p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex flex-col gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
                   <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                   </svg>
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <h3 className="font-semibold text-zinc-900">{t('billing.paymentMethod')}</h3>
-                  <p className="text-sm text-zinc-500">
+                  <p className="text-xs sm:text-sm text-zinc-500 truncate">
                     {selectedProvider === detectedProvider 
                       ? t('billing.recommendedForRegion') 
                       : t('billing.manuallySelected')}
@@ -309,7 +309,7 @@ export default function BillingPage() {
                 <div className="flex flex-col sm:flex-row gap-2">
                   <button
                     onClick={() => handleSelectProvider('paypal')}
-                    className={`px-5 py-2.5 rounded-lg border-2 font-medium transition-all ${
+                    className={`flex-1 px-4 sm:px-5 py-3 rounded-lg border-2 font-medium transition-all min-h-[48px] ${
                       selectedProvider === 'paypal'
                         ? 'border-purple-600 bg-purple-50 text-purple-700'
                         : 'border-zinc-200 hover:border-purple-300 text-zinc-700'
@@ -319,7 +319,7 @@ export default function BillingPage() {
                   </button>
                   <button
                     onClick={() => handleSelectProvider('mercadopago')}
-                    className={`px-5 py-2.5 rounded-lg border-2 font-medium transition-all ${
+                    className={`flex-1 px-4 sm:px-5 py-3 rounded-lg border-2 font-medium transition-all min-h-[48px] ${
                       selectedProvider === 'mercadopago'
                         ? 'border-purple-600 bg-purple-50 text-purple-700'
                         : 'border-zinc-200 hover:border-purple-300 text-zinc-700'
@@ -329,19 +329,19 @@ export default function BillingPage() {
                   </button>
                   <button
                     onClick={() => setShowProviderSelector(false)}
-                    className="px-4 py-2 text-zinc-500 hover:text-zinc-700"
+                    className="px-4 py-3 text-zinc-500 hover:text-zinc-700 min-h-[48px]"
                   >
                     {t('billing.cancel')}
                   </button>
                 </div>
               ) : (
-                <div className="flex items-center gap-3">
-                  <span className="px-5 py-2.5 bg-purple-50 rounded-lg font-semibold text-purple-700 border border-purple-200">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="px-4 sm:px-5 py-2.5 bg-purple-50 rounded-lg font-semibold text-purple-700 border border-purple-200">
                     {providerName}
                   </span>
                   <button
                     onClick={() => setShowProviderSelector(true)}
-                    className="text-sm text-purple-600 hover:text-purple-700 font-semibold underline underline-offset-2"
+                    className="text-sm text-purple-600 hover:text-purple-700 font-semibold underline underline-offset-2 min-h-[44px] flex items-center"
                   >
                     {t('billing.change')}
                   </button>
@@ -352,15 +352,15 @@ export default function BillingPage() {
 
           {/* Credit Packages - Section Title with Brand Pattern */}
           <div>
-            <h2 className="text-xl font-bold mb-6">
+            <h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6">
               <span className="text-zinc-900">Buy</span>{' '}
               <span className="text-purple-600">Credits</span>
             </h2>
             
             {isLoadingPackages ? (
-              <div className="grid md:grid-cols-3 gap-6">
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="bg-white rounded-2xl border border-zinc-200 p-6 animate-pulse shadow-sm">
+                  <div key={i} className="bg-white rounded-xl sm:rounded-2xl border border-zinc-200 p-4 sm:p-6 animate-pulse shadow-sm">
                     <div className="h-6 bg-zinc-200 rounded w-1/2 mb-4" />
                     <div className="h-10 bg-zinc-200 rounded w-2/3 mb-4" />
                     <div className="h-4 bg-zinc-200 rounded w-full mb-2" />
@@ -369,31 +369,31 @@ export default function BillingPage() {
                 ))}
               </div>
             ) : (
-              <div className="grid md:grid-cols-3 gap-6">
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {packages.map((pkg) => (
                   <div
                     key={pkg.id}
-                    className={`relative bg-white rounded-2xl transition-all hover:shadow-lg ${
+                    className={`relative bg-white rounded-xl sm:rounded-2xl transition-all hover:shadow-lg ${
                       isPopular(pkg.id)
-                        ? 'border-2 border-purple-500 shadow-lg shadow-purple-500/10 scale-[1.02]'
+                        ? 'border-2 border-purple-500 shadow-lg shadow-purple-500/10 sm:scale-[1.02]'
                         : 'border border-zinc-200 shadow-sm hover:border-purple-300'
                     }`}
                   >
                     {isPopular(pkg.id) && (
-                      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                        <span className="bg-gradient-to-r from-purple-600 to-purple-500 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-md uppercase tracking-wide">
+                      <div className="absolute -top-3 sm:-top-3.5 left-1/2 -translate-x-1/2">
+                        <span className="bg-gradient-to-r from-purple-600 to-purple-500 text-white text-[10px] sm:text-xs font-bold px-3 sm:px-4 py-1 sm:py-1.5 rounded-full shadow-md uppercase tracking-wide whitespace-nowrap">
                           {t('billing.bestValue')}
                         </span>
                       </div>
                     )}
 
-                    <div className="p-6">
-                      <h3 className="text-lg font-bold text-zinc-900">{pkg.name}</h3>
-                      <p className="text-sm text-zinc-500 mt-1">{pkg.description}</p>
+                    <div className="p-4 sm:p-6">
+                      <h3 className="text-base sm:text-lg font-bold text-zinc-900">{pkg.name}</h3>
+                      <p className="text-xs sm:text-sm text-zinc-500 mt-1">{pkg.description}</p>
 
-                      <div className="mt-6">
+                      <div className="mt-4 sm:mt-6">
                         <div className="flex items-baseline gap-1">
-                          <span className={`text-3xl font-bold ${isPopular(pkg.id) ? 'text-purple-600' : 'text-zinc-900'}`}>
+                          <span className={`text-2xl sm:text-3xl font-bold ${isPopular(pkg.id) ? 'text-purple-600' : 'text-zinc-900'}`}>
                             {formatCurrency(pkg.price, pkg.currency)}
                           </span>
                         </div>
@@ -402,31 +402,31 @@ export default function BillingPage() {
                             ≈ {formatCurrency(pkg.priceUSD, 'USD')}
                           </p>
                         )}
-                        <p className="text-sm text-zinc-500 mt-2 font-medium">
+                        <p className="text-xs sm:text-sm text-zinc-500 mt-2 font-medium">
                           {t('billing.interviewCredits', { count: pkg.credits })}
                         </p>
                       </div>
 
-                      <ul className="mt-6 space-y-3">
-                        <li className="flex items-center gap-3 text-sm text-zinc-600">
-                          <span className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center">
-                            <svg className="w-3 h-3 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                      <ul className="mt-4 sm:mt-6 space-y-2 sm:space-y-3">
+                        <li className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-zinc-600">
+                          <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                            <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                             </svg>
                           </span>
                           {t('billing.practiceInterviews', { count: pkg.credits })}
                         </li>
-                        <li className="flex items-center gap-3 text-sm text-zinc-600">
-                          <span className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center">
-                            <svg className="w-3 h-3 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                        <li className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-zinc-600">
+                          <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                            <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                             </svg>
                           </span>
                           {t('billing.aiFeedback')}
                         </li>
-                        <li className="flex items-center gap-3 text-sm text-zinc-600">
-                          <span className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center">
-                            <svg className="w-3 h-3 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                        <li className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-zinc-600">
+                          <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                            <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                             </svg>
                           </span>
@@ -437,7 +437,7 @@ export default function BillingPage() {
                       <button
                         onClick={() => handlePurchase(pkg.id)}
                         disabled={isPurchasing}
-                        className={`w-full mt-6 py-3.5 px-4 rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                        className={`w-full mt-4 sm:mt-6 py-3 sm:py-3.5 px-4 rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed min-h-[48px] ${
                           isPopular(pkg.id)
                             ? 'bg-gradient-to-r from-purple-600 to-purple-500 text-white hover:from-purple-700 hover:to-purple-600 shadow-md shadow-purple-500/25'
                             : 'bg-zinc-100 text-zinc-900 hover:bg-purple-50 hover:text-purple-700 border border-zinc-200 hover:border-purple-300'

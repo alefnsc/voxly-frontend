@@ -364,31 +364,38 @@ export default function InterviewDetails() {
 
   return (
     <div className="min-h-screen bg-zinc-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6 sm:mb-8">
+        <div className="flex flex-col gap-4 mb-4 sm:mb-6 lg:mb-8">
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
-              <ArrowLeft onClick={handleBackNavigation} className="w-5 h-5 text-zinc-600 hover:text-zinc-900 transition-colors cursor-pointer" />
-              <h1 className="text-2xl sm:text-3xl font-bold text-zinc-900">
+              <button 
+                onClick={handleBackNavigation} 
+                className="p-2 -ml-2 hover:bg-zinc-100 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                aria-label="Go back"
+              >
+                <ArrowLeft className="w-5 h-5 text-zinc-600" />
+              </button>
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900">
                 {t('interviewDetails.title')} <span className="text-purple-600">{t('interviewDetails.titleHighlight')}</span>
               </h1>
             </div>
-            <p className="text-zinc-600 mt-1">
+            <p className="text-sm sm:text-base text-zinc-600 mt-1 ml-10 sm:ml-12">
               {t('interviewDetails.subtitle')}
             </p>
           </div>
 
           {/* Status Badge and Download Buttons */}
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 ml-10 sm:ml-0">
             {/* Download Resume Button */}
             {interview.resumeData && (
               <button
                 onClick={handleDownloadResume}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-sm font-medium transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-sm font-medium transition-colors min-h-[40px]"
               >
                 <Download className="w-4 h-4" />
-                {t('interviewDetails.resume')}
+                <span className="hidden sm:inline">{t('interviewDetails.resume')}</span>
+                <span className="sm:hidden">Resume</span>
               </button>
             )}
 
@@ -396,7 +403,7 @@ export default function InterviewDetails() {
             {interview.feedbackPdf && (
               <button
                 onClick={handleDownloadFeedback}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-700 rounded-full text-sm font-medium transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-2 bg-purple-100 hover:bg-purple-200 text-purple-700 rounded-full text-sm font-medium transition-colors min-h-[40px]"
               >
                 <Download className="w-4 h-4" />
                 {t('interviewDetails.feedbackButton')}

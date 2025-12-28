@@ -106,8 +106,8 @@ const TopBar: React.FC = () => {
   
   return (
     <>
-      <nav className="flex h-[80px] items-center justify-center border-b border-zinc-200 bg-white" role="navigation" aria-label="Main navigation">
-        <div className={`flex flex-row items-center w-full max-w-6xl px-6 sm:px-8 md:px-10 lg:px-8 ${isSignedIn ? 'justify-between lg:justify-end' : 'justify-between'}`}>
+      <nav className="flex h-[60px] sm:h-[80px] items-center justify-center border-b border-zinc-200 bg-white" role="navigation" aria-label="Main navigation">
+        <div className={`flex flex-row items-center w-full max-w-7xl px-4 sm:px-6 lg:px-8 ${isSignedIn ? 'justify-between lg:justify-end' : 'justify-between'}`}>
           {/* Logo - Hidden on desktop when authenticated (sidebar has the logo) */}
           {isSignedIn ? (
             <div className="flex justify-center items-center lg:hidden">

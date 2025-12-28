@@ -108,8 +108,8 @@ export const LandingPreviewTabs: React.FC = () => {
   ]
 
   return (
-    <section id="product-preview" className="py-24 bg-zinc-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="product-preview" className="py-12 sm:py-16 lg:py-24 bg-zinc-50">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           ref={ref}
           variants={containerVariants}
@@ -117,14 +117,14 @@ export const LandingPreviewTabs: React.FC = () => {
           animate={inView ? 'visible' : 'hidden'}
         >
           {/* Section Header */}
-          <motion.div variants={itemVariants} className="text-center mb-12">
-            <span className="inline-block px-3 py-1 text-xs font-semibold text-purple-700 bg-purple-100 rounded-full mb-4">
+          <motion.div variants={itemVariants} className="text-center mb-8 sm:mb-12">
+            <span className="inline-block px-3 py-1 text-xs font-semibold text-purple-700 bg-purple-100 rounded-full mb-3 sm:mb-4">
               {t('landing.previewTabs.badge', 'Product Preview')}
             </span>
-            <h2 className="text-3xl sm:text-4xl font-bold text-zinc-900 mb-4">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-zinc-900 mb-3 sm:mb-4">
               {t('landing.previewTabs.title', 'See Vocaid in')} <span className="text-purple-600">{t('landing.previewTabs.titleHighlight', 'Action')}</span>
             </h2>
-            <p className="text-lg text-zinc-600 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-zinc-600 max-w-2xl mx-auto px-2">
               {t('landing.previewTabs.subtitle', 'Explore what you can do with Vocaid. From personal interview practice to enterprise recruiting.')}
             </p>
           </motion.div>
@@ -132,43 +132,46 @@ export const LandingPreviewTabs: React.FC = () => {
           {/* Tabs */}
           <motion.div variants={itemVariants}>
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              {/* Tab List */}
-              <TabsList className="w-full flex flex-wrap justify-center gap-2 bg-transparent mb-8">
-                {tabConfig.map((tab) => (
-                  <TabsTrigger
-                    key={tab.id}
-                    value={tab.id}
-                    className="relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all data-[state=active]:bg-purple-600 data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-zinc-600 data-[state=inactive]:border data-[state=inactive]:border-zinc-200 data-[state=inactive]:hover:border-purple-300"
-                  >
-                    <tab.icon className="w-4 h-4 mr-2 inline" />
-                    {tab.label}
-                    {tab.comingSoon && (
-                      <span className="ml-2 px-1.5 py-0.5 text-[10px] bg-zinc-200 text-zinc-600 rounded-full data-[state=active]:bg-purple-500 data-[state=active]:text-purple-100">
-                        Soon
-                      </span>
-                    )}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
+              {/* Tab List - horizontal scroll on mobile */}
+              <div className="overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
+                <TabsList className="w-max sm:w-full flex justify-start sm:justify-center gap-2 bg-transparent mb-6 sm:mb-8">
+                  {tabConfig.map((tab) => (
+                    <TabsTrigger
+                      key={tab.id}
+                      value={tab.id}
+                      className="relative px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap min-h-[40px] data-[state=active]:bg-purple-600 data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-zinc-600 data-[state=inactive]:border data-[state=inactive]:border-zinc-200 data-[state=inactive]:hover:border-purple-300"
+                    >
+                      <tab.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 inline" />
+                      <span className="hidden xs:inline">{tab.label}</span>
+                      <span className="xs:hidden">{tab.label.split(' ')[0]}</span>
+                      {tab.comingSoon && (
+                        <span className="ml-1.5 sm:ml-2 px-1 sm:px-1.5 py-0.5 text-[8px] sm:text-[10px] bg-zinc-200 text-zinc-600 rounded-full data-[state=active]:bg-purple-500 data-[state=active]:text-purple-100">
+                          Soon
+                        </span>
+                      )}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </div>
 
               {/* Tab Content Container */}
               <Card className="border-zinc-200 shadow-xl shadow-zinc-200/50 overflow-hidden bg-white">
-                {/* Mock Browser Header */}
-                <div className="bg-zinc-100 px-4 py-3 flex items-center gap-2 border-b border-zinc-200">
-                  <div className="flex gap-1.5">
-                    <div className="w-3 h-3 rounded-full bg-red-400" />
-                    <div className="w-3 h-3 rounded-full bg-yellow-400" />
-                    <div className="w-3 h-3 rounded-full bg-green-400" />
+                {/* Mock Browser Header - simplified on mobile */}
+                <div className="bg-zinc-100 px-3 sm:px-4 py-2 sm:py-3 flex items-center gap-2 border-b border-zinc-200">
+                  <div className="flex gap-1 sm:gap-1.5">
+                    <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-red-400" />
+                    <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-yellow-400" />
+                    <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-green-400" />
                   </div>
-                  <div className="flex-1 flex justify-center">
-                    <div className="px-4 py-1 bg-white rounded-md text-xs text-zinc-500 border border-zinc-200">
+                  <div className="flex-1 flex justify-center overflow-hidden">
+                    <div className="px-2 sm:px-4 py-1 bg-white rounded-md text-[10px] sm:text-xs text-zinc-500 border border-zinc-200 truncate max-w-[200px] sm:max-w-none">
                       vocaid.app/{activeTab === 'dashboard' ? 'app/b2c/dashboard' : activeTab === 'interview' ? 'app/b2c/interview/new' : activeTab === 'resumes' ? 'app/b2c/resumes' : activeTab === 'recruiter' ? 'app/b2b/analytics' : 'app/hr/knowledge'}
                     </div>
                   </div>
                 </div>
 
                 {/* Tab Panels */}
-                <div className="p-6 min-h-[400px]">
+                <div className="p-3 sm:p-4 lg:p-6 min-h-[300px] sm:min-h-[400px]">
                   <AnimatePresence mode="wait">
                     {/* Dashboard Tab */}
                     <TabsContent value="dashboard" className="mt-0">
@@ -244,8 +247,6 @@ export const LandingPreviewTabs: React.FC = () => {
 // Dashboard Preview Component
 // =============================================
 const DashboardPreview: React.FC = () => {
-  const { t } = useTranslation()
-  
   return (
     <div className="grid lg:grid-cols-3 gap-6">
       {/* Left: Stats + Chart */}
@@ -347,8 +348,6 @@ const DashboardPreview: React.FC = () => {
 // Interview Flow Preview Component
 // =============================================
 const InterviewFlowPreview: React.FC = () => {
-  const { t } = useTranslation()
-  
   return (
     <div className="space-y-8">
       {/* Stepper */}
@@ -431,8 +430,6 @@ const InterviewFlowPreview: React.FC = () => {
 // Resume Repository Preview Component
 // =============================================
 const ResumeRepositoryPreview: React.FC = () => {
-  const { t } = useTranslation()
-  
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -486,8 +483,6 @@ const ResumeRepositoryPreview: React.FC = () => {
 // Recruiter Analytics Preview Component
 // =============================================
 const RecruiterAnalyticsPreview: React.FC = () => {
-  const { t } = useTranslation()
-  
   return (
     <div className="space-y-6">
       {/* Coming Soon Banner */}
@@ -556,8 +551,6 @@ const RecruiterAnalyticsPreview: React.FC = () => {
 // HR Knowledge Hub Preview Component
 // =============================================
 const HRKnowledgeHubPreview: React.FC = () => {
-  const { t } = useTranslation()
-  
   return (
     <div className="space-y-6">
       {/* Coming Soon Banner */}

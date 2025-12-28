@@ -89,14 +89,14 @@ export const DefaultLayout = ({
   const showSidebar = isSignedIn && !hideSidebar;
   
   return (
-    <div data-testid="root-container" className={cn("flex min-h-screen", bgClasses)}>
+    <div data-testid="root-container" className={cn("flex min-h-[100dvh]", bgClasses)}>
       {/* Sidebar - only for authenticated users on lg+ screens */}
       {showSidebar && <Sidebar hasRecentInterview={hasRecentInterview} />}
       
       <main 
         data-testid="main-content" 
         className={cn(
-          "w-full min-h-screen",
+          "w-full min-h-[100dvh] flex flex-col",
           showSidebar && "lg:ml-[260px]"
         )}
       >
@@ -104,12 +104,12 @@ export const DefaultLayout = ({
         <div 
           data-testid="content-wrapper" 
           className={cn(
-            "pb-0 min-h-[calc(100vh-64px)]",
-            // Add bottom padding on mobile when bottom nav is visible
-            showSidebar && "pb-20 lg:pb-0"
+            "flex-1 min-h-0",
+            // Add bottom padding on mobile for bottom nav + iOS safe area
+            showSidebar && "pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0"
           )}
         >
-          <div data-testid="content-container" className={cn('mx-auto container pt-6 min-h-[calc(100vh-64px)]', otherClasses)}>
+          <div data-testid="content-container" className={cn('mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6', otherClasses)}>
             {children}
           </div>
         </div>

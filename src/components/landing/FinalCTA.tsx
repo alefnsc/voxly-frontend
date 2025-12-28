@@ -40,14 +40,14 @@ export const FinalCTA: React.FC<FinalCTAProps> = ({ onDemoClick }) => {
   }
 
   return (
-    <section className="py-24 bg-zinc-900 relative overflow-hidden">
+    <section className="py-12 sm:py-16 lg:py-24 bg-zinc-900 relative overflow-hidden">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl" />
+        <div className="absolute top-0 left-1/4 w-48 sm:w-72 lg:w-96 h-48 sm:h-72 lg:h-96 bg-purple-600/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-48 sm:w-72 lg:w-96 h-48 sm:h-72 lg:h-96 bg-purple-600/10 rounded-full blur-3xl" />
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div
           ref={ref}
           variants={containerVariants}
@@ -57,24 +57,24 @@ export const FinalCTA: React.FC<FinalCTAProps> = ({ onDemoClick }) => {
         >
           <motion.h2
             variants={itemVariants}
-            className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-6"
+            className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 sm:mb-6 px-2"
           >
             {t('landing.finalCta.title')}
           </motion.h2>
           <motion.p
             variants={itemVariants}
-            className="text-lg sm:text-xl text-zinc-300 mb-10 max-w-2xl mx-auto"
+            className="text-base sm:text-lg md:text-xl text-zinc-300 mb-6 sm:mb-8 lg:mb-10 max-w-2xl mx-auto px-2"
           >
             {t('landing.finalCta.subtitle')}
           </motion.p>
           <motion.div
             variants={itemVariants}
-            className="flex flex-col sm:flex-row gap-4 justify-center"
+            className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4 sm:px-0"
           >
             <Button
               size="lg"
               onClick={() => navigate('/sign-up')}
-              className="bg-white text-zinc-900 hover:bg-zinc-100 px-8 py-6 text-base font-semibold"
+              className="bg-white text-zinc-900 hover:bg-zinc-100 px-6 sm:px-8 py-5 sm:py-6 text-sm sm:text-base font-semibold min-h-[48px]"
             >
               {t('landing.finalCta.ctaWorkspace')}
             </Button>
@@ -82,7 +82,7 @@ export const FinalCTA: React.FC<FinalCTAProps> = ({ onDemoClick }) => {
               size="lg"
               variant="outline"
               onClick={onDemoClick}
-              className="border-zinc-600 text-white hover:bg-zinc-800 px-8 py-6 text-base font-semibold"
+              className="border-zinc-600 text-white hover:bg-zinc-800 px-6 sm:px-8 py-5 sm:py-6 text-sm sm:text-base font-semibold min-h-[48px]"
             >
               {t('landing.finalCta.ctaDemo')}
             </Button>

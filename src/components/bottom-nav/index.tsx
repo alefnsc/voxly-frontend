@@ -86,21 +86,22 @@ export const BottomNav: React.FC<BottomNavProps> = ({ hasRecentInterview = false
 
   return (
     <nav 
-      className="fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-zinc-200 lg:hidden z-40"
+      className="fixed bottom-0 left-0 right-0 bg-white border-t border-zinc-200 lg:hidden z-40"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       role="navigation"
       aria-label="Bottom navigation"
     >
-      <ul className="flex items-center justify-around h-full px-2">
+      <ul className="flex items-center justify-around h-16 px-1">
         {navItems.map((item) => {
           const isActive = isActivePath(item.path);
           const showPulse = item.id === 'interviews' && hasRecentInterview;
 
           return (
-            <li key={item.id} className="flex-1">
+            <li key={item.id} className="flex-1 min-w-0">
               <Link
                 to={item.path}
                 className={`
-                  relative flex flex-col items-center justify-center h-full px-2 text-center transition-colors
+                  relative flex flex-col items-center justify-center h-full px-1 py-2 text-center transition-colors min-h-[44px]
                   ${isActive 
                     ? 'text-purple-600' 
                     : 'text-zinc-500 hover:text-zinc-900'
@@ -118,7 +119,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ hasRecentInterview = false
                   />
                 )}
                 
-                <span className="relative text-xs font-semibold tracking-tight">
+                <span className="relative text-[10px] sm:text-xs font-semibold tracking-tight truncate w-full">
                   {t(item.labelKey)}
                   <PulseIndicator isActive={showPulse} />
                 </span>

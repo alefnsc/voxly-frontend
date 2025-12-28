@@ -7,13 +7,13 @@
 
 // Supported languages (the 7 app-compatible languages)
 export const SUPPORTED_LANGUAGES = [
-  { code: 'en', name: 'English', flag: 'US' },
-  { code: 'zh', name: '中文', flag: 'CN' },
-  { code: 'hi', name: 'हिन्दी', flag: 'IN' },
-  { code: 'es', name: 'Español', flag: 'ES' },
-  { code: 'pt', name: 'Português', flag: 'BR' },
-  { code: 'fr', name: 'Français', flag: 'FR' },
-  { code: 'ru', name: 'Русский', flag: 'RU' },
+  { code: 'en', name: 'English', flag: '🇺🇸' },
+  { code: 'zh', name: '中文', flag: '🇨🇳' },
+  { code: 'hi', name: 'हिन्दी', flag: '🇮🇳' },
+  { code: 'es', name: 'Español', flag: '🇪🇸' },
+  { code: 'pt', name: 'Português', flag: '🇧🇷' },
+  { code: 'fr', name: 'Français', flag: '🇫🇷' },
+  { code: 'ru', name: 'Русский', flag: '🇷🇺' },
 ] as const;
 
 // Personal Dashboard Preview Data

@@ -23,7 +23,6 @@ import { AuthInput } from './AuthInput';
 import { AuthSelect } from './AuthSelect';
 import { AuthButtons, AuthDivider } from './AuthButtons';
 import { AuthLegalNotice } from './AuthLegalNotice';
-import { AuthFeaturePills } from './AuthFeaturePills';
 
 // Form step types
 type SignUpStep = 'form' | 'verification' | 'complete';

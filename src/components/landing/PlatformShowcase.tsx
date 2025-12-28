@@ -115,23 +115,23 @@ export const PlatformShowcase: React.FC = () => {
   ]
 
   return (
-    <section className="py-24 bg-zinc-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="py-12 sm:py-16 lg:py-24 bg-zinc-50">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="text-center mb-8 sm:mb-12 lg:mb-16"
         >
-          <span className="inline-block px-3 py-1 text-xs font-semibold text-purple-700 bg-purple-100 rounded-full mb-4">
+          <span className="inline-block px-3 py-1 text-xs font-semibold text-purple-700 bg-purple-100 rounded-full mb-3 sm:mb-4">
             {t('landing.platformShowcase.badge')}
           </span>
-          <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 sm:mb-4">
             <span className="text-zinc-900">{t('landing.platformShowcase.titleBlack')}</span>{' '}
             <span className="text-purple-600">{t('landing.platformShowcase.titlePurple')}</span>
           </h2>
-          <p className="text-lg text-zinc-600 max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg text-zinc-600 max-w-2xl mx-auto px-2">
             {t('landing.platformShowcase.subtitle')}
           </p>
         </motion.div>
@@ -141,7 +141,7 @@ export const PlatformShowcase: React.FC = () => {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
-          className="grid lg:grid-cols-3 gap-8"
+          className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8"
         >
           {/* B2C: Interview Practice - First on mobile, Center on desktop - LIVE */}
           <motion.div

@@ -41,36 +41,36 @@ export const Integrations: React.FC = () => {
   const integrationFeatures = t('landing.integrations.features', { returnObjects: true }) as IntegrationFeature[]
 
   return (
-    <section id="integrations" className="py-24 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="integrations" className="py-12 sm:py-16 lg:py-24 bg-white">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           ref={ref}
           variants={containerVariants}
           initial="hidden"
           animate={inView ? 'visible' : 'hidden'}
         >
-          <div className="text-center mb-12">
+          <div className="text-center mb-8 sm:mb-12">
             <motion.span
               variants={itemVariants}
-              className="inline-block px-3 py-1 text-xs font-semibold text-purple-700 bg-purple-100 rounded-full mb-4"
+              className="inline-block px-3 py-1 text-xs font-semibold text-purple-700 bg-purple-100 rounded-full mb-3 sm:mb-4"
             >
               {t('landing.integrations.badge')}
             </motion.span>
             <motion.h2
               variants={itemVariants}
-              className="text-3xl sm:text-4xl font-bold text-zinc-900 mb-4"
+              className="text-2xl sm:text-3xl lg:text-4xl font-bold text-zinc-900 mb-3 sm:mb-4"
             >
               {t('landing.integrations.title')}
             </motion.h2>
             <motion.p
               variants={itemVariants}
-              className="text-lg text-zinc-600 max-w-2xl mx-auto"
+              className="text-base sm:text-lg text-zinc-600 max-w-2xl mx-auto px-2"
             >
               {t('landing.integrations.subtitle')}
             </motion.p>
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-8 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start">
             {/* Features List */}
             <motion.div variants={itemVariants} className="space-y-6">
               {integrationFeatures.map((feature, idx) => (

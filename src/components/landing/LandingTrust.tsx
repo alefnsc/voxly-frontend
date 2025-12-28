@@ -51,12 +51,12 @@ export const LandingTrust: React.FC = () => {
   }
 
   return (
-    <section className="py-20 bg-zinc-900 relative overflow-hidden">
+    <section className="py-12 sm:py-16 lg:py-20 bg-zinc-900 relative overflow-hidden">
       {/* Background decoration */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-600/5 rounded-full blur-3xl" />
+      <div className="absolute top-0 left-1/4 w-48 sm:w-72 lg:w-96 h-48 sm:h-72 lg:h-96 bg-purple-600/10 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 right-1/4 w-48 sm:w-72 lg:w-96 h-48 sm:h-72 lg:h-96 bg-purple-600/5 rounded-full blur-3xl" />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div
           ref={ref}
           variants={containerVariants}
@@ -64,15 +64,15 @@ export const LandingTrust: React.FC = () => {
           animate={inView ? 'visible' : 'hidden'}
         >
           {/* Section Header */}
-          <motion.div variants={itemVariants} className="text-center mb-12">
-            <span className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-purple-300 bg-purple-900/50 rounded-full mb-6">
-              <Shield className="w-4 h-4" />
+          <motion.div variants={itemVariants} className="text-center mb-8 sm:mb-10 lg:mb-12">
+            <span className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-purple-300 bg-purple-900/50 rounded-full mb-4 sm:mb-6">
+              <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               {t('landing.trust.badge', 'Security & Privacy')}
             </span>
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 sm:mb-4">
               {t('landing.trust.title', 'Built for')} <span className="text-purple-400">{t('landing.trust.titleHighlight', 'Trust')}</span>
             </h2>
-            <p className="text-lg text-zinc-400 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-zinc-400 max-w-2xl mx-auto px-2">
               {t('landing.trust.subtitle', 'Your data security and privacy are our top priorities. Designed with enterprise-grade protection from day one.')}
             </p>
           </motion.div>
@@ -80,18 +80,18 @@ export const LandingTrust: React.FC = () => {
           {/* Trust Cards */}
           <motion.div
             variants={containerVariants}
-            className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6"
           >
             {TRUST_FEATURES.map((feature, index) => {
               const IconComponent = ICON_MAP[feature.iconName]
               return (
                 <motion.div key={index} variants={itemVariants}>
-                  <Card className="h-full p-6 bg-zinc-800/50 border-zinc-700 hover:border-purple-500/50 hover:bg-zinc-800 transition-all duration-300 text-center">
-                    <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-purple-600/20 flex items-center justify-center">
-                      {IconComponent && <IconComponent className="w-6 h-6 text-purple-400" />}
+                  <Card className="h-full p-4 sm:p-6 bg-zinc-800/50 border-zinc-700 hover:border-purple-500/50 hover:bg-zinc-800 transition-all duration-300 text-center">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 sm:mb-4 rounded-full bg-purple-600/20 flex items-center justify-center">
+                      {IconComponent && <IconComponent className="w-5 h-5 sm:w-6 sm:h-6 text-purple-400" />}
                     </div>
-                    <h3 className="text-lg font-semibold text-white mb-2">{feature.title}</h3>
-                    <p className="text-sm text-zinc-400">{feature.description}</p>
+                    <h3 className="text-base sm:text-lg font-semibold text-white mb-1.5 sm:mb-2">{feature.title}</h3>
+                    <p className="text-xs sm:text-sm text-zinc-400">{feature.description}</p>
                   </Card>
                 </motion.div>
               )
@@ -99,7 +99,7 @@ export const LandingTrust: React.FC = () => {
           </motion.div>
 
           {/* Disclaimer */}
-          <motion.p variants={itemVariants} className="mt-10 text-center text-xs text-zinc-500">
+          <motion.p variants={itemVariants} className="mt-6 sm:mt-8 lg:mt-10 text-center text-[10px] sm:text-xs text-zinc-500 px-2">
             {t('landing.trust.disclaimer', 'Security features are designed for best practices. Specific compliance certifications may be in progress.')}
           </motion.p>
         </motion.div>

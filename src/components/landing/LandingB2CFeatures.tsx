@@ -64,11 +64,11 @@ export const LandingB2CFeatures: React.FC = () => {
   }
 
   return (
-    <section id="personal" className="py-24 bg-white relative overflow-hidden">
+    <section id="personal" className="py-12 sm:py-16 lg:py-24 bg-white relative overflow-hidden">
       {/* Subtle background decoration */}
       <div className="absolute top-0 right-0 w-1/3 h-1/2 bg-gradient-to-bl from-purple-50/50 to-transparent rounded-full blur-3xl -z-10" />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           ref={ref}
           variants={containerVariants}
@@ -76,15 +76,15 @@ export const LandingB2CFeatures: React.FC = () => {
           animate={inView ? 'visible' : 'hidden'}
         >
           {/* Section Header */}
-          <motion.div variants={itemVariants} className="text-center mb-16">
-            <span className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-purple-700 bg-purple-100 rounded-full mb-6">
-              <Sparkles className="w-4 h-4" />
+          <motion.div variants={itemVariants} className="text-center mb-8 sm:mb-12 lg:mb-16">
+            <span className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-purple-700 bg-purple-100 rounded-full mb-4 sm:mb-6">
+              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               {t('landing.b2c.badge', 'Available Now')}
             </span>
-            <h2 className="text-3xl sm:text-4xl font-bold text-zinc-900 mb-4">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-zinc-900 mb-3 sm:mb-4">
               {t('landing.b2c.title', 'Interview')} <span className="text-purple-600">{t('landing.b2c.titleHighlight', 'Practice')}</span>
             </h2>
-            <p className="text-lg text-zinc-600 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-zinc-600 max-w-2xl mx-auto px-2">
               {t('landing.b2c.subtitle', 'Practice AI-powered interviews, track your progress, and land your dream job. Start for free with credits included.')}
             </p>
           </motion.div>
@@ -92,7 +92,7 @@ export const LandingB2CFeatures: React.FC = () => {
           {/* Features Grid */}
           <motion.div
             variants={containerVariants}
-            className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12"
           >
             {B2C_FEATURES.map((feature) => {
               const IconComponent = ICON_MAP[feature.iconName] || Mic

@@ -181,30 +181,30 @@ export const DashboardPreviewTabs: React.FC = () => {
       }
 
   return (
-    <section id="solutions" className="py-24 bg-zinc-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="solutions" className="py-12 sm:py-16 lg:py-24 bg-zinc-50">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           ref={ref}
           variants={containerVariants}
           initial="hidden"
           animate={inView ? 'visible' : 'hidden'}
-          className="text-center mb-12"
+          className="text-center mb-8 sm:mb-10 lg:mb-12"
         >
           <motion.span
             variants={itemVariants}
-            className="inline-block px-3 py-1 text-xs font-semibold text-purple-700 bg-purple-100 rounded-full mb-4"
+            className="inline-block px-3 py-1 text-xs font-semibold text-purple-700 bg-purple-100 rounded-full mb-3 sm:mb-4"
           >
             {t('landing.dashboardPreview.badge')}
           </motion.span>
           <motion.h2
             variants={itemVariants}
-            className="text-3xl sm:text-4xl font-bold text-zinc-900 mb-4"
+            className="text-2xl sm:text-3xl lg:text-4xl font-bold text-zinc-900 mb-3 sm:mb-4"
           >
             {t('landing.dashboardPreview.title')}
           </motion.h2>
           <motion.p
             variants={itemVariants}
-            className="text-lg text-zinc-600 max-w-2xl mx-auto"
+            className="text-base sm:text-lg text-zinc-600 max-w-2xl mx-auto px-2"
           >
             {t('landing.dashboardPreview.subtitle')}
           </motion.p>
@@ -217,35 +217,35 @@ export const DashboardPreviewTabs: React.FC = () => {
         >
           <motion.div animate={floatAnimation}>
             <Card className="border-zinc-200 shadow-xl shadow-zinc-200/50 overflow-hidden">
-              <div className="bg-zinc-900 px-4 py-3 flex items-center gap-2">
-                <div className="flex gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-red-500" />
-                  <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                  <div className="w-3 h-3 rounded-full bg-green-500" />
+              <div className="bg-zinc-900 px-3 sm:px-4 py-2 sm:py-3 flex items-center gap-2">
+                <div className="flex gap-1 sm:gap-1.5">
+                  <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-red-500" />
+                  <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-yellow-500" />
+                  <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-green-500" />
                 </div>
-                <div className="flex-1 text-center">
-                  <span className="text-xs text-zinc-400 font-mono">dashboard.vocaid.com</span>
+                <div className="flex-1 text-center overflow-hidden">
+                  <span className="text-[10px] sm:text-xs text-zinc-400 font-mono truncate">dashboard.vocaid.com</span>
                 </div>
               </div>
               
               <Tabs defaultValue="pipeline" className="w-full">
-                <div className="border-b border-zinc-200 bg-white px-4 sm:px-6 py-4 overflow-x-auto">
-                  <TabsList className="w-max sm:w-auto justify-start whitespace-nowrap">
-                    <TabsTrigger value="pipeline" className="text-xs sm:text-sm">{t('landing.dashboardPreview.tabs.pipeline')}</TabsTrigger>
-                    <TabsTrigger value="scorecard" className="text-xs sm:text-sm">{t('landing.dashboardPreview.tabs.scorecard')}</TabsTrigger>
-                    <TabsTrigger value="developer" className="text-xs sm:text-sm">{t('landing.dashboardPreview.tabs.developer')}</TabsTrigger>
+                <div className="border-b border-zinc-200 bg-white px-3 sm:px-4 lg:px-6 py-3 sm:py-4 overflow-x-auto -mx-px scrollbar-hide">
+                  <TabsList className="w-max sm:w-auto justify-start whitespace-nowrap gap-1">
+                    <TabsTrigger value="pipeline" className="text-[11px] sm:text-xs lg:text-sm min-h-[36px] px-2 sm:px-3">{t('landing.dashboardPreview.tabs.pipeline')}</TabsTrigger>
+                    <TabsTrigger value="scorecard" className="text-[11px] sm:text-xs lg:text-sm min-h-[36px] px-2 sm:px-3">{t('landing.dashboardPreview.tabs.scorecard')}</TabsTrigger>
+                    <TabsTrigger value="developer" className="text-[11px] sm:text-xs lg:text-sm min-h-[36px] px-2 sm:px-3">{t('landing.dashboardPreview.tabs.developer')}</TabsTrigger>
                   </TabsList>
                 </div>
 
                 {/* Pipeline Tab */}
                 <TabsContent value="pipeline" className="m-0">
-                  <div className="p-4 sm:p-6 bg-white">
-                    <div className="grid lg:grid-cols-3 gap-6">
+                  <div className="p-3 sm:p-4 lg:p-6 bg-white">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
                       {/* Table */}
                       <div className="lg:col-span-2">
                         <div className="border border-zinc-200 rounded-lg overflow-hidden">
-                          <div className="bg-zinc-50 px-4 py-3 border-b border-zinc-200">
-                            <h3 className="font-semibold text-zinc-900">{t('landing.dashboardPreview.pipeline.activeCandidates')}</h3>
+                          <div className="bg-zinc-50 px-3 sm:px-4 py-2 sm:py-3 border-b border-zinc-200">
+                            <h3 className="font-semibold text-sm sm:text-base text-zinc-900">{t('landing.dashboardPreview.pipeline.activeCandidates')}</h3>
                           </div>
                           <div className="overflow-x-auto">
                             <table className="w-full min-w-[500px]">
