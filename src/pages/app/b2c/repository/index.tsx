@@ -35,6 +35,7 @@ import {
   AlertCircle,
   Loader2,
   Building2,
+  GraduationCap,
   Globe2
 } from 'lucide-react';
 
@@ -111,16 +112,17 @@ normalizeInterview._logged = false;
 // CONSTANTS
 // ========================================
 
-const SENIORITY_OPTIONS = [
-  { value: '', label: 'All Levels' },
-  { value: 'Intern', label: 'Intern' },
-  { value: 'Junior', label: 'Junior' },
-  { value: 'Mid', label: 'Mid-Level' },
-  { value: 'Senior', label: 'Senior' },
-  { value: 'Staff', label: 'Staff' },
-  { value: 'Principal', label: 'Principal' },
-  { value: 'Manager', label: 'Manager' },
-];
+// Seniority level keys for translation (value '' is used for "all")
+const SENIORITY_KEYS = [
+  { value: '', key: 'all' },
+  { value: 'Intern', key: 'intern' },
+  { value: 'Junior', key: 'junior' },
+  { value: 'Mid', key: 'mid' },
+  { value: 'Senior', key: 'senior' },
+  { value: 'Staff', key: 'staff' },
+  { value: 'Principal', key: 'principal' },
+  { value: 'Manager', key: 'manager' },
+] as const;
 
 const DATE_FILTER_OPTIONS = [
   { value: 'all', labelKey: 'interviews.repository.filters.allTime' },
@@ -163,8 +165,7 @@ const ScoreBadge: React.FC<{ score: number | null }> = ({ score }) => {
   );
 };
 
-// Note: StatusBadge is defined for future use in interview cards
-const _StatusBadge: React.FC<{ status: string }> = ({ status }) => {
+const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
   const { t } = useTranslation();
   
   // Keep semantic colors for status (completed=green, pending=amber, failed=red)
@@ -214,7 +215,7 @@ const FilterPill: React.FC<FilterPillProps> = ({ label, onRemove }) => (
 
 export default function InterviewRepository() {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { isSignedIn, isLoaded } = useUser();
   const { userCredits } = useAuthCheck();
   
@@ -374,7 +375,7 @@ export default function InterviewRepository() {
   
   // Format helpers
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', { 
+    return new Date(dateString).toLocaleDateString(i18n.language, { 
       month: 'short', 
       day: 'numeric', 
       year: 'numeric' 
@@ -623,8 +624,8 @@ export default function InterviewRepository() {
                       onChange={(e) => setFilters(f => ({ ...f, seniority: e.target.value }))}
                       className="w-full px-3 py-2.5 bg-zinc-50 border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 min-h-[44px]"
                     >
-                      {SENIORITY_OPTIONS.map(opt => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      {SENIORITY_KEYS.map(opt => (
+                        <option key={opt.value} value={opt.value}>{t(`seniority.${opt.key}`)}</option>
                       ))}
                     </select>
                   </div>

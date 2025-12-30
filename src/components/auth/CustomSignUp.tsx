@@ -16,6 +16,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { cn } from 'lib/utils';
+import { config } from 'lib/config';
 import { SUPPORTED_LANGUAGES } from 'lib/i18n';
 import { useLanguage } from 'hooks/use-language';
 import { signUpSchema, verificationSchema, USER_ROLES, SUPPORTED_COUNTRIES, SignUpFormData, UserRole } from './validation';
@@ -23,6 +24,7 @@ import { AuthInput } from './AuthInput';
 import { AuthSelect } from './AuthSelect';
 import { AuthButtons, AuthDivider } from './AuthButtons';
 import { AuthLegalNotice } from './AuthLegalNotice';
+import { B2C_ROUTES } from 'routes/b2cRoutes';
 
 // Form step types
 type SignUpStep = 'form' | 'verification' | 'complete';
@@ -198,7 +200,7 @@ export const CustomSignUp: React.FC<CustomSignUpProps> = ({
         
         // Update user metadata with role and language via backend
         try {
-          const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/users/metadata`, {
+          const response = await fetch(`${config.backendUrl}/api/users/metadata`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -224,7 +226,7 @@ export const CustomSignUp: React.FC<CustomSignUpProps> = ({
         
         // Navigate to dashboard after a short delay
         setTimeout(() => {
-          navigate('/dashboard');
+          navigate(B2C_ROUTES.DASHBOARD);
         }, 1500);
       } else {
         console.error('Verification incomplete:', result);

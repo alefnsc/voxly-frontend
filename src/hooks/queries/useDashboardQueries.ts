@@ -21,63 +21,6 @@ import apiService, {
   CandidateDashboardFilters,
   CandidateDashboardResponse,
 } from '../../services/APIService';
-import { isMockDataEnabled, getMockDashboardData } from '../../config/mockData';
-
-// ============================================
-// MOCK DATA TRANSFORMER
-// ============================================
-
-/**
- * Transform mock data to match the CandidateDashboardResponse type
- */
-function transformMockToDashboardResponse(): CandidateDashboardResponse {
-  const mockData = getMockDashboardData();
-  
-  return {
-    recentInterviews: mockData.recentInterviews.map(i => ({
-      id: i.id,
-      date: i.date,
-      roleTitle: i.roleTitle,
-      companyName: i.companyName,
-      seniority: i.seniority,
-      resumeTitle: null,
-      resumeId: null,
-      durationMinutes: i.duration,
-      score: i.score,
-      status: 'COMPLETED',
-    })),
-    kpis: {
-      totalInterviews: mockData.kpis.totalInterviews,
-      completedInterviews: mockData.kpis.totalInterviews,
-      averageScore: mockData.kpis.averageScore,
-      scoreChange: mockData.kpis.scoreChange,
-      averageDurationMinutes: Math.round(mockData.kpis.totalDuration / mockData.kpis.totalInterviews),
-      totalSpent: mockData.kpis.totalInterviews * 2, // 2 credits per interview
-      creditsRemaining: 10,
-      interviewsThisMonth: mockData.kpis.totalInterviews,
-      passRate: 0.8,
-    },
-    scoreEvolution: mockData.scoreEvolution.map(p => ({
-      date: p.date,
-      score: p.score,
-      roleTitle: 'Practice Interview',
-      seniority: null,
-    })),
-    resumes: [],
-    filterOptions: {
-      roleTitles: ['Frontend Developer', 'Backend Developer', 'Full Stack Engineer'],
-      seniorities: ['junior', 'mid', 'senior'],
-      resumes: [],
-    },
-    filters: {
-      startDate: null,
-      endDate: null,
-      roleTitle: null,
-      seniority: null,
-      resumeId: null,
-    },
-  };
-}
 
 // ============================================
 // DASHBOARD QUERY
@@ -110,20 +53,13 @@ export function useDashboardQuery(options: UseDashboardQueryOptions = {}) {
       isSignedIn,
       isLoaded,
       isSynced,
-      mockDataEnabled: isMockDataEnabled(),
-      queryEnabled: enabled && isLoaded && isSignedIn && (isMockDataEnabled() || (isSynced && !!user?.id)),
+      queryEnabled: enabled && isLoaded && isSignedIn && (isSynced && !!user?.id),
     });
   }
 
   return useQuery({
     queryKey: queryKeys.dashboard.stats(user?.id || '', filters),
     queryFn: async (): Promise<CandidateDashboardResponse> => {
-      // Use mock data in development when enabled
-      if (isMockDataEnabled()) {
-        console.log('🧪 Using mock dashboard data');
-        return transformMockToDashboardResponse();
-      }
-      
       if (!user?.id) throw new Error('User not authenticated');
       
       console.log('📡 Fetching dashboard data for user:', user.id.slice(0, 15));
@@ -138,7 +74,7 @@ export function useDashboardQuery(options: UseDashboardQueryOptions = {}) {
       
       return result;
     },
-    enabled: enabled && isLoaded && isSignedIn && (isMockDataEnabled() || (isSynced && !!user?.id)),
+    enabled: enabled && isLoaded && isSignedIn && (isSynced && !!user?.id),
     staleTime: 60 * 1000, // 1 minute
     gcTime: 5 * 60 * 1000, // 5 minutes
   });

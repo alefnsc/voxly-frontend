@@ -149,9 +149,8 @@ async function safeJsonParse<T>(response: Response, endpointName: string): Promi
 
 /**
  * Make a fetch request with safe JSON handling
- * Note: Kept for potential future use in refactoring API calls
- */
-async function _safeFetch<T>(
+     */
+async function safeFetch<T>(
     url: string,
     options: RequestInit,
     endpointName: string
@@ -324,6 +323,39 @@ export interface CreatedInterview {
 }
 
 class APIService {
+    /**
+     * Execute a GraphQL request against the backend
+     */
+    async graphqlRequest<T>(
+        userId: string,
+        query: string,
+        variables?: Record<string, unknown>
+    ): Promise<T> {
+        const response = await fetch(`${BACKEND_URL}/graphql`, {
+            method: 'POST',
+            headers: {
+                ...getHeaders(userId),
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ query, variables }),
+        });
+
+        const result = await safeJsonParse<{
+            data?: T;
+            errors?: Array<{ message: string }>;
+        }>(response, 'graphqlRequest');
+
+        if (!response.ok || result.errors?.length) {
+            const message = result.errors?.[0]?.message || 'GraphQL request failed';
+            throw new Error(message);
+        }
+
+        if (!result.data) {
+            throw new Error('GraphQL response missing data');
+        }
+
+        return result.data;
+    }
     private retellWebClient: RetellWebClient;
 
     constructor() {
@@ -489,6 +521,58 @@ class APIService {
     }
 
     /**
+     * Send feedback email using Resend template (no PDF attachment)
+     * This uses the published Resend template with alias 'feedback'
+     * Idempotent: Will not send if already sent for this interview
+     * 
+     * @param interviewId - Interview UUID
+     */
+    async sendFeedbackTemplateEmail(
+        interviewId: string
+    ): Promise<{ ok: boolean; skipped?: boolean; reason?: string; messageId?: string; error?: { code: string; message: string } }> {
+        console.log('📧 Sending template-based feedback email:', { interviewId });
+        
+        try {
+            const response = await fetch(`${BACKEND_URL}/api/email/template/feedback/${interviewId}`, {
+                method: "POST",
+                headers: getHeaders(),
+            });
+            
+            // Verify response is JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType?.includes('application/json')) {
+                console.error('❌ Non-JSON response from template email endpoint:', contentType);
+                return { 
+                    ok: false, 
+                    error: { 
+                        code: 'INVALID_RESPONSE', 
+                        message: 'Server returned an invalid response' 
+                    } 
+                };
+            }
+            
+            const result = await response.json();
+            
+            if (!response.ok) {
+                console.error('❌ Failed to send template feedback email:', response.status, result);
+                return { 
+                    ok: false, 
+                    error: result.error || { code: 'UNKNOWN', message: 'Failed to send email' }
+                };
+            }
+            
+            console.log('✅ Template feedback email result:', result);
+            return result;
+        } catch (error: any) {
+            console.error('❌ Error sending template feedback email:', error);
+            return { 
+                ok: false, 
+                error: { code: 'NETWORK_ERROR', message: error.message }
+            };
+        }
+    }
+
+    /**
      * Get email status for an interview
      */
     async getEmailStatus(interviewId: string): Promise<{
@@ -536,18 +620,65 @@ class APIService {
         }
     }
 
+    /**
+     * Request password reset email (custom flow)
+     */
+    async requestPasswordResetEmail(userId: string): Promise<{ status: string; message: string }> {
+        const response = await fetch(`${BACKEND_URL}/api/auth/password-reset/request`, {
+            method: 'POST',
+            headers: getHeaders(userId),
+        });
+
+        const result = await response.json().catch(() => ({
+            status: 'error',
+            message: 'Unexpected response from server',
+        }));
+
+        if (!response.ok) {
+            throw new Error(result.message || `Error: ${response.status}`);
+        }
+
+        return result;
+    }
+
+    /**
+     * Confirm password reset with token
+     */
+    async confirmPasswordReset(token: string, newPassword: string): Promise<{ status: string; message: string }> {
+        const response = await fetch(`${BACKEND_URL}/api/auth/password-reset/confirm`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ token, newPassword }),
+        });
+
+        const result = await response.json().catch(() => ({
+            status: 'error',
+            message: 'Unexpected response from server',
+        }));
+
+        if (!response.ok) {
+            throw new Error(result.message || `Error: ${response.status}`);
+        }
+
+        return result;
+    }
+
     async registerCall(body: MainInterface): Promise<RegisterCallResponse & { interviewId?: string }> {
         // Backend endpoint required for Retell API integration
         console.log('📞 Registering call with backend:', {
             candidate: body.metadata.first_name,
             position: body.metadata.job_title,
             backend_url: BACKEND_URL,
-            userId: body.userId ? '✅ Present' : '❌ Missing'
+            userId: body.userId ? '✅ Present' : '❌ Missing',
+            preferredLanguage: body.metadata.preferred_language || 'not_provided'
         });
         
-        // Step 1: Create interview record in database
+        // Step 1: Create interview record in database (skip if interview_id is already a UUID)
         let interviewId: string | undefined;
-        if (body.userId) {
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (body.metadata?.interview_id && uuidRegex.test(body.metadata.interview_id)) {
+            interviewId = body.metadata.interview_id;
+        } else if (body.userId) {
             try {
                 const interview = await this.createInterview(body.userId, {
                     jobTitle: body.metadata.job_title,
@@ -2454,40 +2585,99 @@ class APIService {
         filters?: CandidateDashboardFilters,
         forceRefresh = false
     ): Promise<CandidateDashboardResponse> {
-        const params = new URLSearchParams();
-        
-        if (filters?.startDate) params.append('startDate', filters.startDate);
-        if (filters?.endDate) params.append('endDate', filters.endDate);
-        if (filters?.roleTitle) params.append('roleTitle', filters.roleTitle);
-        if (filters?.seniority) params.append('seniority', filters.seniority);
-        if (filters?.resumeId) params.append('resumeId', filters.resumeId);
-        if (filters?.limit) params.append('limit', filters.limit.toString());
-
-        const cacheKey = `Vocaid_dashboard_${userId}_${params.toString()}`;
+        const cacheKey = `Vocaid_dashboard_${userId}_${JSON.stringify(filters || {})}`;
 
         return getCachedOrFetch(
             cacheKey,
             async () => {
-                const response = await fetch(
-                    `${BACKEND_URL}/api/dashboard/candidate?${params.toString()}`,
-                    {
-                        method: 'GET',
-                        headers: getHeaders(userId),
+                const query = `
+                  query CandidateDashboard($filters: DashboardFiltersInput) {
+                    candidateDashboard(filters: $filters) {
+                      kpis {
+                        totalInterviews
+                        completedInterviews
+                        averageScore
+                        scoreChange
+                        averageDurationMinutes
+                        totalSpent
+                        creditsRemaining
+                        interviewsThisMonth
+                        passRate
+                      }
+                      scoreEvolution {
+                        date
+                        score
+                        roleTitle
+                        seniority
+                      }
+                      recentInterviews {
+                        id
+                        date
+                        roleTitle
+                        companyName
+                        seniority
+                        resumeTitle
+                        resumeId
+                        durationMinutes
+                        score
+                        status
+                      }
+                      resumes {
+                        id
+                        title
+                        fileName
+                        createdAt
+                        lastUsedAt
+                        interviewCount
+                        filteredInterviewCount
+                        isPrimary
+                        qualityScore
+                      }
+                      filterOptions {
+                        roleTitles
+                        seniorities
+                        resumes {
+                          id
+                          title
+                        }
+                      }
+                      skillBreakdown {
+                        skill
+                        category
+                        score
+                        maxScore
+                        interviewCount
+                        trend
+                      }
+                      weeklyActivity {
+                        day
+                        date
+                        interviews
+                        averageScore
+                        totalDurationMinutes
+                      }
+                      filters {
+                        startDate
+                        endDate
+                        roleTitle
+                        seniority
+                        resumeId
+                        weekStart
+                        weekEnd
+                      }
                     }
+                  }
+                `;
+
+                const data = await this.graphqlRequest<{ candidateDashboard: CandidateDashboardResponse }>(
+                    userId,
+                    query,
+                    { filters: filters || {} }
                 );
 
-                const result = await safeJsonParse<{ status: string; data: CandidateDashboardResponse }>(
-                    response,
-                    'getCandidateDashboard'
-                );
-
-                if (!response.ok || result.status !== 'success') {
-                    throw new Error('Failed to fetch dashboard data');
-                }
-
-                return result.data;
+                return data.candidateDashboard;
             },
-            60000, // 1 minute cache
+            60000,
             forceRefresh
         );
     }
@@ -2974,6 +3164,8 @@ export interface CandidateDashboardFilters {
     seniority?: string;
     resumeId?: string;
     limit?: number;
+    weekStart?: string; // ISO date for week filter
+    weekEnd?: string;   // ISO date for week filter
 }
 
 export interface DashboardKPIs {
@@ -3026,18 +3218,39 @@ export interface DashboardFilterOptions {
     resumes: Array<{ id: string; title: string }>;
 }
 
+export interface SkillBreakdown {
+    skill: string;
+    category: string;
+    score: number;
+    maxScore: number;
+    interviewCount: number;
+    trend: 'up' | 'down' | 'stable';
+}
+
+export interface WeeklyActivityDay {
+    day: string;
+    date: string;
+    interviews: number;
+    averageScore: number | null;
+    totalDurationMinutes: number;
+}
+
 export interface CandidateDashboardResponse {
     kpis: DashboardKPIs;
     scoreEvolution: ScoreEvolutionPoint[];
     recentInterviews: RecentInterview[];
     resumes: ResumeUtilization[];
     filterOptions: DashboardFilterOptions;
+    skillBreakdown: SkillBreakdown[];
+    weeklyActivity: WeeklyActivityDay[];
     filters: {
         startDate: string | null;
         endDate: string | null;
         roleTitle: string | null;
         seniority: string | null;
         resumeId: string | null;
+        weekStart: string | null;
+        weekEnd: string | null;
     };
 }
 

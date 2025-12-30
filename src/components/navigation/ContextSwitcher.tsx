@@ -8,6 +8,7 @@
  */
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronDown, User, Building2, Users, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -31,6 +32,7 @@ const ICON_MAP = {
 } as const;
 
 export function ContextSwitcher({ userRole, className = '' }: ContextSwitcherProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const [isOpen, setIsOpen] = React.useState(false);
@@ -81,9 +83,9 @@ export function ContextSwitcher({ userRole, className = '' }: ContextSwitcherPro
       >
         <CurrentIcon className="h-4 w-4 text-purple-600" />
         <span className="hidden sm:inline">
-          {currentPlatform?.id === 'b2c' && 'Practice'}
-          {currentPlatform?.id === 'b2b' && 'Recruiter'}
-          {currentPlatform?.id === 'hr' && 'Employee Hub'}
+          {currentPlatform?.id === 'b2c' && t('contextSwitcher.practice')}
+          {currentPlatform?.id === 'b2b' && t('contextSwitcher.recruiter')}
+          {currentPlatform?.id === 'hr' && t('contextSwitcher.employeeHub')}
         </span>
         <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
@@ -100,7 +102,7 @@ export function ContextSwitcher({ userRole, className = '' }: ContextSwitcherPro
           >
             <div className="p-2">
               <p className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                Switch Platform
+                {t('contextSwitcher.switchPlatform')}
               </p>
               
               {availablePlatforms.map((platform) => {
@@ -123,9 +125,9 @@ export function ContextSwitcher({ userRole, className = '' }: ContextSwitcherPro
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
                         <span className="font-medium">
-                          {platform.id === 'b2c' && 'Interview Practice'}
-                          {platform.id === 'b2b' && 'Recruiter Platform'}
-                          {platform.id === 'hr' && 'Employee Hub'}
+                          {platform.id === 'b2c' && t('contextSwitcher.interviewPractice')}
+                          {platform.id === 'b2b' && t('contextSwitcher.recruiterPlatform')}
+                          {platform.id === 'hr' && t('contextSwitcher.employeeHub')}
                         </span>
                         {isActive && <Check className="h-4 w-4 text-purple-600" />}
                       </div>
@@ -140,7 +142,7 @@ export function ContextSwitcher({ userRole, className = '' }: ContextSwitcherPro
 
             <div className="border-t border-gray-100 px-4 py-3 bg-gray-50">
               <p className="text-xs text-gray-500">
-                <strong>Tip:</strong> You can access different platforms based on your role and organization settings.
+                <strong>{t('contextSwitcher.tip')}</strong> {t('contextSwitcher.tipMessage')}
               </p>
             </div>
           </motion.div>

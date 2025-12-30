@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { useUser } from '@clerk/clerk-react';
+import { useTranslation } from 'react-i18next';
 import APIService from 'services/APIService';
 import { config } from 'lib/config';
 
@@ -12,6 +13,7 @@ const CREDIT_RESTORATION_THRESHOLD_MS = config.creditRestorationThresholdMs;
 
 export const useCallManager = (body, navigate) => {
     const { user } = useUser();
+    const { t } = useTranslation();
     const [callId, setCallId] = useState('');
     const [interviewId, setInterviewId] = useState('');
     const [isCalling, setIsCalling] = useState(false);
@@ -77,10 +79,10 @@ export const useCallManager = (body, navigate) => {
             }
         } catch (error) {
             console.error("Error starting call:", error);
-            alert('Failed to start interview. Please try again.');
+            alert(t('interview.errors.startCallFailed'));
             navigate('/');
         }
-    }, [body, navigate, user]);
+    }, [body, navigate, user, t]);
 
     const stopCall = useCallback(() => {
         APIService.stopCall();
@@ -290,12 +292,12 @@ export const useCallManager = (body, navigate) => {
                 console.error('   3. Retell agent Custom LLM URL: wss://caaa362a8359.ngrok-free.app/llm-websocket/{call_id}');
                 console.error('   4. Does agent have a VOICE configured in Retell dashboard?');
                 console.error('═══════════════════════════════════════════════════');
-                alert('An error occurred during the interview. Check console for details.');
+                alert(t('interview.errors.callError'));
                 handleCallEnded();
             }
         };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [handleCallEnded]);
+    }, [handleCallEnded, t]);
 
     // Check if the agent mentioned incompatibility (credit restoration)
     const checkForIncompatibility = (event) => {

@@ -374,11 +374,11 @@ const Feedback = () => {
       setRetryCount(0); // Reset on success
     } catch (err: any) {
       console.error("Failed to fetch feedback:", err);
-      setError(err.message || 'Failed to load feedback. Please try again.');
+      setError(err.message || t('feedback.error.loadFailed'));
     } finally {
       setIsLoading(false);
     }
-  }, [state, user]);
+  }, [state, user, t]);
 
   useEffect(() => {
     fetchFeedback();

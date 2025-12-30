@@ -278,6 +278,7 @@ export const ContactAssistant: React.FC<ContactAssistantProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasAnsweredFAQ, setHasAnsweredFAQ] = useState(false);
   
+  // Derive current language for FAQ detection
   const currentLanguage = i18n.language?.startsWith('pt') ? 'pt' : 'en';
   
   // Scroll to bottom when messages change
@@ -296,9 +297,7 @@ export const ContactAssistant: React.FC<ContactAssistantProps> = ({
   
   // Add initial welcome message
   useEffect(() => {
-    const welcomeText = currentLanguage === 'pt'
-      ? "Olá! 👋 Sou o assistente de contato da Vocaid. Posso ajudá-lo a enviar uma mensagem para nossa equipe ou responder suas dúvidas frequentes.\n\nComo posso ajudar você hoje?"
-      : "Hello! 👋 I'm Vocaid's contact assistant. I can help you send a message to our team or answer your frequently asked questions.\n\nHow can I help you today?";
+    const welcomeText = t('contactAssistant.prompts.welcome');
     
     addMessage('assistant', welcomeText);
   }, []);
@@ -316,26 +315,17 @@ export const ContactAssistant: React.FC<ContactAssistantProps> = ({
     return newMessage.id;
   }, []);
   
-  // Build review message with actual user data (NOT using translation placeholders)
+  // Build review message with actual user data
   const buildReviewMessage = useCallback((): string => {
     const subjectLabel = formData.subject ? getSubjectDisplayLabel(formData.subject as SubjectType) : '';
     
-    if (currentLanguage === 'pt') {
-      return `Aqui está um resumo da sua mensagem:\n\n` +
-        `**Nome:** ${formData.name}\n` +
-        `**Email:** ${formData.email}\n` +
-        `**Assunto:** ${subjectLabel}\n` +
-        `**Mensagem:** ${formData.message}\n\n` +
-        `Está tudo correto? Digite "sim" para enviar ou "não" para fazer alterações.`;
-    }
-    
-    return `Here's a summary of your message:\n\n` +
-      `**Name:** ${formData.name}\n` +
-      `**Email:** ${formData.email}\n` +
-      `**Subject:** ${subjectLabel}\n` +
-      `**Message:** ${formData.message}\n\n` +
-      `Does everything look correct? Type "yes" to send or "no" to make changes.`;
-  }, [formData, currentLanguage]);
+    return t('contactAssistant.review.summary', {
+      name: formData.name,
+      email: formData.email,
+      subject: subjectLabel,
+      message: formData.message
+    });
+  }, [formData, t]);
   
   // Process current step and move forward
   const processStep = useCallback((value: string) => {
@@ -346,18 +336,14 @@ export const ContactAssistant: React.FC<ContactAssistantProps> = ({
         if (faqMatch) {
           setHasAnsweredFAQ(true);
           const answer = currentLanguage === 'pt' ? faqMatch.answer.pt : faqMatch.answer.en;
-          const followUp = currentLanguage === 'pt'
-            ? "\n\nPosso ajudar com mais alguma dúvida? Ou se preferir, posso ajudá-lo a enviar uma mensagem para nossa equipe."
-            : "\n\nCan I help with anything else? Or if you prefer, I can help you send a message to our team.";
+          const followUp = "\n\n" + t('contactAssistant.prompts.faqFollowUp');
           
           addMessage('assistant', answer + followUp);
           return;
         }
         
         // Move to name collection
-        const namePrompt = currentLanguage === 'pt'
-          ? "Vou ajudá-lo a entrar em contato com nossa equipe. Primeiro, qual é o seu nome?"
-          : "I'll help you get in touch with our team. First, what's your name?";
+        const namePrompt = t('contactAssistant.prompts.nameStart');
         addMessage('assistant', namePrompt);
         setStep('name');
         break;
@@ -365,17 +351,13 @@ export const ContactAssistant: React.FC<ContactAssistantProps> = ({
       case 'name':
         const nameValidation = validateField('name', value);
         if (nameValidation !== null) {
-          const errorMsg = currentLanguage === 'pt'
-            ? "Por favor, digite um nome válido (pelo menos 2 caracteres)."
-            : "Please enter a valid name (at least 2 characters).";
+          const errorMsg = t('contactAssistant.validation.invalidName');
           addMessage('assistant', errorMsg);
           return;
         }
         
         setFormData(prev => ({ ...prev, name: value }));
-        const emailPrompt = currentLanguage === 'pt'
-          ? `Prazer em conhecê-lo, ${value}! Qual é o seu endereço de email?`
-          : `Nice to meet you, ${value}! What's your email address?`;
+        const emailPrompt = t('contactAssistant.prompts.emailGreeting', { name: value });
         addMessage('assistant', emailPrompt);
         setStep('email');
         break;
@@ -383,19 +365,14 @@ export const ContactAssistant: React.FC<ContactAssistantProps> = ({
       case 'email':
         const emailValidation = validateField('email', value);
         if (emailValidation !== null) {
-          const errorMsg = currentLanguage === 'pt'
-            ? "Por favor, digite um endereço de email válido."
-            : "Please enter a valid email address.";
+          const errorMsg = t('contactAssistant.validation.invalidEmail');
           addMessage('assistant', errorMsg);
           return;
         }
         
         setFormData(prev => ({ ...prev, email: value }));
-        const subjectPrompt = currentLanguage === 'pt'
-          ? "Ótimo! Sobre qual assunto você gostaria de falar? Por favor, escolha uma opção:\n\n" +
-            SUBJECT_OPTIONS.map((opt, i) => `${i + 1}. ${opt.labelKey}`).join('\n')
-          : "Great! What topic would you like to discuss? Please choose an option:\n\n" +
-            SUBJECT_OPTIONS.map((opt, i) => `${i + 1}. ${opt.labelKey}`).join('\n');
+        const subjectPrompt = t('contactAssistant.prompts.subjectPrompt') + "\n\n" +
+          SUBJECT_OPTIONS.map((opt, i) => `${i + 1}. ${opt.labelKey}`).join('\n');
         addMessage('assistant', subjectPrompt);
         setStep('subject');
         break;
@@ -405,11 +382,8 @@ export const ContactAssistant: React.FC<ContactAssistantProps> = ({
         const subjectFaqMatch = detectFAQIntent(value, currentLanguage);
         if (subjectFaqMatch) {
           const answer = currentLanguage === 'pt' ? subjectFaqMatch.answer.pt : subjectFaqMatch.answer.en;
-          const followUp = currentLanguage === 'pt'
-            ? "\n\nAinda gostaria de enviar uma mensagem? Por favor, escolha um assunto:\n\n" +
-              SUBJECT_OPTIONS.map((opt, i) => `${i + 1}. ${opt.labelKey}`).join('\n')
-            : "\n\nWould you still like to send a message? Please choose a topic:\n\n" +
-              SUBJECT_OPTIONS.map((opt, i) => `${i + 1}. ${opt.labelKey}`).join('\n');
+          const followUp = "\n\n" + t('contactAssistant.prompts.subjectFollowUp') + "\n\n" +
+            SUBJECT_OPTIONS.map((opt, i) => `${i + 1}. ${opt.labelKey}`).join('\n');
           
           addMessage('assistant', answer + followUp);
           return;
@@ -434,18 +408,18 @@ export const ContactAssistant: React.FC<ContactAssistantProps> = ({
         }
         
         if (!selectedSubject) {
-          const errorMsg = currentLanguage === 'pt'
-            ? "Por favor, selecione uma opção válida (1-6) ou digite o nome do assunto."
-            : "Please select a valid option (1-6) or type the topic name.";
+          const errorMsg = t('contactAssistant.validation.invalidSubject');
           addMessage('assistant', errorMsg);
           return;
         }
         
         setFormData(prev => ({ ...prev, subject: selectedSubject as SubjectType }));
         const subjectLabel = getSubjectDisplayLabel(selectedSubject as SubjectType);
-        const messagePrompt = currentLanguage === 'pt'
-          ? `Entendido - "${subjectLabel}". Agora, por favor, escreva sua mensagem (entre ${MESSAGE_MIN_LENGTH} e ${MESSAGE_MAX_LENGTH} caracteres).`
-          : `Got it - "${subjectLabel}". Now, please write your message (between ${MESSAGE_MIN_LENGTH} and ${MESSAGE_MAX_LENGTH} characters).`;
+        const messagePrompt = t('contactAssistant.prompts.messagePrompt', { 
+          subject: subjectLabel, 
+          min: MESSAGE_MIN_LENGTH, 
+          max: MESSAGE_MAX_LENGTH 
+        });
         addMessage('assistant', messagePrompt);
         setStep('message');
         break;
@@ -457,13 +431,9 @@ export const ContactAssistant: React.FC<ContactAssistantProps> = ({
           let errorMsg: string;
           
           if (charCount < MESSAGE_MIN_LENGTH) {
-            errorMsg = currentLanguage === 'pt'
-              ? `Sua mensagem precisa de pelo menos ${MESSAGE_MIN_LENGTH} caracteres. Atualmente você tem ${charCount}.`
-              : `Your message needs at least ${MESSAGE_MIN_LENGTH} characters. You currently have ${charCount}.`;
+            errorMsg = t('contactAssistant.validation.messageTooShort', { min: MESSAGE_MIN_LENGTH, current: charCount });
           } else {
-            errorMsg = currentLanguage === 'pt'
-              ? `Sua mensagem não pode exceder ${MESSAGE_MAX_LENGTH} caracteres. Atualmente você tem ${charCount}.`
-              : `Your message cannot exceed ${MESSAGE_MAX_LENGTH} characters. You currently have ${charCount}.`;
+            errorMsg = t('contactAssistant.validation.messageTooLong', { max: MESSAGE_MAX_LENGTH, current: charCount });
           }
           addMessage('assistant', errorMsg);
           return;
@@ -474,19 +444,12 @@ export const ContactAssistant: React.FC<ContactAssistantProps> = ({
         const updatedFormData = { ...formData, message: value };
         const subjectLabelReview = updatedFormData.subject ? getSubjectDisplayLabel(updatedFormData.subject as SubjectType) : '';
         
-        const reviewText = currentLanguage === 'pt'
-          ? `Aqui está um resumo da sua mensagem:\n\n` +
-            `**Nome:** ${updatedFormData.name}\n` +
-            `**Email:** ${updatedFormData.email}\n` +
-            `**Assunto:** ${subjectLabelReview}\n` +
-            `**Mensagem:** ${value}\n\n` +
-            `Está tudo correto? Digite "sim" para enviar ou "não" para fazer alterações.`
-          : `Here's a summary of your message:\n\n` +
-            `**Name:** ${updatedFormData.name}\n` +
-            `**Email:** ${updatedFormData.email}\n` +
-            `**Subject:** ${subjectLabelReview}\n` +
-            `**Message:** ${value}\n\n` +
-            `Does everything look correct? Type "yes" to send or "no" to make changes.`;
+        const reviewText = t('contactAssistant.review.summary', {
+          name: updatedFormData.name,
+          email: updatedFormData.email,
+          subject: subjectLabelReview,
+          message: value
+        });
         
         addMessage('assistant', reviewText);
         setStep('review');
@@ -500,16 +463,12 @@ export const ContactAssistant: React.FC<ContactAssistantProps> = ({
         if (confirmWords.some(w => lowerValue.includes(w))) {
           handleSubmit();
         } else if (declineWords.some(w => lowerValue.includes(w))) {
-          const restartMsg = currentLanguage === 'pt'
-            ? "Sem problema! Vamos recomeçar. Qual é o seu nome?"
-            : "No problem! Let's start over. What's your name?";
+          const restartMsg = t('contactAssistant.review.restart');
           addMessage('assistant', restartMsg);
           setFormData({});
           setStep('name');
         } else {
-          const clarifyMsg = currentLanguage === 'pt'
-            ? "Por favor, digite 'sim' para enviar sua mensagem ou 'não' para fazer alterações."
-            : "Please type 'yes' to send your message or 'no' to make changes.";
+          const clarifyMsg = t('contactAssistant.review.clarify');
           addMessage('assistant', clarifyMsg);
         }
         break;
@@ -521,9 +480,7 @@ export const ContactAssistant: React.FC<ContactAssistantProps> = ({
     setStep('submitting');
     setIsSubmitting(true);
     
-    const submittingMsg = currentLanguage === 'pt'
-      ? "Enviando sua mensagem..."
-      : "Sending your message...";
+    const submittingMsg = t('contactAssistant.submission.sending');
     addMessage('system', submittingMsg);
     
     try {
@@ -552,9 +509,7 @@ export const ContactAssistant: React.FC<ContactAssistantProps> = ({
         const receipt = createSubmissionReceipt(formData as ContactFormData);
         storeReceipt(receipt);
         
-        const successMsg = currentLanguage === 'pt'
-          ? "✓ Sua mensagem foi enviada com sucesso! Nossa equipe responderá em breve. Você pode fechar esta janela."
-          : "✓ Your message has been sent successfully! Our team will respond soon. You can close this window.";
+        const successMsg = t('contactAssistant.submission.success');
         addMessage('assistant', successMsg);
         setStep('success');
         
@@ -568,9 +523,7 @@ export const ContactAssistant: React.FC<ContactAssistantProps> = ({
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       console.error('Contact form submission error:', errorMessage);
       
-      const errorMsg = currentLanguage === 'pt'
-        ? `Desculpe, houve um erro ao enviar sua mensagem. Por favor, tente novamente ou envie um email diretamente para contato@vocaid.io.`
-        : `Sorry, there was an error sending your message. Please try again or email us directly at contact@vocaid.io.`;
+      const errorMsg = t('contactAssistant.submission.error');
       addMessage('assistant', errorMsg);
       setStep('error');
       setError(errorMessage);
@@ -613,17 +566,11 @@ export const ContactAssistant: React.FC<ContactAssistantProps> = ({
   const renderQuickActions = () => {
     if (step !== 'welcome' || messages.length > 1) return null;
     
-    const actions = currentLanguage === 'pt'
-      ? [
-          { label: 'Enviar mensagem', value: 'Quero enviar uma mensagem' },
-          { label: 'Dúvidas sobre créditos', value: 'Como funcionam os créditos?' },
-          { label: 'Idiomas suportados', value: 'Quais idiomas vocês suportam?' },
-        ]
-      : [
-          { label: 'Send a message', value: 'I want to send a message' },
-          { label: 'Questions about credits', value: 'How do credits work?' },
-          { label: 'Supported languages', value: 'What languages do you support?' },
-        ];
+    const actions = [
+      { label: t('contactAssistant.quickActions.sendMessage.label'), value: t('contactAssistant.quickActions.sendMessage.value') },
+      { label: t('contactAssistant.quickActions.creditsQuestions.label'), value: t('contactAssistant.quickActions.creditsQuestions.value') },
+      { label: t('contactAssistant.quickActions.supportedLanguages.label'), value: t('contactAssistant.quickActions.supportedLanguages.value') },
+    ];
     
     return (
       <div className="flex flex-wrap gap-2 px-4 py-2">
@@ -646,17 +593,17 @@ export const ContactAssistant: React.FC<ContactAssistantProps> = ({
       <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200">
         <div>
           <h2 className="text-lg font-semibold text-zinc-900">
-            {currentLanguage === 'pt' ? 'Assistente de Contato' : 'Contact Assistant'}
+            {t('contactAssistant.header.title')}
           </h2>
           <p className="text-sm text-zinc-500">
-            {currentLanguage === 'pt' ? 'Pergunte ou envie uma mensagem' : 'Ask a question or send a message'}
+            {t('contactAssistant.header.subtitle')}
           </p>
         </div>
         {onClose && (
           <button
             onClick={onClose}
             className="p-2 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors"
-            aria-label={currentLanguage === 'pt' ? 'Fechar' : 'Close'}
+            aria-label={t('contactAssistant.header.close')}
           >
             <span className="text-xl font-light">×</span>
           </button>
@@ -701,7 +648,7 @@ export const ContactAssistant: React.FC<ContactAssistantProps> = ({
                   ref={textareaRef}
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  placeholder={currentLanguage === 'pt' ? 'Escreva sua mensagem...' : 'Write your message...'}
+                  placeholder={t('contactAssistant.placeholder.message')}
                   className="w-full px-4 py-3 border border-zinc-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent resize-none"
                   rows={4}
                   disabled={isSubmitting}
@@ -715,7 +662,7 @@ export const ContactAssistant: React.FC<ContactAssistantProps> = ({
                     disabled={isSubmitting || charCount < MESSAGE_MIN_LENGTH || charCount > MESSAGE_MAX_LENGTH}
                     className="px-4 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
-                    {currentLanguage === 'pt' ? 'Enviar' : 'Send'}
+                    {t('contactAssistant.buttons.send')}
                   </button>
                 </div>
               </>
@@ -727,10 +674,10 @@ export const ContactAssistant: React.FC<ContactAssistantProps> = ({
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   placeholder={
-                    step === 'name' ? (currentLanguage === 'pt' ? 'Digite seu nome...' : 'Enter your name...') :
-                    step === 'email' ? (currentLanguage === 'pt' ? 'Digite seu email...' : 'Enter your email...') :
-                    step === 'subject' ? (currentLanguage === 'pt' ? 'Escolha uma opção (1-6)...' : 'Choose an option (1-6)...') :
-                    (currentLanguage === 'pt' ? 'Digite sua resposta...' : 'Type your response...')
+                    step === 'name' ? t('contactAssistant.placeholder.name') :
+                    step === 'email' ? t('contactAssistant.placeholder.email') :
+                    step === 'subject' ? t('contactAssistant.placeholder.subject') :
+                    t('contactAssistant.placeholder.default')
                   }
                   className="flex-1 px-4 py-3 border border-zinc-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
                   disabled={isSubmitting}
@@ -740,7 +687,7 @@ export const ContactAssistant: React.FC<ContactAssistantProps> = ({
                   disabled={isSubmitting || !inputValue.trim()}
                   className="px-4 py-3 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {currentLanguage === 'pt' ? 'Enviar' : 'Send'}
+                  {t('contactAssistant.buttons.send')}
                 </button>
               </div>
             )}
@@ -755,7 +702,7 @@ export const ContactAssistant: React.FC<ContactAssistantProps> = ({
             onClick={onClose}
             className="w-full py-3 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-colors"
           >
-            {currentLanguage === 'pt' ? 'Fechar' : 'Close'}
+            {t('contactAssistant.buttons.close')}
           </button>
         </div>
       )}
@@ -771,14 +718,14 @@ export const ContactAssistant: React.FC<ContactAssistantProps> = ({
             }}
             className="flex-1 py-3 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-colors"
           >
-            {currentLanguage === 'pt' ? 'Tentar novamente' : 'Try again'}
+            {t('contactAssistant.buttons.tryAgain')}
           </button>
           {onClose && (
             <button
               onClick={onClose}
               className="px-6 py-3 border border-zinc-300 text-zinc-700 rounded-xl font-medium hover:bg-zinc-50 transition-colors"
             >
-              {currentLanguage === 'pt' ? 'Fechar' : 'Close'}
+              {t('contactAssistant.buttons.close')}
             </button>
           )}
         </div>

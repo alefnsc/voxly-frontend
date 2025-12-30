@@ -38,6 +38,7 @@ const ResumeLibrary = lazy(() => import('./pages/ResumeLibrary'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 const TermsOfUse = lazy(() => import('./pages/TermsOfUse'));
 const Account = lazy(() => import('./pages/Account'));
+const AuthPasswordConfirm = lazy(() => import('./pages/AuthPasswordConfirm'));
 const UnderConstruction = lazy(() => import('./pages/UnderConstruction'));
 const AccessDenied = lazy(() => import('./pages/AccessDenied'));
 
@@ -203,6 +204,9 @@ const App: React.FC = () => {
                               </ProtectedInterviewRoute>
                             </ConsentGuard>
                           } />
+
+                          {/* Password reset confirmation */}
+                          <Route path="auth/password-confirm" element={<AuthPasswordConfirm />} />
                           
                           {/* Static Pages (no consent required) */}
                           <Route path="about" element={<About />} />

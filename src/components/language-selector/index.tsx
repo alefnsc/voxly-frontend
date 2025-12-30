@@ -13,7 +13,6 @@ import { SupportedLanguageCode } from '../../lib/i18n';
 
 interface LanguageSelectorProps {
   variant?: 'dropdown' | 'sidebar' | 'horizontal';
-  showFlag?: boolean;
   showName?: boolean;
   className?: string;
 }
@@ -42,7 +41,6 @@ const languageOrder: SupportedLanguageCode[] = [
 
 export function LanguageSelector({
   variant = 'dropdown',
-  showFlag = true,
   showName = true,
   className = '',
 }: LanguageSelectorProps) {
@@ -116,7 +114,6 @@ export function LanguageSelector({
           aria-label="Select language"
           aria-expanded={isOpen}
         >
-          <span className="text-lg">{currentLangInfo?.flag}</span>
           <span className="flex-1 text-left text-sm font-medium text-black">
             {currentLangInfo?.name}
           </span>
@@ -156,7 +153,6 @@ export function LanguageSelector({
                         }
                       `}
                     >
-                      <span className="text-lg">{info.flag}</span>
                       <span className={`font-medium ${isActive ? 'text-purple-600' : 'text-black'}`}>
                         {info.name}
                       </span>
@@ -222,7 +218,6 @@ export function LanguageSelector({
         aria-label="Select language"
         aria-expanded={isOpen}
       >
-        {showFlag && <span className="text-lg">{currentLangInfo?.flag}</span>}
         {showName && (
           <span className="text-sm font-medium text-black">{currentLangInfo?.name}</span>
         )}
@@ -265,7 +260,6 @@ export function LanguageSelector({
                       }
                     `}
                   >
-                    <span className="text-lg">{info.flag}</span>
                     <span className={`font-medium ${isActive ? 'text-purple-600' : 'text-black'}`}>
                       {info.name}
                     </span>

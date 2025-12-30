@@ -247,7 +247,7 @@ export const AccountMenu: React.FC<AccountMenuProps> = ({
                 className="w-full text-left px-4 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50 transition-colors"
                 role="menuitem"
               >
-                {t('account.title', 'Account Settings')}
+                {t('nav.settings', 'Settings')}
               </button>
 
               {/* Divider */}

@@ -118,6 +118,9 @@ export const LandingPreviewTabs: React.FC = () => {
         >
           {/* Section Header */}
           <motion.div variants={itemVariants} className="text-center mb-8 sm:mb-12">
+            <span className="inline-block px-3 py-1 text-xs font-semibold text-purple-700 bg-purple-100 rounded-full mb-3 sm:mb-4">
+              {t('landing.previewTabs.badge', 'Product Preview')}
+            </span>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-zinc-900 mb-3 sm:mb-4">
               {t('landing.previewTabs.title', 'See Vocaid in')} <span className="text-purple-600">{t('landing.previewTabs.titleHighlight', 'Action')}</span>
             </h2>
@@ -427,12 +430,13 @@ const InterviewFlowPreview: React.FC = () => {
 // Resume Repository Preview Component
 // =============================================
 const ResumeRepositoryPreview: React.FC = () => {
+  const { t } = useTranslation()
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-medium text-zinc-700">Your Resumes ({MOCK_RESUME_REPOSITORY.stats.totalResumes})</h4>
-        <button className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium">+ Upload Resume</button>
+        <h4 className="text-sm font-medium text-zinc-700">{t('landing.preview.resumeRepository.yourResumes')} ({MOCK_RESUME_REPOSITORY.stats.totalResumes})</h4>
+        <button className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium">{t('landing.preview.resumeRepository.uploadResume')}</button>
       </div>
 
       {/* Resume Cards */}
@@ -443,7 +447,7 @@ const ResumeRepositoryPreview: React.FC = () => {
               <FileText className="w-8 h-8 text-purple-600" />
               {resume.isPrimary && (
                 <span className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-purple-600 bg-purple-100 rounded-full">
-                  <Star className="w-3 h-3" /> Primary
+                  <Star className="w-3 h-3" /> {t('landing.preview.resumeRepository.primary')}
                 </span>
               )}
             </div>
@@ -452,7 +456,7 @@ const ResumeRepositoryPreview: React.FC = () => {
             
             {resume.usedIn.length > 0 && (
               <div className="mb-3">
-                <p className="text-xs text-zinc-500 mb-1">Used in:</p>
+                <p className="text-xs text-zinc-500 mb-1">{t('landing.preview.resumeRepository.usedIn')}:</p>
                 <div className="flex flex-wrap gap-1">
                   {resume.usedIn.slice(0, 2).map((use, i) => (
                     <span key={i} className="px-2 py-0.5 text-[10px] bg-zinc-200 text-zinc-600 rounded-full truncate max-w-full">{use}</span>
@@ -463,11 +467,11 @@ const ResumeRepositoryPreview: React.FC = () => {
             
             {resume.roleScore !== null ? (
               <div className="flex items-center gap-2">
-                <span className="text-xs text-zinc-500">Match Score:</span>
+                <span className="text-xs text-zinc-500">{t('landing.preview.resumeRepository.matchScore')}:</span>
                 <span className="text-sm font-semibold text-purple-600">{resume.roleScore}%</span>
               </div>
             ) : (
-              <span className="text-xs text-zinc-400 italic">Scoring coming soon</span>
+              <span className="text-xs text-zinc-400 italic">{t('landing.preview.resumeRepository.scoringComingSoon')}</span>
             )}
           </div>
         ))}
@@ -548,19 +552,20 @@ const RecruiterAnalyticsPreview: React.FC = () => {
 // HR Knowledge Hub Preview Component
 // =============================================
 const HRKnowledgeHubPreview: React.FC = () => {
+  const { t } = useTranslation()
   return (
     <div className="space-y-6">
       {/* Coming Soon Banner */}
       <div className="p-4 bg-zinc-100 rounded-xl text-center">
         <span className="inline-block px-3 py-1 text-xs font-semibold text-zinc-600 bg-zinc-200 rounded-full">
-          🚧 B2B Employee Service Hub - Coming Soon
+          🚧 {t('landing.preview.hrKnowledgeHub.comingSoon')}
         </span>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Categories */}
         <div className="p-4 bg-zinc-50 rounded-xl">
-          <h4 className="text-sm font-medium text-zinc-700 mb-4">Knowledge Categories</h4>
+          <h4 className="text-sm font-medium text-zinc-700 mb-4">{t('landing.preview.hrKnowledgeHub.knowledgeCategories')}</h4>
           <div className="space-y-2">
             {MOCK_HR_KNOWLEDGE_HUB.categories.map((cat) => {
               const IconComponent = ICON_MAP[cat.iconName]
@@ -579,7 +584,7 @@ const HRKnowledgeHubPreview: React.FC = () => {
 
         {/* Chat Mock */}
         <div className="lg:col-span-2 p-4 bg-zinc-50 rounded-xl">
-          <h4 className="text-sm font-medium text-zinc-700 mb-4">AI HR Assistant</h4>
+          <h4 className="text-sm font-medium text-zinc-700 mb-4">{t('landing.preview.hrKnowledgeHub.aiAssistant')}</h4>
           <div className="space-y-3 mb-4 max-h-48 overflow-y-auto">
             {MOCK_HR_KNOWLEDGE_HUB.chatHistory.map((msg, index) => (
               <div

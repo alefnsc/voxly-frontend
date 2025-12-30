@@ -7,6 +7,7 @@ import { Coins, LogIn, Gift } from 'lucide-react'
 import { useNavigate } from 'react-router-dom';
 import { Checkbox } from 'components/ui/checkbox';
 import { useAuthCheck } from 'hooks/use-auth-check';
+import { useLanguage } from 'hooks/use-language';
 import CreditsModal from 'components/credits-modal';
 import { SignInButton } from '@clerk/clerk-react';
 import CreditPackages from 'components/credit-packages';
@@ -31,6 +32,7 @@ interface FormValues {
 const InputForm: React.FC<InputFormProps> = ({ isMobile, credits }) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const { currentLanguage } = useLanguage();
 
     // Form state - firstName and lastName come from Clerk
     const [formValues, setFormValues] = useState<FormValues>({
@@ -120,7 +122,7 @@ const InputForm: React.FC<InputFormProps> = ({ isMobile, credits }) => {
                 }
             };
             reader.onerror = () => {
-                setErrors(prev => ({ ...prev, resume: 'Failed to read file. Please try again.' }));
+                setErrors(prev => ({ ...prev, resume: t('interview.errors.readFileFailed') }));
                 setIsProcessingFile(false);
             };
             reader.readAsDataURL(file);
@@ -215,7 +217,8 @@ const InputForm: React.FC<InputFormProps> = ({ isMobile, credits }) => {
                             interviewee_cv: formValues.resume, // Now contains Base64 encoded content
                             resume_file_name: formValues.resumeFileName,
                             resume_mime_type: formValues.resumeMimeType,
-                            interview_id: interviewId
+                            interview_id: interviewId,
+                            preferred_language: currentLanguage
                         }
                     }
                 }
@@ -224,7 +227,7 @@ const InputForm: React.FC<InputFormProps> = ({ isMobile, credits }) => {
             console.error('Error starting interview:', error);
             setIsSubmitting(false);
             // Show error in the policy field area since it's at the bottom
-            setErrors(prev => ({ ...prev, policy: 'Failed to start interview. Please try again.' }));
+            setErrors(prev => ({ ...prev, policy: t('interview.errors.startFailed') }));
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [validateForm, availableCredits, updateCredits, navigate, formValues, setShowCreditsModal]);

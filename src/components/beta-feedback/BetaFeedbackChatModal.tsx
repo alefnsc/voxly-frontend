@@ -6,7 +6,7 @@
  * 
  * Vocaid Design System:
  * - White background, zinc borders, purple accents
- * - Chat-style message bubbles
+ * - Chat-style message bubbles with animations
  * - Mobile-first (bottom sheet on mobile)
  */
 
@@ -14,10 +14,10 @@
 
 import React, { useEffect, useCallback, useRef, useState, KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, Send, ChevronLeft, SkipForward, Loader2, Check, Plus, Trash2 } from 'lucide-react';
+import { X, Send, ChevronLeft, SkipForward, Loader2, Check, Plus, Trash2, Bug, Lightbulb, Sparkles } from 'lucide-react';
 import { cn } from 'lib/utils';
 import { useBetaFeedbackFlow } from 'hooks/useBetaFeedbackFlow';
-import { ChatMessage, ChatOption } from 'types/betaFeedback';
+import { ChatMessage } from 'types/betaFeedback';
 
 // ============================================================================
 // SUB-COMPONENTS
@@ -29,6 +29,7 @@ interface MessageBubbleProps {
   onTextSubmit?: (value: string) => void;
   onStepsSubmit?: (steps: string[]) => void;
   isLatest: boolean;
+  animationDelay?: number;
 }
 
 const MessageBubble: React.FC<MessageBubbleProps> = ({
@@ -37,17 +38,26 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   onTextSubmit,
   onStepsSubmit,
   isLatest,
+  animationDelay = 0,
 }) => {
   const { t } = useTranslation();
   const isAssistant = message.role === 'assistant';
   const [inputValue, setInputValue] = useState('');
   const [steps, setSteps] = useState<string[]>([]);
+  const [isVisible, setIsVisible] = useState(false);
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
+
+  // Animate in
+  useEffect(() => {
+    const timer = setTimeout(() => setIsVisible(true), animationDelay);
+    return () => clearTimeout(timer);
+  }, [animationDelay]);
 
   // Focus input when this becomes the latest assistant message with input
   useEffect(() => {
     if (isLatest && isAssistant && message.inputType && inputRef.current) {
-      inputRef.current.focus();
+      const timer = setTimeout(() => inputRef.current?.focus(), 100);
+      return () => clearTimeout(timer);
     }
   }, [isLatest, isAssistant, message.inputType]);
 
@@ -92,7 +102,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     const parts = content.split(/(\*\*[^*]+\*\*)/g);
     return parts.map((part, i) => {
       if (part.startsWith('**') && part.endsWith('**')) {
-        return <strong key={i}>{part.slice(2, -2)}</strong>;
+        return <strong key={i} className="font-semibold">{part.slice(2, -2)}</strong>;
       }
       // Handle newlines
       return part.split('\n').map((line, j) => (
@@ -107,37 +117,47 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   return (
     <div
       className={cn(
-        'flex w-full mb-4',
-        isAssistant ? 'justify-start' : 'justify-end'
+        'flex w-full mb-4 transition-all duration-300 ease-out',
+        isAssistant ? 'justify-start' : 'justify-end',
+        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
       )}
     >
       <div
         className={cn(
-          'max-w-[85%] rounded-2xl px-4 py-3',
+          'max-w-[88%] rounded-2xl px-4 py-3 shadow-sm',
           isAssistant
-            ? 'bg-zinc-100 text-zinc-900 rounded-bl-md'
-            : 'bg-purple-600 text-white rounded-br-md'
+            ? 'bg-gradient-to-br from-zinc-50 to-zinc-100 text-zinc-800 rounded-bl-md border border-zinc-200/60'
+            : 'bg-gradient-to-br from-purple-600 to-purple-700 text-white rounded-br-md shadow-purple-600/20'
         )}
       >
         {/* Message content */}
-        <div className="text-sm whitespace-pre-wrap">
+        <div className="text-sm leading-relaxed whitespace-pre-wrap">
           {renderContent(message.content)}
         </div>
 
         {/* Options (for assistant messages) */}
         {isLatest && isAssistant && message.options && (
-          <div className="mt-3 flex flex-col gap-2">
-            {message.options.map((option) => (
+          <div className="mt-4 flex flex-col gap-2">
+            {message.options.map((option, idx) => (
               <button
                 key={option.id}
                 onClick={() => onOptionSelect?.(option.value)}
-                className="w-full px-4 py-2.5 text-left text-sm font-medium 
-                  bg-white border border-zinc-200 rounded-xl
-                  hover:border-purple-600 hover:text-purple-600
-                  transition-colors duration-150
-                  focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-1"
+                className={cn(
+                  'w-full px-4 py-3 text-left text-sm font-medium',
+                  'bg-white border border-zinc-200 rounded-xl',
+                  'hover:border-purple-500 hover:bg-purple-50 hover:text-purple-700',
+                  'active:scale-[0.98]',
+                  'transition-all duration-150',
+                  'focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-1',
+                  'group'
+                )}
+                style={{ animationDelay: `${idx * 50}ms` }}
               >
-                {option.label}
+                <span className="flex items-center gap-2">
+                  {option.value === 'bug' && <Bug className="w-4 h-4 text-red-500 group-hover:scale-110 transition-transform" />}
+                  {option.value === 'feature' && <Lightbulb className="w-4 h-4 text-amber-500 group-hover:scale-110 transition-transform" />}
+                  {option.label}
+                </span>
               </button>
             ))}
           </div>
@@ -145,7 +165,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
 
         {/* Text/Email input */}
         {isLatest && isAssistant && message.inputType && message.inputType !== 'steps' && !message.options && (
-          <div className="mt-3">
+          <div className="mt-4">
             {message.inputType === 'textarea' ? (
               <textarea
                 ref={inputRef as React.RefObject<HTMLTextAreaElement>}
@@ -153,11 +173,11 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={message.inputPlaceholder}
-                rows={3}
-                className="w-full px-3 py-2 text-sm bg-white border border-zinc-200 rounded-lg
+                rows={4}
+                className="w-full px-4 py-3 text-sm bg-white border border-zinc-200 rounded-xl
                   placeholder:text-zinc-400
-                  focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent
-                  resize-none"
+                  focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
+                  resize-none transition-shadow"
               />
             ) : (
               <input
@@ -167,19 +187,25 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={message.inputPlaceholder}
-                className="w-full px-3 py-2 text-sm bg-white border border-zinc-200 rounded-lg
+                className="w-full px-4 py-3 text-sm bg-white border border-zinc-200 rounded-xl
                   placeholder:text-zinc-400
-                  focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                  focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
+                  transition-shadow"
               />
             )}
             <button
               onClick={handleTextSubmit}
               disabled={!inputValue.trim()}
-              className="mt-2 w-full px-4 py-2 text-sm font-medium text-white
-                bg-purple-600 hover:bg-purple-700 disabled:bg-zinc-300
-                rounded-lg transition-colors duration-150
-                focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-1"
+              className="mt-3 w-full px-4 py-2.5 text-sm font-medium text-white
+                bg-gradient-to-r from-purple-600 to-purple-700 
+                hover:from-purple-700 hover:to-purple-800 
+                disabled:from-zinc-300 disabled:to-zinc-300 disabled:cursor-not-allowed
+                rounded-xl transition-all duration-200
+                active:scale-[0.98]
+                focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-1
+                flex items-center justify-center gap-2"
             >
+              <Send className="w-4 h-4" />
               {t('betaFeedback.continue', 'Continue')}
             </button>
           </div>
@@ -187,19 +213,27 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
 
         {/* Steps input */}
         {isLatest && isAssistant && message.inputType === 'steps' && (
-          <div className="mt-3">
+          <div className="mt-4">
             {/* Current steps */}
             {steps.length > 0 && (
-              <div className="mb-2 space-y-1">
+              <div className="mb-3 space-y-2">
                 {steps.map((step, i) => (
-                  <div key={i} className="flex items-center gap-2 text-sm bg-white px-3 py-1.5 rounded-lg">
-                    <span className="text-zinc-400">{i + 1}.</span>
-                    <span className="flex-1">{step}</span>
+                  <div 
+                    key={i} 
+                    className="flex items-start gap-3 text-sm bg-white px-4 py-2.5 rounded-xl border border-zinc-200
+                      animate-in fade-in slide-in-from-top-1 duration-200"
+                  >
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-purple-100 text-purple-700 
+                      flex items-center justify-center text-xs font-semibold">
+                      {i + 1}
+                    </span>
+                    <span className="flex-1 text-zinc-700">{step}</span>
                     <button
                       onClick={() => removeStep(i)}
-                      className="text-zinc-400 hover:text-red-500"
+                      className="flex-shrink-0 p-1 text-zinc-400 hover:text-red-500 hover:bg-red-50 
+                        rounded-lg transition-colors"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 ))}
@@ -215,20 +249,22 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={message.inputPlaceholder}
-                className="flex-1 px-3 py-2 text-sm bg-white border border-zinc-200 rounded-lg
+                className="flex-1 px-4 py-3 text-sm bg-white border border-zinc-200 rounded-xl
                   placeholder:text-zinc-400
-                  focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                  focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
+                  transition-shadow"
               />
               <button
                 onClick={() => {
                   if (inputValue.trim()) {
                     setSteps(prev => [...prev, inputValue.trim()]);
                     setInputValue('');
+                    inputRef.current?.focus();
                   }
                 }}
                 disabled={!inputValue.trim()}
-                className="px-3 py-2 bg-zinc-200 hover:bg-zinc-300 disabled:bg-zinc-100 
-                  rounded-lg transition-colors"
+                className="px-4 py-3 bg-zinc-100 hover:bg-zinc-200 disabled:bg-zinc-50 disabled:text-zinc-300
+                  text-zinc-700 rounded-xl transition-colors flex items-center gap-1"
               >
                 <Plus className="w-4 h-4" />
               </button>
@@ -237,12 +273,22 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             <button
               onClick={handleStepsSubmit}
               disabled={steps.length === 0}
-              className="mt-2 w-full px-4 py-2 text-sm font-medium text-white
-                bg-purple-600 hover:bg-purple-700 disabled:bg-zinc-300
-                rounded-lg transition-colors duration-150
-                focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-1"
+              className="mt-3 w-full px-4 py-2.5 text-sm font-medium text-white
+                bg-gradient-to-r from-purple-600 to-purple-700 
+                hover:from-purple-700 hover:to-purple-800 
+                disabled:from-zinc-300 disabled:to-zinc-300 disabled:cursor-not-allowed
+                rounded-xl transition-all duration-200
+                active:scale-[0.98]
+                focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-1
+                flex items-center justify-center gap-2"
             >
-              {t('betaFeedback.done', 'Done')} ({steps.length} {t('betaFeedback.steps', 'steps')})
+              <Check className="w-4 h-4" />
+              {t('betaFeedback.done', 'Done')} 
+              {steps.length > 0 && (
+                <span className="ml-1 px-2 py-0.5 bg-white/20 rounded-full text-xs">
+                  {steps.length}
+                </span>
+              )}
             </button>
           </div>
         )}
@@ -266,6 +312,7 @@ const BetaFeedbackChatModal: React.FC<BetaFeedbackChatModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [isAnimatingIn, setIsAnimatingIn] = useState(false);
   
   const {
     state,
@@ -286,8 +333,13 @@ const BetaFeedbackChatModal: React.FC<BetaFeedbackChatModalProps> = ({
 
   // Initialize chat on open
   useEffect(() => {
-    if (isOpen && messages.length === 0) {
-      initializeChat();
+    if (isOpen) {
+      setIsAnimatingIn(true);
+      if (messages.length === 0) {
+        initializeChat();
+      }
+    } else {
+      setIsAnimatingIn(false);
     }
   }, [isOpen, messages.length, initializeChat]);
 
@@ -317,7 +369,9 @@ const BetaFeedbackChatModal: React.FC<BetaFeedbackChatModalProps> = ({
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [messages]);
 
   // Handle backdrop click
@@ -334,71 +388,94 @@ const BetaFeedbackChatModal: React.FC<BetaFeedbackChatModalProps> = ({
     setTimeout(reset, 300);
   }, [onClose, reset]);
 
+  // Get header icon based on feedback type
+  const getHeaderIcon = () => {
+    if (state.feedbackType === 'bug') {
+      return <Bug className="w-5 h-5 text-red-500" />;
+    }
+    if (state.feedbackType === 'feature') {
+      return <Lightbulb className="w-5 h-5 text-amber-500" />;
+    }
+    return <Sparkles className="w-5 h-5 text-purple-500" />;
+  };
+
   if (!isOpen) return null;
 
   return (
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/40 z-[9998] transition-opacity duration-200"
+        className={cn(
+          'fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998] transition-opacity duration-300',
+          isAnimatingIn ? 'opacity-100' : 'opacity-0'
+        )}
         onClick={handleBackdropClick}
         aria-hidden="true"
       />
 
       {/* Modal */}
       <div
-        className="fixed z-[9999] transition-all duration-300 ease-out
-          /* Mobile: bottom sheet style */
-          bottom-0 left-0 right-0 h-[90vh] rounded-t-2xl
-          /* Desktop: floating window */
-          sm:bottom-4 sm:right-4 sm:left-auto sm:top-auto
-          sm:w-[440px] sm:h-[640px] sm:rounded-2xl
-          /* Styling */
-          bg-white border border-zinc-200 shadow-2xl
-          flex flex-col overflow-hidden"
+        className={cn(
+          'fixed z-[9999] transition-all duration-300 ease-out',
+          // Mobile: bottom sheet style
+          'bottom-0 left-0 right-0 max-h-[92vh] rounded-t-3xl',
+          // Desktop: floating window
+          'sm:bottom-6 sm:right-6 sm:left-auto sm:top-auto',
+          'sm:w-[420px] sm:max-h-[680px] sm:rounded-2xl',
+          // Styling
+          'bg-white border border-zinc-200 shadow-2xl',
+          'flex flex-col overflow-hidden',
+          // Animation
+          isAnimatingIn 
+            ? 'translate-y-0 sm:translate-y-0 opacity-100 scale-100' 
+            : 'translate-y-full sm:translate-y-8 opacity-0 sm:scale-95'
+        )}
         role="dialog"
         aria-modal="true"
         aria-labelledby="beta-feedback-modal-title"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 bg-white">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between px-4 py-4 border-b border-zinc-100 bg-gradient-to-r from-zinc-50 to-white">
+          <div className="flex items-center gap-3">
             {canGoBack && (
               <button
                 onClick={previousStep}
-                className="p-1 hover:bg-zinc-100 rounded-lg transition-colors"
+                className="p-1.5 hover:bg-zinc-100 rounded-lg transition-colors -ml-1"
                 aria-label={t('betaFeedback.back', 'Go back')}
               >
-                <ChevronLeft className="w-5 h-5 text-zinc-600" />
+                <ChevronLeft className="w-5 h-5 text-zinc-500" />
               </button>
             )}
-            <h2 id="beta-feedback-modal-title" className="text-lg font-semibold text-zinc-900">
-              {state.feedbackType === 'bug' 
-                ? t('betaFeedback.bugReportTitle', '🐛 Bug Report')
-                : state.feedbackType === 'feature'
-                ? t('betaFeedback.featureTitle', '💡 Feature Suggestion')
-                : t('betaFeedback.title', 'Beta Feedback')}
-            </h2>
+            <div className="flex items-center gap-2">
+              {getHeaderIcon()}
+              <h2 id="beta-feedback-modal-title" className="text-base font-semibold text-zinc-900">
+                {state.feedbackType === 'bug' 
+                  ? t('betaFeedback.bugReportTitle', 'Bug Report')
+                  : state.feedbackType === 'feature'
+                  ? t('betaFeedback.featureTitle', 'Feature Suggestion')
+                  : t('betaFeedback.title', 'Beta Feedback')}
+              </h2>
+            </div>
           </div>
           <button
             onClick={handleClose}
-            className="p-2 hover:bg-zinc-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-zinc-100 rounded-xl transition-colors"
             aria-label={t('common.close', 'Close')}
           >
-            <X className="w-5 h-5 text-zinc-600" />
+            <X className="w-5 h-5 text-zinc-500" />
           </button>
         </div>
 
         {/* Progress bar */}
-        <div className="h-1 bg-zinc-100">
+        <div className="h-1 bg-zinc-100 overflow-hidden">
           <div 
-            className="h-full bg-purple-600 transition-all duration-300"
+            className="h-full bg-gradient-to-r from-purple-500 to-purple-600 transition-all duration-500 ease-out"
             style={{ width: `${progress}%` }}
           />
         </div>
 
         {/* Messages area */}
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto p-4 bg-gradient-to-b from-white to-zinc-50/50">
           {messages.map((message, index) => (
             <MessageBubble
               key={message.id}
@@ -407,14 +484,18 @@ const BetaFeedbackChatModal: React.FC<BetaFeedbackChatModalProps> = ({
               onTextSubmit={handleTextInput}
               onStepsSubmit={handleStepsInput}
               isLatest={index === messages.length - 1}
+              animationDelay={index === messages.length - 1 ? 100 : 0}
             />
           ))}
 
           {/* Submitting indicator */}
           {isSubmitting && (
-            <div className="flex justify-start mb-4">
-              <div className="bg-zinc-100 rounded-2xl rounded-bl-md px-4 py-3 flex items-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin text-purple-600" />
+            <div className="flex justify-start mb-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="bg-gradient-to-br from-zinc-50 to-zinc-100 border border-zinc-200/60 
+                rounded-2xl rounded-bl-md px-4 py-3 flex items-center gap-3 shadow-sm">
+                <div className="relative">
+                  <Loader2 className="w-5 h-5 animate-spin text-purple-600" />
+                </div>
                 <span className="text-sm text-zinc-600">
                   {t('betaFeedback.submitting', 'Submitting your feedback...')}
                 </span>
@@ -424,9 +505,12 @@ const BetaFeedbackChatModal: React.FC<BetaFeedbackChatModalProps> = ({
 
           {/* Success indicator */}
           {isComplete && (
-            <div className="flex justify-center my-4">
-              <div className="flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-full">
-                <Check className="w-4 h-4" />
+            <div className="flex justify-center my-6 animate-in zoom-in-50 duration-300">
+              <div className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-green-50 to-emerald-50 
+                text-green-700 rounded-full border border-green-200 shadow-sm">
+                <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
+                  <Check className="w-4 h-4 text-white" />
+                </div>
                 <span className="text-sm font-medium">
                   {t('betaFeedback.submitted', 'Feedback submitted!')}
                 </span>
@@ -438,37 +522,42 @@ const BetaFeedbackChatModal: React.FC<BetaFeedbackChatModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-4 py-3 border-t border-zinc-100 bg-zinc-50 flex items-center justify-between">
+        <div className="px-4 py-3 border-t border-zinc-100 bg-white flex items-center justify-between gap-4">
           {/* Skip button (for optional fields) */}
-          {canSkip && !isComplete && !isSubmitting && (
+          {canSkip && !isComplete && !isSubmitting ? (
             <button
               onClick={skipStep}
-              className="flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-700 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-zinc-500 
+                hover:text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors"
             >
               <SkipForward className="w-4 h-4" />
               {t('betaFeedback.skip', 'Skip')}
             </button>
+          ) : (
+            <div />
           )}
 
           {/* Close button when complete */}
           {isComplete && (
             <button
               onClick={handleClose}
-              className="ml-auto px-4 py-2 text-sm font-medium text-white
-                bg-purple-600 hover:bg-purple-700
-                rounded-lg transition-colors"
+              className="ml-auto px-5 py-2.5 text-sm font-medium text-white
+                bg-gradient-to-r from-purple-600 to-purple-700
+                hover:from-purple-700 hover:to-purple-800
+                rounded-xl transition-all duration-200 shadow-sm
+                active:scale-[0.98]"
             >
               {t('betaFeedback.close', 'Close')}
             </button>
           )}
 
-          {/* Placeholder to maintain layout */}
-          {!canSkip && !isComplete && <div />}
-
-          {/* Step indicator */}
-          <span className="text-xs text-zinc-400">
-            {t('betaFeedback.powered', 'Powered by Vocaid')}
-          </span>
+          {/* Branding */}
+          {!isComplete && (
+            <span className="text-xs text-zinc-400 flex items-center gap-1">
+              <Sparkles className="w-3 h-3" />
+              {t('betaFeedback.powered', 'Powered by Vocaid')}
+            </span>
+          )}
         </div>
       </div>
     </>

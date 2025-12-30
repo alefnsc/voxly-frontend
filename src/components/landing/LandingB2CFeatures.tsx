@@ -17,6 +17,7 @@ import { Card } from 'components/ui/card'
 import { B2C_FEATURES } from './LandingMockData'
 import {
   ArrowRight,
+  Sparkles,
   Mic,
   BarChart3,
   FileText,
@@ -76,7 +77,10 @@ export const LandingB2CFeatures: React.FC = () => {
         >
           {/* Section Header */}
           <motion.div variants={itemVariants} className="text-center mb-8 sm:mb-12 lg:mb-16">
-
+            <span className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-purple-700 bg-purple-100 rounded-full mb-4 sm:mb-6">
+              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              {t('landing.b2c.badge', 'Available Now')}
+            </span>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-zinc-900 mb-3 sm:mb-4">
               {t('landing.b2c.title', 'Interview')} <span className="text-purple-600">{t('landing.b2c.titleHighlight', 'Practice')}</span>
             </h2>
@@ -106,10 +110,10 @@ export const LandingB2CFeatures: React.FC = () => {
                     <IconComponent className="w-6 h-6 text-purple-600" />
                   </div>
                   <h3 className="text-lg font-semibold text-zinc-900 mb-2 group-hover:text-purple-600 transition-colors">
-                    {feature.title}
+                    {t(feature.titleKey)}
                   </h3>
                   <p className="text-sm text-zinc-600">
-                    {feature.description}
+                    {t(feature.descriptionKey)}
                   </p>
                 </Card>
               </motion.div>

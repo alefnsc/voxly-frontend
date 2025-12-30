@@ -8,6 +8,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useUser } from '@clerk/clerk-react';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { v4 as uuidv4 } from 'uuid';
 import { 
   WizardStep, 
@@ -87,6 +88,7 @@ const createInitialState = (): BetaFeedbackWizardState => ({
 export function useBetaFeedbackFlow() {
   const { t, i18n } = useTranslation();
   const { user, isSignedIn } = useUser();
+  const { executeRecaptcha } = useGoogleReCaptcha();
   
   const [state, setState] = useState<BetaFeedbackWizardState>(() => {
     const initial = createInitialState();
@@ -528,6 +530,19 @@ export function useBetaFeedbackFlow() {
 
     const refId = uuidv4();
     
+    // Get reCAPTCHA v3 token for spam protection
+    let recaptchaToken: string | undefined;
+    if (executeRecaptcha) {
+      try {
+        recaptchaToken = await executeRecaptcha('beta_feedback');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[BetaFeedback] reCAPTCHA token acquired');
+        }
+      } catch (err) {
+        console.warn('[BetaFeedback] reCAPTCHA failed, continuing without token:', err);
+      }
+    }
+    
     // Dev logging (non-PII: only type and metadata)
     if (process.env.NODE_ENV === 'development') {
       console.log('[BetaFeedback] Submitting feedback:', {
@@ -535,6 +550,7 @@ export function useBetaFeedbackFlow() {
         tag: state.feedbackType === 'bug' ? '[Bug]' : '[Feature]',
         hasTitle: !!state.title,
         hasDescription: !!state.description,
+        hasRecaptcha: !!recaptchaToken,
         refId,
       });
     }
@@ -552,6 +568,7 @@ export function useBetaFeedbackFlow() {
       userAgent: navigator.userAgent,
       allowFollowUp: state.allowFollowUp,
       refId,
+      recaptchaToken,
     };
 
     // Add type-specific fields
@@ -625,7 +642,7 @@ export function useBetaFeedbackFlow() {
       }));
       goToStep('error');
     }
-  }, [state, isSignedIn, user, i18n.language, goToStep]);
+  }, [state, isSignedIn, user, i18n.language, goToStep, executeRecaptcha]);
 
   // ============================================================================
   // RESET

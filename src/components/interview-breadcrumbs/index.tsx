@@ -34,7 +34,7 @@ export const InterviewBreadcrumbs: React.FC<InterviewBreadcrumbsProps> = ({
 
   const handleBackToDashboard = () => {
     resetFlow();
-    navigate('/app/b2c/dashboard');
+    navigate('/');
   };
 
   const getStepStatus = (stepIndex: number): 'completed' | 'current' | 'upcoming' => {
@@ -73,7 +73,7 @@ export const InterviewBreadcrumbs: React.FC<InterviewBreadcrumbsProps> = ({
                         'flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium transition-all',
                         status === 'completed' && 'bg-purple-600 text-white',
                         status === 'current' && 'bg-purple-600 text-white ring-4 ring-purple-100',
-                        status === 'upcoming' && 'bg-zinc-200 text-zinc-500'
+                        status === 'upcoming' && 'bg-gray-200 text-gray-500'
                       )}
                     >
                       {status === 'completed' ? (
@@ -86,8 +86,8 @@ export const InterviewBreadcrumbs: React.FC<InterviewBreadcrumbsProps> = ({
                       className={cn(
                         'text-sm font-medium hidden sm:inline',
                         status === 'current' && 'text-purple-600',
-                        status === 'completed' && 'text-zinc-700',
-                        status === 'upcoming' && 'text-zinc-400'
+                        status === 'completed' && 'text-gray-700',
+                        status === 'upcoming' && 'text-gray-400'
                       )}
                     >
                       {step.label}
@@ -102,7 +102,7 @@ export const InterviewBreadcrumbs: React.FC<InterviewBreadcrumbsProps> = ({
                           'w-5 h-5',
                           status === 'completed' || status === 'current'
                             ? 'text-purple-600'
-                            : 'text-zinc-300'
+                            : 'text-gray-300'
                         )}
                       />
                     </div>

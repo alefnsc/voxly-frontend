@@ -40,7 +40,6 @@ import {
   TrendingUp,
   Download
 } from 'lucide-react'
-import InterviewReady from 'components/interview-ready'
 
 // Format duration from milliseconds to mm:ss
 const formatDuration = (ms: number | null | undefined): string => {
@@ -86,7 +85,7 @@ export default function InterviewDetails() {
   const { id } = useParams<{ id: string }>()
   const { user, isLoaded, isSignedIn } = useUser()
   const navigate = useNavigate()
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const { userRole } = useWorkspace()
 
@@ -143,11 +142,11 @@ export default function InterviewDetails() {
       setInterview(details)
     } catch (err) {
       console.error('Failed to fetch interview details:', err)
-      setError('Failed to load interview details. Please try again.')
+      setError(t('interviewDetails.loadError'))
     } finally {
       setIsLoading(false)
     }
-  }, [user?.id, id])
+  }, [user?.id, id, t])
 
   // Fetch analytics data after interview details are loaded
   const fetchAnalyticsData = useCallback(async () => {
@@ -243,7 +242,7 @@ export default function InterviewDetails() {
   // Format date for display (includes year)
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString(i18n.language, {
       month: 'short',
       day: 'numeric',
       year: 'numeric'
@@ -361,7 +360,6 @@ export default function InterviewDetails() {
   const displayCompany = interview.companyName || interview.company || 'N/A'
   const displayDuration = formatDuration(interview.callDuration)
   const displayScore = interview.score ?? interview.feedback?.overallScore ?? null
-
   return (
     <div className="min-h-screen bg-zinc-50">
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
@@ -658,7 +656,7 @@ export default function InterviewDetails() {
                 <div className="flex items-center justify-center py-12">
                   <div className="flex flex-col items-center gap-3">
                     <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
-                    <p className="text-sm text-zinc-500">Loading advanced analytics...</p>
+                    <p className="text-sm text-zinc-500">{t('interviewDetails.loadingAnalytics')}</p>
                   </div>
                 </div>
               </div>
@@ -689,8 +687,6 @@ export default function InterviewDetails() {
           </div>
         )}
 
-        {/* CTA Section */}
-       <InterviewReady />
       </div>
       <ContactButton />
     </div>

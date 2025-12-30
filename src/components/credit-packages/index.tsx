@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useUser, useClerk } from '@clerk/clerk-react';
 import { useMediaQuery } from '@mantine/hooks';
 import { Sparkles, Crown, Star, Loader2, CreditCard, Shield, Globe } from 'lucide-react';
@@ -18,6 +19,7 @@ interface PackageCardProps {
   onPurchase: (pkg: CreditPackage) => void;
   isLoading: boolean;
   loadingPackageId: string | null;
+  t: (key: string, options?: Record<string, unknown>) => string;
 }
 
 // Individual package card - clean self-contained styling
@@ -26,7 +28,8 @@ const PackageCard: React.FC<PackageCardProps> = ({
   getPackageIcon,
   onPurchase,
   isLoading,
-  loadingPackageId
+  loadingPackageId,
+  t
 }) => {
   const isThisLoading = isLoading && loadingPackageId === pkg.id;
 
@@ -46,7 +49,7 @@ const PackageCard: React.FC<PackageCardProps> = ({
         <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
           <span className="bg-gradient-to-r from-purple-600 to-violet-600 text-white px-4 py-1 rounded-full text-xs font-bold shadow-md whitespace-nowrap flex items-center gap-1">
             <Star className="w-3 h-3 fill-current" />
-            Most Popular
+            {t('creditPackages.mostPopular')}
           </span>
         </div>
       )}
@@ -94,10 +97,10 @@ const PackageCard: React.FC<PackageCardProps> = ({
           <span className="text-sm text-gray-400 ml-1">USD</span>
         </div>
         <p className="text-gray-600 mt-2">
-          <span className="font-bold text-lg text-purple-700">{pkg.credits}</span> Credits
+          <span className="font-bold text-lg text-purple-700">{pkg.credits}</span> {t('creditPackages.credits')}
         </p>
         <p className="text-xs text-gray-400 mt-1">
-          ${(pkg.priceUSD / pkg.credits).toFixed(2)} per interview
+          ${(pkg.priceUSD / pkg.credits).toFixed(2)} {t('creditPackages.perInterview')}
         </p>
         <p className="text-xs text-purple-600 font-medium mt-1">
           ≈ R$ {pkg.priceBRL.toFixed(2)} BRL
@@ -124,12 +127,12 @@ const PackageCard: React.FC<PackageCardProps> = ({
         {isThisLoading ? (
           <>
             <Loader2 className="w-5 h-5 animate-spin" />
-            <span>Processing...</span>
+            <span>{t('creditPackages.processing')}</span>
           </>
         ) : (
           <>
             <CreditCard className="w-5 h-5" />
-            <span>Buy {pkg.credits} Credits</span>
+            <span>{t('creditPackages.buyCredits', { count: pkg.credits })}</span>
           </>
         )}
       </button>
@@ -139,6 +142,7 @@ const PackageCard: React.FC<PackageCardProps> = ({
 
 // Main component
 const CreditPackages: React.FC<CreditPackagesProps> = ({ onPurchaseComplete }) => {
+  const { t } = useTranslation();
   const { user, isSignedIn } = useUser();
   const { openSignIn } = useClerk();
   const [isLoading, setIsLoading] = useState(false);
@@ -233,14 +237,14 @@ const CreditPackages: React.FC<CreditPackagesProps> = ({ onPurchaseComplete }) =
         // Small delay to ensure user data is ready, then proceed with purchase
         setTimeout(async () => {
           if (!user) {
-            setError('Authentication failed. Please try again.');
+            setError(t('creditPackages.errors.authFailed'));
             return;
           }
 
           setIsLoading(true);
           setLoadingPackageId(pendingPackage.id);
           setError(null);
-          setPaymentStatus('Opening payment window...');
+          setPaymentStatus(t('creditPackages.status.openingPayment'));
 
           try {
             console.log(`🛒 Resuming purchase for ${pendingPackage.name}...`);
@@ -270,13 +274,13 @@ const CreditPackages: React.FC<CreditPackagesProps> = ({ onPurchaseComplete }) =
             );
 
             if (!popup) {
-              setPaymentStatus('Redirecting to payment...');
+              setPaymentStatus(t('creditPackages.status.redirecting'));
               window.location.href = redirectUrl;
               return;
             }
 
             const providerDisplayName = provider === 'mercadopago' ? 'Mercado Pago' : 'PayPal';
-            setPaymentStatus(`Complete payment in the ${providerDisplayName} popup. This page will update automatically.`);
+            setPaymentStatus(t('creditPackages.status.completeInPopup', { provider: providerDisplayName }));
 
             // Get current credits from backend PostgreSQL (source of truth)
             let currentCredits = 0;
@@ -291,7 +295,7 @@ const CreditPackages: React.FC<CreditPackagesProps> = ({ onPurchaseComplete }) =
             pollForCreditsChange(currentCredits, expectedCredits, popup);
           } catch (err) {
             console.error('❌ Purchase error:', err);
-            setError('Failed to initiate payment. Please try again.');
+            setError(t('creditPackages.errors.paymentFailed'));
             setPaymentStatus(null);
             setIsLoading(false);
             setLoadingPackageId(null);
@@ -300,7 +304,7 @@ const CreditPackages: React.FC<CreditPackagesProps> = ({ onPurchaseComplete }) =
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSignedIn, user]);
+  }, [isSignedIn, user, t]);
 
   // Get icon for each package type
   const getPackageIcon = (packageId: string) => {
@@ -324,7 +328,7 @@ const CreditPackages: React.FC<CreditPackagesProps> = ({ onPurchaseComplete }) =
       try {
         // Check if popup was closed by user
         if (popup && popup.closed) {
-          setPaymentStatus('Payment window closed. Checking for credit update...');
+          setPaymentStatus(t('creditPackages.status.windowClosed'));
         }
 
         // Fetch credits from backend PostgreSQL (source of truth) - skip cache for payment verification
@@ -340,7 +344,7 @@ const CreditPackages: React.FC<CreditPackagesProps> = ({ onPurchaseComplete }) =
 
         if (currentCredits >= expectedCredits) {
           console.log('✅ Credits updated in PostgreSQL!');
-          setPaymentStatus('Payment successful! Credits added.');
+          setPaymentStatus(t('creditPackages.status.paymentSuccessful'));
 
           // Close popup if still open
           if (popup && !popup.closed) {
@@ -359,7 +363,7 @@ const CreditPackages: React.FC<CreditPackagesProps> = ({ onPurchaseComplete }) =
           // Continue polling
           setTimeout(checkCredits, 5000); // Check every 5 seconds
         } else {
-          setPaymentStatus('Credit verification timed out. If you completed the payment, please refresh the page.');
+          setPaymentStatus(t('creditPackages.status.verificationTimeout'));
           setIsLoading(false);
           setLoadingPackageId(null);
         }
@@ -379,14 +383,14 @@ const CreditPackages: React.FC<CreditPackagesProps> = ({ onPurchaseComplete }) =
   // Handle purchase after authentication (for users who just signed in)
   const handlePurchaseAfterAuth = async (pkg: CreditPackage) => {
     if (!user) {
-      setError('Authentication failed. Please try again.');
+      setError(t('creditPackages.errors.authFailed'));
       return;
     }
 
     setIsLoading(true);
     setLoadingPackageId(pkg.id);
     setError(null);
-    setPaymentStatus('Creating payment...');
+    setPaymentStatus(t('creditPackages.status.creatingPayment'));
 
     try {
       console.log(`🛒 Initiating purchase for ${pkg.name}...`);
@@ -421,13 +425,13 @@ const CreditPackages: React.FC<CreditPackagesProps> = ({ onPurchaseComplete }) =
       if (!popup) {
         // Popup was blocked, fallback to redirect
         console.log('Popup blocked, redirecting instead...');
-        setPaymentStatus('Redirecting to payment...');
+        setPaymentStatus(t('creditPackages.status.redirecting'));
         window.location.href = redirectUrl;
         return;
       }
 
       const providerDisplayName = provider === 'mercadopago' ? 'Mercado Pago' : 'PayPal';
-      setPaymentStatus(`Complete payment in the ${providerDisplayName} popup. This page will update automatically.`);
+      setPaymentStatus(t('creditPackages.status.completeInPopup', { provider: providerDisplayName }));
 
       // Get current credits from backend PostgreSQL (source of truth)
       let currentCredits = 0;
@@ -443,7 +447,7 @@ const CreditPackages: React.FC<CreditPackagesProps> = ({ onPurchaseComplete }) =
       pollForCreditsChange(currentCredits, expectedCredits, popup);
     } catch (err) {
       console.error('❌ Purchase error:', err);
-      setError('Failed to initiate payment. Please try again.');
+      setError(t('creditPackages.errors.paymentFailed'));
       setPaymentStatus(null);
       setIsLoading(false);
       setLoadingPackageId(null);
@@ -519,6 +523,7 @@ const CreditPackages: React.FC<CreditPackagesProps> = ({ onPurchaseComplete }) =
             onPurchase={handlePurchase}
             isLoading={isLoading}
             loadingPackageId={loadingPackageId}
+            t={t}
           />
         ))}
       </div>
@@ -528,7 +533,7 @@ const CreditPackages: React.FC<CreditPackagesProps> = ({ onPurchaseComplete }) =
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border border-gray-200">
           <Shield className="w-4 h-4 text-green-600" />
           <span className="text-gray-600 text-sm font-medium">
-            Secure payment via {providerName}
+            {t('creditPackages.securePayment', { provider: providerName })}
           </span>
           {isLoadingProvider && <Loader2 className="w-3 h-3 animate-spin text-gray-400" />}
         </div>
@@ -536,8 +541,8 @@ const CreditPackages: React.FC<CreditPackagesProps> = ({ onPurchaseComplete }) =
           <Globe className="w-3 h-3 text-gray-400" />
           <p className="text-xs text-gray-400">
             {detectedProvider === 'mercadopago' 
-              ? 'Prices in USD • Payment processed in BRL (LATAM)' 
-              : 'Prices in USD • Global payment processing'
+              ? `${t('creditPackages.pricesUsd')} • ${t('creditPackages.paymentProcessing.latam')}` 
+              : `${t('creditPackages.pricesUsd')} • ${t('creditPackages.paymentProcessing.global')}`
             }
           </p>
         </div>

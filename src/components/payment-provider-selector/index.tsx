@@ -7,6 +7,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useUser } from '@clerk/clerk-react';
+import { useTranslation } from 'react-i18next';
 import { Globe, CreditCard, Check, Loader2, MapPin, RefreshCw } from 'lucide-react';
 import apiService from '../../services/APIService';
 
@@ -56,6 +57,7 @@ export const PaymentProviderSelector: React.FC<PaymentProviderSelectorProps> = (
   compact = false,
 }) => {
   const { user, isSignedIn } = useUser();
+  const { t } = useTranslation();
   const [detectedProvider, setDetectedProvider] = useState<PaymentProvider>('paypal');
   const [selectedProvider, setSelectedProvider] = useState<PaymentProvider>('paypal');
   const [providerName, setProviderName] = useState<string>('PayPal');
@@ -145,12 +147,12 @@ export const PaymentProviderSelector: React.FC<PaymentProviderSelectorProps> = (
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <CreditCard className="w-5 h-5 text-purple-600" />
-          <h3 className="font-semibold text-gray-900">Payment Method</h3>
+          <h3 className="font-semibold text-gray-900">{t('paymentProvider.title')}</h3>
         </div>
         {isLoading && (
           <div className="flex items-center gap-1 text-gray-400">
             <Loader2 className="w-4 h-4 animate-spin" />
-            <span className="text-xs">Detecting...</span>
+            <span className="text-xs">{t('paymentProvider.detecting')}</span>
           </div>
         )}
       </div>
@@ -160,13 +162,13 @@ export const PaymentProviderSelector: React.FC<PaymentProviderSelectorProps> = (
         <div className="flex items-center gap-2 mb-4 text-sm text-gray-500">
           <MapPin className="w-4 h-4" />
           <span>
-            Detected region: <span className="font-medium text-gray-700">{detectedRegion}</span>
+            {t('paymentProvider.detectedRegion')}: <span className="font-medium text-gray-700">{detectedRegion}</span>
           </span>
           {isAutoDetected && (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-50 
                              text-green-700 rounded-full text-xs font-medium">
               <Check className="w-3 h-3" />
-              Auto-selected
+              {t('paymentProvider.autoSelected')}
             </span>
           )}
         </div>
@@ -197,7 +199,7 @@ export const PaymentProviderSelector: React.FC<PaymentProviderSelectorProps> = (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-600 
                                    text-white rounded-full text-xs font-medium shadow-sm">
                     <Globe className="w-3 h-3" />
-                    Recommended
+                    {t('paymentProvider.recommended')}
                   </span>
                 </div>
               )}
@@ -235,10 +237,9 @@ export const PaymentProviderSelector: React.FC<PaymentProviderSelectorProps> = (
           <div className="flex items-start gap-2">
             <RefreshCw className="w-4 h-4 text-yellow-600 mt-0.5" />
             <div>
-              <p className="text-sm text-yellow-800 font-medium">Using fallback provider</p>
+              <p className="text-sm text-yellow-800 font-medium">{t('paymentProvider.fallback.title')}</p>
               <p className="text-xs text-yellow-600 mt-0.5">
-                Your preferred payment provider is temporarily unavailable.
-                We've selected an alternative for you.
+                {t('paymentProvider.fallback.description')}
               </p>
             </div>
           </div>
@@ -247,8 +248,7 @@ export const PaymentProviderSelector: React.FC<PaymentProviderSelectorProps> = (
 
       {/* Info Text */}
       <p className="text-xs text-gray-400 mt-4 text-center">
-        Payment provider is selected based on your region for the best experience.
-        You can change it anytime.
+        {t('paymentProvider.regionInfo')}
       </p>
     </div>
   );

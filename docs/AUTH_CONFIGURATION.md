@@ -18,8 +18,8 @@ Vocaid uses Clerk for authentication with the following OAuth providers:
 
 3. Configure redirect URLs in Clerk:
    - **Redirect URL (Callback)**: `https://your-domain.com/sso-callback`
-   - **After Sign-in URL**: `https://your-domain.com/dashboard`
-   - **After Sign-up URL**: `https://your-domain.com/dashboard`
+   - **After Sign-in URL**: `https://your-domain.com/app/b2c/dashboard`
+   - **After Sign-up URL**: `https://your-domain.com/app/b2c/dashboard`
 
 4. In your Google Cloud Console:
    - Add authorized redirect URI: `https://clerk.your-domain.com/v1/oauth_callback`
@@ -69,7 +69,7 @@ Apple OAuth requires additional configuration:
 
 Ensure these URLs are configured in Clerk:
 - **Redirect URL**: `/sso-callback`
-- **After Sign-in/Sign-up URL**: `/dashboard`
+- **After Sign-in/Sign-up URL**: `/app/b2c/dashboard`
 
 ## Frontend Code
 
@@ -81,7 +81,7 @@ The `AuthButtons` component handles OAuth flows:
 await auth.authenticateWithRedirect({
   strategy: 'oauth_google', // or 'oauth_apple'
   redirectUrl: '/sso-callback',
-  redirectUrlComplete: '/dashboard',
+  redirectUrlComplete: '/app/b2c/dashboard',
 });
 \`\`\`
 

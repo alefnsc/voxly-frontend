@@ -116,6 +116,8 @@ export interface BetaFeedbackRequest {
   userAgent: string;
   allowFollowUp: boolean;
   refId: string;
+  // reCAPTCHA v3 token (for Formspree spam protection)
+  recaptchaToken?: string;
 }
 
 export interface BetaFeedbackResponse {

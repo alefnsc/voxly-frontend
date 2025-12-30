@@ -29,6 +29,7 @@ import {
   Loader2,
   ArrowRight,
   Upload,
+  X,
   Check,
   ChevronDown,
   Search,
@@ -42,6 +43,7 @@ import { useWalletBalanceQuery } from 'hooks/queries/useWalletQueries';
 import {
   INTERVIEW_LANGUAGES,
   getAllCountries,
+  type Country,
   type InterviewLanguageCode,
 } from 'lib/geo/languageCountries';
 import { cn } from 'lib/utils';
@@ -380,7 +382,6 @@ const B2CNewInterviewPage: React.FC = () => {
     return INTERVIEW_LANGUAGES.map((lang) => ({
       value: lang.code,
       label: lang.name,
-      icon: <span className="text-lg">{lang.flag}</span>,
       description: lang.nativeName,
     }));
   }, []);
@@ -556,6 +557,15 @@ const B2CNewInterviewPage: React.FC = () => {
     try {
       // Get resume data for the interview
       const selectedResume = resumes?.find((r: any) => r.id === formData.resumeId);
+      let resumeData: { base64Data?: string; fileName?: string; mimeType?: string } | null = null;
+      if (user?.id && formData.resumeId) {
+        try {
+          const resumeResponse = await apiService.getResumeById(user.id, formData.resumeId, true);
+          resumeData = resumeResponse?.data || null;
+        } catch (error) {
+          console.error('Failed to fetch resume data for interview:', error);
+        }
+      }
       
       // Create interview
       const interview = await apiService.createInterview(user.id, {
@@ -576,9 +586,37 @@ const B2CNewInterviewPage: React.FC = () => {
           jobTitle: formData.jobTitle,
           jobDescription: formData.jobDescription,
         });
-        
-        // Navigate to interview page
-        navigate(`/app/b2c/interview/${interview.id}`);
+
+        if (!resumeData?.base64Data) {
+          throw new Error(t('interview.errors.resumeMissingData', 'Resume data is missing. Please re-upload your resume.'));
+        }
+
+        // Generate validation token and set expiration (1 hour from now)
+        const tokenExpiration = Date.now() + (60 * 60 * 1000);
+        localStorage.setItem('interviewValidationToken', interview.id);
+        localStorage.setItem('tokenExpiration', tokenExpiration.toString());
+
+        // Navigate to live interview with required metadata
+        navigate('/interview', {
+          state: {
+            body: {
+              userId: user.id,
+              metadata: {
+                first_name: user.firstName || '',
+                last_name: user.lastName || '',
+                company_name: formData.company.trim(),
+                job_title: formData.jobTitle.trim(),
+                job_description: formData.jobDescription.trim(),
+                interviewee_cv: resumeData.base64Data,
+                resume_file_name: resumeData.fileName || selectedResume?.fileName,
+                resume_mime_type: resumeData.mimeType,
+                interview_id: interview.id,
+                preferred_language: formData.language,
+                seniority: formData.seniority,
+              }
+            }
+          }
+        });
       } else {
         throw new Error('Failed to create interview');
       }
@@ -865,7 +903,7 @@ const B2CNewInterviewPage: React.FC = () => {
               {t('interview.creditsInfo', 'This interview will use 1 credit.')}
               {walletBalance?.data?.balance !== undefined && (
                 <span className="ml-1">
-                  {t('interview.currentBalance', 'Current balance:')} <strong>{walletBalance.data.balance}</strong>
+                  {t('interview.currentBalance', 'Current balance: {{count}} credits', { count: walletBalance.data.balance })}
                 </span>
               )}
             </div>

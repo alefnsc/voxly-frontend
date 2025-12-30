@@ -52,7 +52,7 @@ export const PricingCards: React.FC<PricingCardsProps> = ({ onDemoClick }) => {
   }
 
   return (
-    <section id="pricing" className="py-12 sm:py-16 lg:py-24 bg-zinc-50 scroll-mt-20 md:scroll-mt-24">
+    <section id="pricing" className="py-12 sm:py-16 lg:py-24 bg-zinc-50">
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           ref={ref}

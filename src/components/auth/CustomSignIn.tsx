@@ -19,6 +19,7 @@ import { signInSchema, SignInFormData } from './validation';
 import { AuthInput } from './AuthInput';
 import { AuthButtons, AuthDivider } from './AuthButtons';
 import { AuthLegalNotice } from './AuthLegalNotice';
+import { B2C_ROUTES } from 'routes/b2cRoutes';
 
 // Form step types
 type SignInStep = 'form' | 'factor' | 'complete';
@@ -112,7 +113,7 @@ export const CustomSignIn: React.FC<CustomSignInProps> = ({
         
         // Navigate to dashboard
         setTimeout(() => {
-          navigate('/dashboard');
+          navigate(B2C_ROUTES.DASHBOARD);
         }, 1000);
       } else if (result.status === 'needs_second_factor') {
         // 2FA required
@@ -153,7 +154,7 @@ export const CustomSignIn: React.FC<CustomSignInProps> = ({
         onSuccess?.();
         
         setTimeout(() => {
-          navigate('/dashboard');
+          navigate(B2C_ROUTES.DASHBOARD);
         }, 1000);
       } else {
         console.error('2FA incomplete:', result);

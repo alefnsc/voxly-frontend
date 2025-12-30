@@ -9,6 +9,7 @@
  */
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Calendar, ChevronDown, X, Filter } from 'lucide-react';
 
 // ========================================
@@ -44,10 +45,10 @@ export interface AnalyticsFiltersProps {
 // CONSTANTS
 // ========================================
 
-const PERIOD_OPTIONS: Array<{ value: DateRangePeriod; label: string }> = [
-  { value: 'weekly', label: 'Last 7 days' },
-  { value: 'monthly', label: 'Last 30 days' },
-  { value: 'yearly', label: 'Last 12 months' },
+const PERIOD_OPTIONS: Array<{ value: DateRangePeriod; labelKey: string }> = [
+  { value: 'weekly', labelKey: 'analyticsFilters.last7Days' },
+  { value: 'monthly', labelKey: 'analyticsFilters.last30Days' },
+  { value: 'yearly', labelKey: 'analyticsFilters.last12Months' },
 ];
 
 // ========================================
@@ -63,6 +64,7 @@ export function AnalyticsFilters({
   showResumeFilter = false,
   className = '',
 }: AnalyticsFiltersProps) {
+  const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = React.useState(false);
 
   const hasActiveFilters = filters.role || filters.resumeId;
@@ -103,7 +105,7 @@ export function AnalyticsFilters({
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              {option.label}
+              {t(option.labelKey)}
             </button>
           ))}
         </div>
@@ -121,7 +123,7 @@ export function AnalyticsFilters({
           }`}
         >
           <Filter className="h-4 w-4" />
-          Filters
+          {t('analyticsFilters.filters')}
           {activeFilterCount > 0 && (
             <span className="bg-purple-600 text-white text-xs px-1.5 py-0.5 rounded-full">
               {activeFilterCount}
@@ -137,7 +139,7 @@ export function AnalyticsFilters({
             className="flex items-center gap-1 px-2 py-1.5 text-sm text-gray-500 hover:text-gray-700"
           >
             <X className="h-4 w-4" />
-            Clear
+            {t('analyticsFilters.clear')}
           </button>
         )}
       </div>
@@ -149,14 +151,14 @@ export function AnalyticsFilters({
           {showRoleFilter && roles.length > 0 && (
             <div className="flex-1 min-w-[200px]">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Role
+                {t('analyticsFilters.role')}
               </label>
               <select
                 value={filters.role || ''}
                 onChange={(e) => handleRoleChange(e.target.value)}
                 className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               >
-                <option value="">All roles</option>
+                <option value="">{t('analyticsFilters.allRoles')}</option>
                 {roles.map((role) => (
                   <option key={role.value} value={role.value}>
                     {role.label}
@@ -170,14 +172,14 @@ export function AnalyticsFilters({
           {showResumeFilter && resumes.length > 0 && (
             <div className="flex-1 min-w-[200px]">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Resume
+                {t('analyticsFilters.resume')}
               </label>
               <select
                 value={filters.resumeId || ''}
                 onChange={(e) => handleResumeChange(e.target.value)}
                 className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               >
-                <option value="">All resumes</option>
+                <option value="">{t('analyticsFilters.allResumes')}</option>
                 {resumes.map((resume) => (
                   <option key={resume.value} value={resume.value}>
                     {resume.label}
@@ -192,7 +194,7 @@ export function AnalyticsFilters({
             <>
               <div className="flex-1 min-w-[150px]">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Start Date
+                  {t('analyticsFilters.startDate')}
                 </label>
                 <div className="relative">
                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -211,7 +213,7 @@ export function AnalyticsFilters({
               </div>
               <div className="flex-1 min-w-[150px]">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  End Date
+                  {t('analyticsFilters.endDate')}
                 </label>
                 <div className="relative">
                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />

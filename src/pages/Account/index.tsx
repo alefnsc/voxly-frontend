@@ -15,12 +15,14 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { cn } from 'lib/utils';
+import { config } from 'lib/config';
 import { SUPPORTED_LANGUAGES, SupportedLanguageCode } from 'lib/i18n';
 import { useLanguage } from 'hooks/use-language';
 import { CustomAvatar } from 'components/auth/CustomAvatar';
 import { AuthInput } from 'components/auth/AuthInput';
 import { AuthSelect } from 'components/auth/AuthSelect';
 import { profileUpdateSchema, USER_ROLES, SUPPORTED_COUNTRIES, UserRole } from 'components/auth/validation';
+import apiService from 'services/APIService';
 
 // Section types
 type Section = 'profile' | 'security' | 'danger';
@@ -50,7 +52,7 @@ const AccountDashboard: React.FC = () => {
   
   // Loading states
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isSendingResetEmail, setIsSendingResetEmail] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   
   // Form data
@@ -62,11 +64,6 @@ const AccountDashboard: React.FC = () => {
   
   // Country state (separate from profileData since it's persisted differently)
   const [countryCode, setCountryCode] = useState<string>('BR');
-  
-  // Password change
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   
   // Delete confirmation
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
@@ -108,7 +105,6 @@ const AccountDashboard: React.FC = () => {
   const languageOptions = Object.entries(SUPPORTED_LANGUAGES).map(([code, info]) => ({
     value: code,
     label: info.name,
-    flag: info.flag,
   }));
 
   // Country options (Brazil-only enabled for now)
@@ -116,7 +112,7 @@ const AccountDashboard: React.FC = () => {
     value: country.code,
     label: `${country.flag} ${country.name}`,
     disabled: !country.enabled,
-    sublabel: !country.enabled ? '(Coming soon)' : undefined,
+    sublabel: !country.enabled ? t('common.comingSoon') : undefined,
   }));
 
   // Role options
@@ -138,13 +134,21 @@ const AccountDashboard: React.FC = () => {
     await changeLanguage(newLanguage as SupportedLanguageCode);
     
     // Also update in backend
+    if (!user?.id) return;
+    
     try {
-      await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/users/metadata`, {
+      const response = await fetch(`${config.backendUrl}/api/users/metadata`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-user-id': user.id,
+        },
         body: JSON.stringify({ preferredLanguage: newLanguage }),
       });
+      
+      if (!response.ok) {
+        console.warn('Failed to sync language to backend:', await response.text());
+      }
     } catch (error) {
       console.warn('Failed to sync language to backend:', error);
     }
@@ -154,12 +158,16 @@ const AccountDashboard: React.FC = () => {
   const handleCountryChange = async (newCountry: string) => {
     setCountryCode(newCountry);
     
+    if (!user?.id) return;
+    
     // Update in backend
     try {
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/users/metadata`, {
+      const response = await fetch(`${config.backendUrl}/api/users/metadata`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-user-id': user.id,
+        },
         body: JSON.stringify({ countryCode: newCountry }),
       });
       
@@ -204,58 +212,45 @@ const AccountDashboard: React.FC = () => {
       });
 
       // Update metadata via backend
-      await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/users/metadata`, {
+      const response = await fetch(`${config.backendUrl}/api/users/metadata`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-user-id': user.id,
+        },
         body: JSON.stringify({ role: profileData.role }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || errorData.message || 'Failed to update profile');
+      }
 
       setProfileSuccess(t('account.profileUpdated', 'Profile updated successfully'));
     } catch (error: any) {
       console.error('Profile update error:', error);
-      setProfileError(error.errors?.[0]?.message || t('account.validation.failedToUpdateProfile'));
+      setProfileError(error.message || error.errors?.[0]?.message || t('account.validation.failedToUpdateProfile'));
     } finally {
       setIsUpdatingProfile(false);
     }
   };
 
-  // Change password
-  const handleChangePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!user) return;
-    
-    // Validate passwords match
-    if (newPassword !== confirmPassword) {
-      setPasswordError(t('account.validation.passwordsDoNotMatch'));
-      return;
-    }
-    
-    if (newPassword.length < 8) {
-      setPasswordError(t('account.validation.passwordTooShort'));
-      return;
-    }
-    
-    setIsChangingPassword(true);
+  // Request password reset email (double-step validation)
+  const handleSendPasswordReset = async () => {
+    if (!user?.id) return;
+
+    setIsSendingResetEmail(true);
     setPasswordError(null);
     setPasswordSuccess(null);
 
     try {
-      await user.updatePassword({
-        currentPassword,
-        newPassword,
-      });
-
-      setPasswordSuccess(t('account.passwordChanged', 'Password changed successfully'));
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
+      await apiService.requestPasswordResetEmail(user.id);
+      setPasswordSuccess(t('account.security.resetEmailSent', 'We sent a reset link to your email.'));
     } catch (error: any) {
-      console.error('Password change error:', error);
-      setPasswordError(error.errors?.[0]?.message || t('account.validation.failedToChangePassword'));
+      console.error('Password reset request error:', error);
+      setPasswordError(error?.message || t('account.security.resetEmailFailed', 'Failed to send reset link.'));
     } finally {
-      setIsChangingPassword(false);
+      setIsSendingResetEmail(false);
     }
   };
 
@@ -437,20 +432,20 @@ const AccountDashboard: React.FC = () => {
                         error={errors.role}
                       />
 
-                      {/* Language (instant change) */}
-                      <AuthSelect
-                        label={t('auth.preferredLanguage', 'Preferred Language')}
-                        value={currentLanguage}
-                        onChange={handleLanguageChange}
-                        options={languageOptions}
-                      />
-
                       {/* Country */}
                       <AuthSelect
                         label={t('auth.country', 'Country')}
                         value={countryCode}
                         onChange={handleCountryChange}
                         options={countryOptions}
+                      />
+
+                      {/* Language (instant change) */}
+                      <AuthSelect
+                        label={t('auth.preferredLanguage', 'Preferred Language')}
+                        value={currentLanguage}
+                        onChange={handleLanguageChange}
+                        options={languageOptions}
                       />
 
                       {/* Submit Button */}
@@ -492,7 +487,7 @@ const AccountDashboard: React.FC = () => {
                 >
                   <div className="bg-white border border-zinc-200 rounded-xl p-6">
                     <h2 className="text-xl font-bold text-zinc-900 mb-6">
-                      {t('account.security.title', 'Change Password')}
+                      {t('account.security.title', 'Reset Password')}
                     </h2>
 
                     {/* Success/Error Messages */}
@@ -507,37 +502,14 @@ const AccountDashboard: React.FC = () => {
                       </div>
                     )}
 
-                    <form onSubmit={handleChangePassword} className="space-y-4">
-                      <AuthInput
-                        label={t('account.security.currentPassword', 'Current Password')}
-                        type="password"
-                        value={currentPassword}
-                        onChange={(e) => setCurrentPassword(e.target.value)}
-                        placeholder="••••••••"
-                        autoComplete="current-password"
-                      />
-
-                      <AuthInput
-                        label={t('account.security.newPassword', 'New Password')}
-                        type="password"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        placeholder="••••••••"
-                        autoComplete="new-password"
-                      />
-
-                      <AuthInput
-                        label={t('account.security.confirmPassword', 'Confirm New Password')}
-                        type="password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        placeholder="••••••••"
-                        autoComplete="new-password"
-                      />
-
+                    <div className="space-y-4">
+                      <p className="text-sm text-zinc-600">
+                        {t('account.security.resetDescription', 'We will email you a secure link to complete your password change.')}
+                      </p>
                       <button
-                        type="submit"
-                        disabled={isChangingPassword || !currentPassword || !newPassword || !confirmPassword}
+                        type="button"
+                        onClick={handleSendPasswordReset}
+                        disabled={isSendingResetEmail}
                         className={cn(
                           'w-full py-3 px-4 rounded-lg text-sm font-semibold',
                           'bg-zinc-900 text-white',
@@ -547,16 +519,16 @@ const AccountDashboard: React.FC = () => {
                           'disabled:opacity-50 disabled:cursor-not-allowed'
                         )}
                       >
-                        {isChangingPassword ? (
+                        {isSendingResetEmail ? (
                           <span className="flex items-center justify-center gap-2">
                             <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                            {t('common.updating', 'Updating...')}
+                            {t('account.security.sendingReset', 'Sending...')}
                           </span>
                         ) : (
-                          t('account.security.changePassword', 'Change Password')
+                          t('account.security.sendResetLink', 'Send reset link')
                         )}
                       </button>
-                    </form>
+                    </div>
                   </div>
                 </motion.div>
               )}

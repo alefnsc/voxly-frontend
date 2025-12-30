@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
@@ -25,11 +25,11 @@ export const LandingHeader: React.FC<LandingHeaderProps> = ({ onDemoClick }) => 
   const navigate = useNavigate()
 
   const navLinks = [
-    { label: t('landing.nav.product', 'Product'), href: '#product' },
-    { label: t('landing.nav.solutions', 'Solutions'), href: '#solutions' },
-    { label: t('landing.nav.integrations', 'Integrations'), href: '#integrations' },
-    { label: t('landing.nav.pricing', 'Pricing'), href: '#pricing' },
-    { label: t('landing.nav.faq', 'FAQ'), href: '#faq' },
+    { label: t('landing.nav.product'), href: '#product' },
+    { label: t('landing.nav.solutions'), href: '#solutions' },
+    { label: t('landing.nav.integrations'), href: '#integrations' },
+    { label: t('landing.nav.pricing'), href: '#pricing' },
+    { label: t('landing.nav.faq'), href: '#faq' },
   ]
 
   useEffect(() => {
@@ -40,67 +40,17 @@ export const LandingHeader: React.FC<LandingHeaderProps> = ({ onDemoClick }) => 
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  /**
-   * Scroll to section with header offset compensation
-   * Uses data-landing-header attribute to find header height dynamically
-   */
-  const scrollToSection = useCallback((href: string, closeMobileMenu = true) => {
-    // Close mobile menu first if needed
-    if (closeMobileMenu) {
-      setMobileMenuOpen(false)
+  const scrollToSection = (href: string) => {
+    const element = document.querySelector(href)
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' })
     }
-
-    // Small delay to allow menu close animation
-    const performScroll = () => {
-      const element = document.querySelector(href)
-      if (!element) {
-        console.warn(`Section ${href} not found`)
-        return
-      }
-
-      // Get header height dynamically
-      const header = document.querySelector('[data-landing-header="true"]')
-      const headerHeight = header?.getBoundingClientRect().height ?? 80
-
-      // Calculate target scroll position with offset
-      const elementTop = element.getBoundingClientRect().top + window.scrollY
-      const offsetPosition = elementTop - headerHeight - 8 // 8px extra padding
-
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth'
-      })
-
-      // Update URL hash without triggering scroll
-      window.history.replaceState(null, '', href)
-    }
-
-    // If mobile menu was open, wait for it to close
-    if (closeMobileMenu && mobileMenuOpen) {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(performScroll)
-      })
-    } else {
-      performScroll()
-    }
-  }, [mobileMenuOpen])
-
-  // Handle direct hash navigation on page load
-  useEffect(() => {
-    const hash = window.location.hash
-    if (hash) {
-      // Wait for DOM to be ready
-      const timer = setTimeout(() => {
-        scrollToSection(hash, false)
-      }, 100)
-      return () => clearTimeout(timer)
-    }
-  }, [scrollToSection])
+    setMobileMenuOpen(false)
+  }
 
   return (
     <>
       <motion.header
-        data-landing-header="true"
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}

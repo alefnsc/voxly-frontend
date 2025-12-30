@@ -173,33 +173,33 @@ export const B2C_FEATURES = [
   {
     id: 'practice',
     iconName: 'Mic',
-    title: 'AI Interview Practice',
-    description: 'Practice with realistic AI interviews tailored to your target role, company, and language.',
+    titleKey: 'landing.b2c.features.practice.title',
+    descriptionKey: 'landing.b2c.features.practice.description',
   },
   {
     id: 'dashboard',
     iconName: 'BarChart3',
-    title: 'Performance Dashboard',
-    description: 'Track your progress with detailed analytics, skill breakdowns, and weekly activity insights.',
+    titleKey: 'landing.b2c.features.dashboard.title',
+    descriptionKey: 'landing.b2c.features.dashboard.description',
   },
   {
     id: 'resume',
     iconName: 'FileText',
-    title: 'Resume Repository',
-    description: 'Store multiple resume versions for different roles. See which resume you used for each interview.',
+    titleKey: 'landing.b2c.features.resume.title',
+    descriptionKey: 'landing.b2c.features.resume.description',
   },
   {
     id: 'linkedin',
     iconName: 'Link',
-    title: 'LinkedIn Import',
-    description: 'Import your profile directly from LinkedIn to create optimized resumes.',
+    titleKey: 'landing.b2c.features.linkedin.title',
+    descriptionKey: 'landing.b2c.features.linkedin.description',
     comingSoon: true,
   },
   {
     id: 'privacy',
     iconName: 'Lock',
-    title: 'Privacy First',
-    description: 'Your data is encrypted and never shared. Practice with complete confidence.',
+    titleKey: 'landing.b2c.features.privacy.title',
+    descriptionKey: 'landing.b2c.features.privacy.description',
   },
 ];
 
@@ -271,7 +271,7 @@ export const B2B_HR_FEATURES = [
   },
   {
     id: 'segmentation',
-    iconName: 'Lock',
+    iconName: 'Shield',
     title: 'Tenant Isolation',
     description: 'Complete data separation per organization with role-based access controls.',
   },

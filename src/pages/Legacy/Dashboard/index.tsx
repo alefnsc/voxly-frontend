@@ -21,16 +21,8 @@ import {
 } from 'recharts'
 import { Filter, RefreshCw } from 'lucide-react'
 
-// Seniority levels for filter
-const SENIORITY_OPTIONS = [
-  { value: 'all', label: 'All Levels' },
-  { value: 'intern', label: 'Intern' },
-  { value: 'junior', label: 'Junior' },
-  { value: 'mid', label: 'Mid-Level' },
-  { value: 'senior', label: 'Senior' },
-  { value: 'staff', label: 'Staff / Lead' },
-  { value: 'principal', label: 'Principal / Director' },
-]
+// Seniority level keys for translation
+const SENIORITY_KEYS = ['all', 'intern', 'junior', 'mid', 'senior', 'staff', 'principal'] as const;
 
 // Score badge component with landing-page styling
 const ScoreBadge: React.FC<{ score: number | null }> = ({ score }) => {
@@ -79,7 +71,7 @@ const StatsCard: React.FC<{
 export default function Dashboard() {
   const { user, isLoaded, isSignedIn } = useUser()
   const navigate = useNavigate()
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   
   // Filter state
   const [roleFilter, setRoleFilter] = useState<string>('all')
@@ -140,7 +132,7 @@ export default function Dashboard() {
   // Format date for display
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString(i18n.language, {
       month: 'short',
       day: 'numeric',
       year: 'numeric'
@@ -196,12 +188,12 @@ export default function Dashboard() {
             {/* Seniority Filter */}
             <Select value={seniorityFilter} onValueChange={setSeniorityFilter}>
               <SelectTrigger className="w-[160px] bg-white text-sm">
-                <SelectValue placeholder={t('dashboard.filters.allSeniorities')} />
+                <SelectValue placeholder={t('seniority.all')} />
               </SelectTrigger>
               <SelectContent className="bg-white">
-                {SENIORITY_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.value === 'all' ? t('dashboard.filters.allSeniorities') : t(`interviewSetup.form.seniorityLevels.${opt.value}`)}
+                {SENIORITY_KEYS.map((key) => (
+                  <SelectItem key={key} value={key}>
+                    {t(`seniority.${key}`)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -231,7 +223,7 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Stats Grid */}
+        {/* Stats Grid
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <StatsCard
             title={t('dashboard.stats.totalInterviews')}
@@ -272,7 +264,7 @@ export default function Dashboard() {
               </svg>
             }
           />
-        </div>
+        </div> */}
 
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
@@ -284,7 +276,7 @@ export default function Dashboard() {
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart 
                     data={filteredScoreData.map(d => ({
-                      date: d.date ? new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : d.name,
+                      date: d.date ? new Date(d.date).toLocaleDateString(i18n.language, { month: 'short', day: 'numeric' }) : d.name,
                       score: d.score
                     }))}
                   >

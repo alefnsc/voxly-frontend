@@ -73,7 +73,7 @@ export const AuthButtons: React.FC<AuthButtonsProps> = ({
       await auth.authenticateWithRedirect({
         strategy,
         redirectUrl: `${baseUrl}/sso-callback`,
-        redirectUrlComplete: `${baseUrl}/dashboard`,
+        redirectUrlComplete: `${baseUrl}/app/b2c/dashboard`,
       });
     } catch (error: any) {
       console.error('OAuth error:', error);

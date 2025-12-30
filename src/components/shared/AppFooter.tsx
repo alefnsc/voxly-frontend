@@ -13,6 +13,7 @@
 'use client'
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
 import { BrandLockup, CopyrightNotice, BRAND } from './Brand';
@@ -75,6 +76,8 @@ export function AppFooter({ variant = 'full', className = '' }: AppFooterProps) 
 // ============================================
 
 function FullFooter({ className = '' }: { className?: string }) {
+  const { t } = useTranslation();
+  
   const scrollToSection = (href: string) => {
     if (href.startsWith('#')) {
       const element = document.querySelector(href);
@@ -94,7 +97,7 @@ function FullFooter({ className = '' }: { className?: string }) {
               <BrandLockup size="md" linkToHome />
             </div>
             <p className="text-sm text-zinc-600 mb-4">
-              AI-powered interview intelligence for candidates, recruiters, and HR teams.
+              {t('appFooter.description')}
             </p>
             <CopyrightNotice className="text-xs" />
           </div>
@@ -102,7 +105,7 @@ function FullFooter({ className = '' }: { className?: string }) {
           {/* Product Links */}
           <div>
             <h3 className="text-sm font-semibold text-zinc-900 uppercase tracking-wider mb-4">
-              Product
+              {t('appFooter.product')}
             </h3>
             <ul className="space-y-3">
               {footerLinks.product.map((link) => (
@@ -169,14 +172,14 @@ function FullFooter({ className = '' }: { className?: string }) {
         {/* Bottom Bar */}
         <div className="mt-12 pt-8 border-t border-zinc-200 flex flex-col sm:flex-row justify-between items-center gap-4">
           <p className="text-xs text-zinc-500">
-            Built with care for interview excellence.
+            {t('appFooter.tagline')}
           </p>
           <div className="flex items-center gap-6">
             <Link to="/privacy-policy" className="text-xs text-zinc-500 hover:text-purple-600">
-              Privacy
+              {t('appFooter.privacy')}
             </Link>
             <Link to="/terms-of-use" className="text-xs text-zinc-500 hover:text-purple-600">
-              Terms
+              {t('appFooter.terms')}
             </Link>
           </div>
         </div>
@@ -190,15 +193,17 @@ function FullFooter({ className = '' }: { className?: string }) {
 // ============================================
 
 function SimpleFooter({ className = '' }: { className?: string }) {
+  const { t } = useTranslation();
+  
   return (
     <footer className={`py-6 text-center ${className}`}>
       <CopyrightNotice className="text-xs" />
       <div className="mt-2 flex justify-center gap-4">
         <Link to="/privacy-policy" className="text-xs text-zinc-500 hover:text-purple-600">
-          Privacy Policy
+          {t('appFooter.privacyPolicy')}
         </Link>
         <Link to="/terms-of-use" className="text-xs text-zinc-500 hover:text-purple-600">
-          Terms of Use
+          {t('appFooter.termsOfUse')}
         </Link>
       </div>
     </footer>
@@ -211,6 +216,8 @@ function SimpleFooter({ className = '' }: { className?: string }) {
 // ============================================
 
 function AppShellFooter({ isSignedIn, className = '' }: { isSignedIn?: boolean; className?: string }) {
+  const { t } = useTranslation();
+  
   const scrollToSection = (href: string) => {
     if (href.startsWith('#')) {
       const element = document.querySelector(href);
@@ -238,7 +245,7 @@ function AppShellFooter({ isSignedIn, className = '' }: { isSignedIn?: boolean; 
               <BrandLockup size="md" linkToHome />
             </div>
             <p className="text-sm text-zinc-600 mb-4">
-              AI-powered interview intelligence for candidates, recruiters, and HR teams.
+              {t('appFooter.description')}
             </p>
             <CopyrightNotice className="text-xs" />
           </div>
@@ -246,7 +253,7 @@ function AppShellFooter({ isSignedIn, className = '' }: { isSignedIn?: boolean; 
           {/* Company Links */}
           <div>
             <h3 className="text-sm font-semibold text-zinc-900 uppercase tracking-wider mb-4">
-              Company
+              {t('appFooter.company')}
             </h3>
             <ul className="space-y-3">
               {footerLinks.company.map((link) => (
@@ -265,7 +272,7 @@ function AppShellFooter({ isSignedIn, className = '' }: { isSignedIn?: boolean; 
           {/* Legal Links */}
           <div>
             <h3 className="text-sm font-semibold text-zinc-900 uppercase tracking-wider mb-4">
-              Legal
+              {t('appFooter.legal')}
             </h3>
             <ul className="space-y-3">
               {footerLinks.legal.map((link) => (
@@ -285,14 +292,14 @@ function AppShellFooter({ isSignedIn, className = '' }: { isSignedIn?: boolean; 
         {/* Bottom Bar */}
         <div className="mt-12 pt-8 border-t border-zinc-200 flex flex-col sm:flex-row justify-between items-center gap-4">
           <p className="text-xs text-zinc-500">
-            Built with care for interview excellence.
+            {t('appFooter.tagline')}
           </p>
           <div className="flex items-center gap-6">
             <Link to="/privacy-policy" className="text-xs text-zinc-500 hover:text-purple-600">
-              Privacy
+              {t('appFooter.privacy')}
             </Link>
             <Link to="/terms-of-use" className="text-xs text-zinc-500 hover:text-purple-600">
-              Terms
+              {t('appFooter.terms')}
             </Link>
           </div>
         </div>

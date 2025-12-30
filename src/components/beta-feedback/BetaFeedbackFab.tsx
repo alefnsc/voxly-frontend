@@ -13,7 +13,7 @@
 import React, { useState, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Bug } from 'lucide-react';
+import { MessageSquarePlus } from 'lucide-react';
 import { cn } from 'lib/utils';
 import { isClosedBetaFeedbackEnabled } from 'config/featureFlags';
 import BetaFeedbackChatModal from './BetaFeedbackChatModal';
@@ -38,6 +38,7 @@ const BetaFeedbackFab: React.FC = () => {
   const { t } = useTranslation();
   const location = useLocation();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   // Check if FAB should be visible
   const shouldHide = 
@@ -71,25 +72,45 @@ const BetaFeedbackFab: React.FC = () => {
         {/* Main FAB Button */}
         <button
           onClick={handleOpen}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
           className={cn(
-            'flex items-center gap-3',
-            'px-5 py-3.5',
-            'bg-purple-600 hover:bg-purple-700',
+            'group relative flex items-center justify-center',
+            'w-14 h-14 sm:w-auto sm:h-auto',
+            'sm:px-5 sm:py-3',
+            'bg-gradient-to-r from-purple-600 to-purple-700',
+            'hover:from-purple-700 hover:to-purple-800',
             'text-white text-sm font-semibold',
             'rounded-full',
-            'shadow-lg hover:shadow-xl',
-            'transition-all duration-200',
+            'shadow-lg shadow-purple-600/30',
+            'hover:shadow-xl hover:shadow-purple-600/40',
+            'transition-all duration-300 ease-out',
             'transform hover:scale-105 active:scale-95',
-            'focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-2',
-            // Pulse animation to draw attention
-            'animate-pulse-subtle'
+            'focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2'
           )}
           aria-label={t('betaFeedback.fabLabel', 'Send Feedback')}
           aria-haspopup="dialog"
         >
-          <Bug className="w-5 h-5" />
-          <span className="hidden sm:inline">
+          <MessageSquarePlus className={cn(
+            'w-6 h-6 sm:w-5 sm:h-5',
+            'transition-transform duration-300',
+            isHovered && 'rotate-12'
+          )} />
+          <span className="hidden sm:inline sm:ml-2">
             {t('betaFeedback.fabText', 'Feedback')}
+          </span>
+          
+          {/* Mobile tooltip on hover */}
+          <span className={cn(
+            'sm:hidden absolute right-full mr-3 px-3 py-1.5',
+            'bg-zinc-900 text-white text-xs font-medium rounded-lg',
+            'whitespace-nowrap shadow-lg',
+            'opacity-0 translate-x-2 pointer-events-none',
+            'transition-all duration-200',
+            isHovered && 'opacity-100 translate-x-0'
+          )}>
+            {t('betaFeedback.fabText', 'Feedback')}
+            <span className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full border-8 border-transparent border-l-zinc-900" />
           </span>
         </button>
       </div>
@@ -99,23 +120,6 @@ const BetaFeedbackFab: React.FC = () => {
         isOpen={isModalOpen}
         onClose={handleClose}
       />
-
-      {/* Custom animation styles */}
-      <style>{`
-        @keyframes pulse-subtle {
-          0%, 100% {
-            box-shadow: 0 10px 15px -3px rgba(147, 51, 234, 0.3),
-                        0 4px 6px -4px rgba(147, 51, 234, 0.3);
-          }
-          50% {
-            box-shadow: 0 10px 25px -3px rgba(147, 51, 234, 0.5),
-                        0 4px 10px -4px rgba(147, 51, 234, 0.5);
-          }
-        }
-        .animate-pulse-subtle {
-          animation: pulse-subtle 3s ease-in-out infinite;
-        }
-      `}</style>
     </>
   );
 };

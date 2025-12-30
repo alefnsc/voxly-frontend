@@ -13,7 +13,7 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { useInView } from 'react-intersection-observer'
 import { Card } from 'components/ui/card'
 import { TRUST_FEATURES } from './LandingMockData'
-import { Lock, User, Building2, CheckCircle, type LucideIcon } from 'lucide-react'
+import { Shield, Lock, User, Building2, CheckCircle, type LucideIcon } from 'lucide-react'
 
 // Map iconName strings to Lucide components
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -65,7 +65,10 @@ export const LandingTrust: React.FC = () => {
         >
           {/* Section Header */}
           <motion.div variants={itemVariants} className="text-center mb-8 sm:mb-10 lg:mb-12">
-
+            <span className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-purple-300 bg-purple-900/50 rounded-full mb-4 sm:mb-6">
+              <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              {t('landing.trust.badge', 'Security & Privacy')}
+            </span>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 sm:mb-4">
               {t('landing.trust.title', 'Built for')} <span className="text-purple-400">{t('landing.trust.titleHighlight', 'Trust')}</span>
             </h2>
@@ -96,7 +99,7 @@ export const LandingTrust: React.FC = () => {
           </motion.div>
 
           {/* Disclaimer */}
-          <motion.p variants={itemVariants} className="mt-6 sm:mt-8 lg:mt-10 text-center text-[10px] sm:text-xs text-white px-2">
+          <motion.p variants={itemVariants} className="mt-6 sm:mt-8 lg:mt-10 text-center text-[10px] sm:text-xs text-zinc-500 px-2">
             {t('landing.trust.disclaimer', 'Security features are designed for best practices. Specific compliance certifications may be in progress.')}
           </motion.p>
         </motion.div>

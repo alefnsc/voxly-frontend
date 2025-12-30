@@ -80,6 +80,7 @@ export const useLoggedLayout = () => {
 const SIDEBAR_WIDTH = 260;
 const TOPBAR_HEIGHT = 80;
 const BOTTOM_NAV_HEIGHT = 64;
+const SIDEBAR_STATE_KEY = 'vocaid_sidebar_collapsed';
 
 // Main navigation items - B2C focused
 const mainNavItems: NavItem[] = [
@@ -549,6 +550,7 @@ BottomNav.displayName = 'BottomNav';
 // ========================================
 
 const LoggedTopBar = memo(() => {
+  const { user } = useUser();
   const { userCredits } = useAuthCheck();
   const { t } = useTranslation();
   const { isMobileDrawerOpen, toggleMobileDrawer } = useLoggedLayout();

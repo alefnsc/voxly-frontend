@@ -301,24 +301,53 @@
   "contactAssistant": {
     "title": "Contact Vocaid",
     "button": "Contact Us",
+    "header": {
+      "title": "Contact Assistant",
+      "subtitle": "Ask a question or send a message",
+      "close": "Close"
+    },
+    "quickActions": {
+      "sendMessage": { "label": "Send a message", "value": "I want to send a message" },
+      "creditsQuestions": { "label": "Questions about credits", "value": "How do credits work?" },
+      "supportedLanguages": { "label": "Supported languages", "value": "What languages do you support?" }
+    },
     "prompts": {
-      "welcome": "Hi! I'm here to help you get in touch with Vocaid. Let's start with your name.",
-      "name": "What's your name?",
-      "email": "Thanks! What's your email address?",
-      "subject": "What would you like to discuss? Please choose a topic:\n\n• General Inquiry\n• Technical Support\n• Billing Question\n• Feedback\n• Partnership Opportunity\n• Other",
-      "message": "Great! Now, please describe your question or message (50-250 characters).",
-      "review": "Here's a summary of your message. Ready to send? Type \"yes\" to confirm or \"edit [field]\" to make changes.",
-      "submitting": "Sending your message...",
-      "success": "Your message has been sent successfully! We'll get back to you within 24-48 hours.",
-      "error": "Sorry, there was an error sending your message. Would you like to try again?",
-      "invalidSubject": "I didn't recognize that subject. Please choose from:\n• General Inquiry\n• Technical Support\n• Billing Question\n• Feedback\n• Partnership Opportunity\n• Other",
-      "editField": "Sure, let's update that. What would you like to change it to?",
-      "cancelled": "No problem! What would you like to edit? You can say 'edit name', 'edit email', 'edit subject', or 'edit message'.",
-      "confirmHelp": "Please type 'yes' to send your message, or 'edit [field]' to make changes."
+      "welcome": "Hello! 👋 I'm Vocaid's contact assistant. I can help you send a message to our team or answer your frequently asked questions.\n\nHow can I help you today?",
+      "nameStart": "I'll help you get in touch with our team. First, what's your name?",
+      "emailGreeting": "Nice to meet you, {{name}}! What's your email address?",
+      "subjectPrompt": "Great! What topic would you like to discuss? Please choose an option:",
+      "subjectFollowUp": "Would you still like to send a message? Please choose a topic:",
+      "messagePrompt": "Got it - \"{{subject}}\". Now, please write your message (between {{min}} and {{max}} characters).",
+      "faqFollowUp": "Can I help with anything else? Or if you prefer, I can help you send a message to our team."
+    },
+    "review": {
+      "summary": "Here's a summary of your message:\n\n**Name:** {{name}}\n**Email:** {{email}}\n**Subject:** {{subject}}\n**Message:** {{message}}\n\nDoes everything look correct? Type \"yes\" to send or \"no\" to make changes.",
+      "restart": "No problem! Let's start over. What's your name?",
+      "clarify": "Please type 'yes' to send your message or 'no' to make changes."
+    },
+    "submission": {
+      "sending": "Sending your message...",
+      "success": "✓ Your message has been sent successfully! Our team will respond soon. You can close this window.",
+      "error": "Sorry, there was an error sending your message. Please try again or email us directly at contact@vocaid.io."
+    },
+    "validation": {
+      "invalidName": "Please enter a valid name (at least 2 characters).",
+      "invalidEmail": "Please enter a valid email address.",
+      "invalidSubject": "Please select a valid option (1-6) or type the topic name.",
+      "messageTooShort": "Your message needs at least {{min}} characters. You currently have {{current}}.",
+      "messageTooLong": "Your message cannot exceed {{max}} characters. You currently have {{current}}."
     },
     "placeholder": {
       "default": "Type your response...",
-      "message": "Type your message..."
+      "message": "Write your message...",
+      "name": "Enter your name...",
+      "email": "Enter your email...",
+      "subject": "Choose an option (1-6)..."
+    },
+    "buttons": {
+      "send": "Send",
+      "close": "Close",
+      "tryAgain": "Try again"
     }
   },
   "betaFeedback": {
@@ -524,8 +553,22 @@
     },
     "errors": {
       "noCreditsError": "No credits available. Please purchase credits to continue.",
-      "sessionValidationFailed": "Failed to validate session. Please try again."
-    }
+      "sessionValidationFailed": "Failed to validate session. Please try again.",
+      "readFileFailed": "Failed to read file. Please try again.",
+      "startFailed": "Failed to start interview. Please try again.",
+      "startCallFailed": "Failed to start interview. Please try again.",
+      "callError": "An error occurred during the interview. Please try again."
+    },
+    "seniority": {
+      "intern": "Intern",
+      "junior": "Junior",
+      "mid": "Mid-level",
+      "senior": "Senior",
+      "lead": "Lead",
+      "manager": "Manager",
+      "director": "Director"
+    },
+    "uploadNewResume": "+ Upload new resume"
   },
   "interviewSetup": {
     "backToDashboard": "← Back to Dashboard",
@@ -980,11 +1023,29 @@
       "save": "Save Changes"
     },
     "security": {
-      "title": "Change Password",
+      "title": "Reset Password",
       "currentPassword": "Current Password",
       "newPassword": "New Password",
       "confirmPassword": "Confirm New Password",
-      "changePassword": "Change Password"
+      "changePassword": "Change Password",
+      "resetDescription": "We will email you a secure link to complete your password change.",
+      "sendResetLink": "Send reset link",
+      "sendingReset": "Sending...",
+      "resetEmailSent": "We sent a reset link to your email.",
+      "resetEmailFailed": "Failed to send reset link."
+    },
+    "passwordResetConfirm": {
+      "title": "Set a new password",
+      "subtitle": "Enter a new password for your account.",
+      "passwordLabel": "New password",
+      "confirmLabel": "Confirm new password",
+      "submit": "Update password",
+      "updating": "Updating...",
+      "successTitle": "Password updated",
+      "successMessage": "Your password was updated. You can sign in now.",
+      "missingToken": "Missing reset token.",
+      "invalidToken": "This reset link is invalid or expired.",
+      "backToSignIn": "Back to sign in"
     },
     "danger": {
       "title": "Delete Account",
@@ -1017,6 +1078,7 @@
     },
     "error": {
       "title": "Unable to Load Feedback",
+      "loadFailed": "Failed to load feedback. Please try again.",
       "returnHome": "Return Home"
     },
     "results": {
@@ -1104,6 +1166,18 @@
       "tryAgain": "Try Again"
     }
   },
+  "paymentProvider": {
+    "title": "Payment Method",
+    "detecting": "Detecting...",
+    "detectedRegion": "Detected region",
+    "autoSelected": "Auto-selected",
+    "recommended": "Recommended",
+    "fallback": {
+      "title": "Using fallback provider",
+      "description": "Your preferred payment provider is temporarily unavailable. We've selected an alternative for you."
+    },
+    "regionInfo": "Payment provider is selected based on your region for the best experience. You can change it anytime."
+  },
   "analytics": {
     "sentimentTimeline": {
       "title": "Sentiment & Pace Timeline",
@@ -1185,6 +1259,36 @@
       "pause": "Pause"
     }
   },
+  "appFooter": {
+    "description": "AI-powered interview intelligence for candidates, recruiters, and HR teams.",
+    "product": "Product",
+    "company": "Company",
+    "legal": "Legal",
+    "features": "Features",
+    "solutions": "Solutions",
+    "integrations": "Integrations",
+    "pricing": "Pricing",
+    "faq": "FAQ",
+    "about": "About",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfUse": "Terms of Use",
+    "tagline": "Built with care for interview excellence.",
+    "privacy": "Privacy",
+    "terms": "Terms"
+  },
+  "analyticsFilters": {
+    "last7Days": "Last 7 Days",
+    "last30Days": "Last 30 Days",
+    "last12Months": "Last 12 Months",
+    "filters": "Filters",
+    "clear": "Clear",
+    "role": "Role",
+    "allRoles": "All roles",
+    "resume": "Resume",
+    "allResumes": "All resumes",
+    "startDate": "Start Date",
+    "endDate": "End Date"
+  },
   "performanceChat": {
     "title": "Performance Analyst",
     "subtitle": "AI-powered interview insights",
@@ -1262,7 +1366,8 @@
     "noFeedback": "No feedback available",
     "completeToProceed": "Please complete your interview session to receive AI-generated feedback.",
     "interviewIssue": "This interview may have ended early or encountered an issue.",
-    "loadingAnalytics": "Loading analytics..."
+    "loadingAnalytics": "Loading analytics...",
+    "loadingAdvancedAnalytics": "Loading advanced analytics..."
   },
   "hrChat": {
     "title": "HR Intelligence Chat",
@@ -1403,6 +1508,36 @@
       "faq": "FAQ",
       "menu": "Menu"
     },
+    "b2c": {
+      "badge": "Available Now",
+      "title": "Interview",
+      "titleHighlight": "Practice",
+      "subtitle": "Practice AI-powered interviews, track your progress, and land your dream job. Start for free with credits included.",
+      "cta": "Start Practicing Free",
+      "ctaSubtext": "No credit card required • Free credits included",
+      "features": {
+        "practice": {
+          "title": "AI Interview Practice",
+          "description": "Practice with realistic AI interviews tailored to your target role, company, and language."
+        },
+        "dashboard": {
+          "title": "Performance Dashboard",
+          "description": "Track your progress with detailed analytics, skill breakdowns, and weekly activity insights."
+        },
+        "resume": {
+          "title": "Resume Repository",
+          "description": "Store multiple resume versions for different roles. See which resume you used for each interview."
+        },
+        "linkedin": {
+          "title": "LinkedIn Import",
+          "description": "Import your profile directly from LinkedIn to create optimized resumes."
+        },
+        "privacy": {
+          "title": "Privacy First",
+          "description": "Your data is encrypted and never shared. Practice with complete confidence."
+        }
+      }
+    },
     "hero": {
       "badge": "3-in-1 Vocational Intelligence",
       "title": "Three platforms, one mission:",
@@ -1469,8 +1604,8 @@
       }
     },
     "integrations": {
-      "titleBlack": "Vocaid Connect:",
-      "titlePurple": "Embed → Webhook → Scorecard",
+      "badge": "Vocaid Connect",
+      "title": "From embed → scorecard → webhook in minutes",
       "subtitle": "Integrate Vocaid into your existing tools with our developer-friendly SDK and APIs.",
       "tagline": "Designed for tenant isolation, audit trails, and secure integrations.",
       "features": [
@@ -1547,8 +1682,8 @@
       }
     },
     "faq": {
-      "titleBlack": "Frequently Asked",
-      "titlePurple": "Questions",
+      "badge": "FAQ",
+      "title": "Frequently asked questions",
       "subtitle": "Everything you need to know about Vocaid.",
       "items": {
         "whatIsVocaid": {
@@ -1668,8 +1803,7 @@
       }
     },
     "finalCta": {
-      "titleBlack": "Ready to Level Up",
-      "titlePurple": "Your interviews?",
+      "title": "Ready to level up your interviews?",
       "subtitle": "Whether you're a candidate preparing for your dream job, a recruiter building a great team, or an HR manager supporting employees — Vocaid has you covered.",
       "ctaWorkspace": "Start Free",
       "ctaWorkspacePlural": "Start Frees",
@@ -1744,6 +1878,7 @@
       }
     },
     "platformShowcase": {
+      "badge": "Three Platforms",
       "titleBlack": "What Vocaid",
       "titlePurple": "Delivers",
       "subtitle": "Interview tools built for individuals, recruiters, and HR teams. One live today, two launching soon.",
@@ -1825,8 +1960,8 @@
       }
     },
     "dashboardPreview": {
-      "titleBlack": "Your Recruiting",
-      "titlePurple": "Command Center",
+      "badge": "See It In Action",
+      "title": "Your recruiting command center",
       "subtitle": "From candidate pipeline to detailed scorecards and developer integrations—everything you need in one place.",
       "tabs": {
         "pipeline": "Candidate Pipeline",
@@ -1887,6 +2022,21 @@
         "distributedSystems": "Deep knowledge of distributed systems",
         "articulation": "Clear articulation of complex concepts",
         "clarifying": "Asked clarifying questions effectively"
+      }
+    },
+    "preview": {
+      "resumeRepository": {
+        "yourResumes": "Your Resumes",
+        "uploadResume": "+ Upload Resume",
+        "primary": "Primary",
+        "usedIn": "Used in",
+        "matchScore": "Match Score",
+        "scoringComingSoon": "Scoring coming soon"
+      },
+      "hrKnowledgeHub": {
+        "comingSoon": "B2B Employee Service Hub - Coming Soon",
+        "knowledgeCategories": "Knowledge Categories",
+        "aiAssistant": "AI HR Assistant"
       }
     }
   },
@@ -1972,6 +2122,7 @@
     "needsImprovement": "Needs Improvement"
   },
   "pricing": {
+    "badge": "Pricing",
     "titleFirst": "Pricing",
     "subtitle": "Start free, upgrade when you're ready. Clear plans, predictable usage, no surprises.",
     "microcopy": "Built for individuals today — ready for teams and internal HR tomorrow.",
@@ -2161,5 +2312,52 @@
         ]
       }
     }
+  },
+  "creditPackages": {
+    "mostPopular": "Most Popular",
+    "credits": "Credits",
+    "perInterview": "per interview",
+    "buyCredits": "Buy {{count}} Credits",
+    "processing": "Processing...",
+    "securePayment": "Secure payment via {{provider}}",
+    "pricesUsd": "Prices in USD",
+    "paymentProcessing": {
+      "latam": "Payment processed in BRL (LATAM)",
+      "global": "Global payment processing"
+    },
+    "status": {
+      "openingPayment": "Opening payment window...",
+      "creatingPayment": "Creating payment...",
+      "redirecting": "Redirecting to payment...",
+      "completeInPopup": "Complete payment in the {{provider}} popup. This page will update automatically.",
+      "windowClosed": "Payment window closed. Checking for credit update...",
+      "paymentSuccessful": "Payment successful! Credits added.",
+      "verificationTimeout": "Credit verification timed out. If you completed the payment, please refresh the page."
+    },
+    "errors": {
+      "authFailed": "Authentication failed. Please try again.",
+      "paymentFailed": "Failed to initiate payment. Please try again."
+    }
+  },
+  "seniority": {
+    "all": "All Levels",
+    "intern": "Intern",
+    "junior": "Junior",
+    "mid": "Mid-Level",
+    "senior": "Senior",
+    "staff": "Staff / Lead",
+    "principal": "Principal / Director",
+    "manager": "Manager",
+    "executive": "Executive",
+    "na": "N/A"
+  },
+  "days": {
+    "sun": "Sun",
+    "mon": "Mon",
+    "tue": "Tue",
+    "wed": "Wed",
+    "thu": "Thu",
+    "fri": "Fri",
+    "sat": "Sat"
   }
 }

@@ -71,7 +71,7 @@ const Interview = () => {
         };
 
         validateUserSession();
-    }, [isUserLoaded, user?.id, navigate]);
+    }, [isUserLoaded, user?.id, navigate, t]);
 
     // Use validation hooks
     useTokenValidation(navigate);
@@ -96,7 +96,7 @@ const Interview = () => {
     const { minutes, seconds, startTimer } = useInterviewTimer(15, stopCall);
 
     // Handle microphone permission
-    const handleMicPermission = (granted) => {
+    const handleMicPermission = (granted: boolean) => {
         setMicPermissionGranted(granted);
         if (!granted) {
             navigate('/app/b2c/dashboard');
@@ -123,36 +123,40 @@ const Interview = () => {
     }
 
     return (
-        <DefaultLayout className="flex flex-col overflow-hidden items-center bg-white min-h-screen">
-            {/* Breadcrumbs - hidden during interview but present for flow tracking */}
-            <div className="w-full max-w-5xl px-4 sm:px-6 lg:px-8 pt-4">
-                <InterviewBreadcrumbs 
-                    currentStage="interview" 
-                    showBackArrow={false}
+        <DefaultLayout className="min-h-screen bg-zinc-50" hideSidebar>
+            <div className="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+                {/* Breadcrumbs */}
+                <div className="mb-4 sm:mb-6">
+                    <InterviewBreadcrumbs 
+                        currentStage="interview" 
+                        showBackArrow={false}
+                    />
+                </div>
+
+                {/* Microphone permission modal */}
+                <MicPermissionModal
+                    onPermissionGranted={handleMicPermission}
                 />
+
+                {/* Quit confirmation modal */}
+                <QuitInterviewModal
+                    isOpen={isQuitModalOpen}
+                    onClose={toggleQuitModal}
+                    onQuit={stopCall}
+                />
+
+                {/* Main interview content */}
+                <div className="flex items-center justify-center">
+                    <InterviewContent
+                        isConnecting={isConnecting}
+                        isAgentTalking={isAgentTalking}
+                        minutes={minutes}
+                        seconds={seconds}
+                        onQuitClick={toggleQuitModal}
+                        audioSamples={audioSamples}
+                    />
+                </div>
             </div>
-
-            {/* Microphone permission modal */}
-            <MicPermissionModal
-                onPermissionGranted={handleMicPermission}
-            />
-
-            {/* Quit confirmation modal */}
-            <QuitInterviewModal
-                isOpen={isQuitModalOpen}
-                onClose={toggleQuitModal}
-                onQuit={stopCall}
-            />
-
-            {/* Main interview content */}
-            <InterviewContent
-                isConnecting={isConnecting}
-                isAgentTalking={isAgentTalking}
-                minutes={minutes}
-                seconds={seconds}
-                onQuitClick={toggleQuitModal}
-                audioSamples={audioSamples}
-            />
         </DefaultLayout>
     );
 };

@@ -56,9 +56,9 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-import { useWalletBalanceQuery } from '../../../../hooks/queries/useWalletQueries';
 import { useResumesQuery } from '../../../../hooks/queries/useResumeQueries';
 import { useDashboardQuery } from '../../../../hooks/queries/useDashboardQueries';
+import { useAuthCheck } from '../../../../hooks/use-auth-check';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -73,21 +73,12 @@ const itemVariants = {
   visible: { opacity: 1, y: 0 },
 };
 
-// Seniority options constant (matches backend values)
-const SENIORITY_OPTIONS = [
-  { value: 'all', labelKey: 'dashboard.filters.allSeniorities' },
-  { value: 'intern', labelKey: 'interviewSetup.form.seniorityLevels.intern' },
-  { value: 'junior', labelKey: 'interviewSetup.form.seniorityLevels.junior' },
-  { value: 'mid', labelKey: 'interviewSetup.form.seniorityLevels.mid' },
-  { value: 'senior', labelKey: 'interviewSetup.form.seniorityLevels.senior' },
-  { value: 'staff', labelKey: 'interviewSetup.form.seniorityLevels.staff' },
-  { value: 'principal', labelKey: 'interviewSetup.form.seniorityLevels.principal' },
-  { value: 'executive', labelKey: 'interviewSetup.form.seniorityLevels.executive' },
-];
+// Seniority level keys for translation
+const SENIORITY_KEYS = ['all', 'intern', 'junior', 'mid', 'senior', 'staff', 'principal', 'executive'] as const;
 
 export default function B2CDashboard() {
   const { user } = useUser();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const firstName = user?.firstName || t('common.there');
 
   // Filter state
@@ -112,13 +103,13 @@ export default function B2CDashboard() {
   }, []);
 
   // Fetch real data from APIs
-  const { data: walletData, isLoading: isLoadingWallet } = useWalletBalanceQuery();
+  const { userCredits, isLoading: isLoadingCredits } = useAuthCheck();
   const { data: resumes, isLoading: isLoadingResumes } = useResumesQuery();
   const { data: dashboardData, isLoading: isLoadingDashboard, refetch } = useDashboardQuery({
     filters: apiFilters,
   });
 
-  const credits = walletData?.data?.balance ?? 0;
+  const credits = userCredits ?? 0;
   const resumeCount = resumes?.length ?? 0;
   const recentInterviews = dashboardData?.recentInterviews ?? [];
   // Use kpis.totalInterviews for accurate count (source of truth from backend)
@@ -142,10 +133,10 @@ export default function B2CDashboard() {
     return scoreEvolution
       .slice(-5)
       .map((point) => ({
-        date: new Date(point.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        date: new Date(point.date).toLocaleDateString(i18n.language, { month: 'short', day: 'numeric' }),
         score: point.score,
       }));
-  }, [dashboardData?.scoreEvolution]);
+  }, [dashboardData?.scoreEvolution, i18n.language]);
 
   // Calculate skill breakdown from interview data (simulated for now)
   const skillBreakdown = React.useMemo((): Array<{ skill: string; score: number; trend: 'up' | 'down' | 'stable' }> => {
@@ -159,10 +150,12 @@ export default function B2CDashboard() {
     ];
   }, [recentInterviews.length, averageScore, t]);
 
+  // Day keys for translation (Sunday=0 through Saturday=6)
+  const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
+
   // Weekly activity data (derived from recent interviews)
   const weeklyActivity = React.useMemo(() => {
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const activity = days.map(day => ({ day, interviews: 0 }));
+    const activity = DAY_KEYS.map(key => ({ day: t(`days.${key}`), interviews: 0 }));
     
     recentInterviews.forEach(interview => {
       const dayIndex = new Date(interview.date).getDay();
@@ -171,7 +164,7 @@ export default function B2CDashboard() {
     
     // Rotate to start from Monday
     return [...activity.slice(1), activity[0]];
-  }, [recentInterviews]);
+  }, [recentInterviews, t]);
 
   return (
     <div className="min-h-screen bg-zinc-50">
@@ -198,7 +191,7 @@ export default function B2CDashboard() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="flex-1 min-w-0">
                 <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900 truncate">
-                  {t('dashboard.welcome', 'Welcome back,')} <span className="text-purple-600">{firstName}!</span>
+                  {t('dashboard.welcome', 'Welcome back,')} <span className="text-purple-600">{' '}{firstName}!</span>
                 </h1>
                 <p className="text-sm sm:text-base text-gray-600 mt-1">
                   {t('dashboard.readyToPractice')}
@@ -243,11 +236,9 @@ export default function B2CDashboard() {
                     <SelectValue placeholder={t('dashboard.filters.allSeniorities', 'All Levels')} />
                   </SelectTrigger>
                   <SelectContent className="bg-white">
-                    {SENIORITY_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        {opt.value === 'all' 
-                          ? t('dashboard.filters.allSeniorities', 'All Levels') 
-                          : t(opt.labelKey, opt.value)}
+                    {SENIORITY_KEYS.map((key) => (
+                      <SelectItem key={key} value={key}>
+                        {t(`seniority.${key}`)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -278,16 +269,16 @@ export default function B2CDashboard() {
           )}
 
           {/* Stats Grid - 2 columns on small mobile, 4 on desktop */}
-          <motion.div variants={itemVariants} className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          {/* <motion.div variants={itemVariants} className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"> */}
             {/* Credits Balance */}
-            <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm">
+            {/* <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm">
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="p-1.5 sm:p-2 bg-purple-100 rounded-lg flex-shrink-0">
                   <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs sm:text-sm text-gray-500 truncate">{t('dashboard.stats.credits')}</p>
-                  {isLoadingWallet ? (
+                  {isLoadingCredits ? (
                     <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600 animate-spin" />
                   ) : (
                     <p className="text-xl sm:text-2xl font-bold text-gray-900">{credits}</p>
@@ -301,10 +292,10 @@ export default function B2CDashboard() {
                 <span className="truncate">{t('dashboard.lowCredits.buyMore')}</span>
                 <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
               </Link>
-            </div>
+            </div> */}
 
             {/* Total Interviews */}
-            <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm">
+            {/* <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm">
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="p-1.5 sm:p-2 bg-purple-100 rounded-lg flex-shrink-0">
                   <History className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
@@ -325,10 +316,10 @@ export default function B2CDashboard() {
                 <span className="truncate">{t('dashboard.viewAll')}</span>
                 <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
               </Link>
-            </div>
+            </div> */}
 
             {/* Average Score */}
-            <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm">
+            {/* <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm">
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="p-1.5 sm:p-2 bg-purple-100 rounded-lg flex-shrink-0">
                   <Target className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
@@ -348,10 +339,10 @@ export default function B2CDashboard() {
                   {scoreChange > 0 ? '+' : ''}{scoreChange}% <span className="hidden sm:inline">{t('dashboard.stats.thisMonth')}</span>
                 </p>
               )}
-            </div>
+            </div> */}
 
             {/* Resumes */}
-            <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm">
+            {/* <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm">
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="p-1.5 sm:p-2 bg-purple-100 rounded-lg flex-shrink-0">
                   <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
@@ -373,7 +364,7 @@ export default function B2CDashboard() {
                 <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
               </Link>
             </div>
-          </motion.div>
+          </motion.div> */}
 
           {/* On mobile: Quick Actions first (most important), then charts */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -472,124 +463,7 @@ export default function B2CDashboard() {
             </motion.div>
           </div>
 
-          {/* Recent Interviews */}
-          <motion.div variants={itemVariants} className="bg-white rounded-xl p-4 sm:p-6 border border-gray-200 shadow-sm">
-            <div className="flex items-center justify-between mb-4 sm:mb-6">
-              <h2 className="text-base sm:text-lg font-semibold text-gray-900">{t('dashboard.recentInterviews')}</h2>
-              <Link
-                to="/app/b2c/interviews"
-                className="text-xs sm:text-sm text-purple-600 hover:text-purple-700 font-medium flex items-center gap-1"
-              >
-                {t('dashboard.viewAll')} <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
-              </Link>
-            </div>
-
-            {isLoadingDashboard ? (
-              <div className="text-center py-8 sm:py-12">
-                <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 text-purple-600 mx-auto mb-4 animate-spin" />
-                <p className="text-sm text-gray-500">{t('common.loading', 'Loading...')}</p>
-              </div>
-            ) : recentInterviews.length === 0 ? (
-              <div className="text-center py-8 sm:py-12">
-                <History className="h-10 w-10 sm:h-12 sm:w-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-sm sm:text-base text-gray-500">{t('dashboard.noInterviews')}</p>
-                <p className="text-xs sm:text-sm text-gray-400 mt-1">{t('dashboard.noInterviewsHint')}</p>
-                <Link
-                  to="/app/b2c/interview/new"
-                  className="mt-4 inline-flex items-center gap-2 px-4 py-2.5 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors text-sm min-h-[44px]"
-                >
-                  <PlayCircle className="h-4 w-4" />
-                  {t('dashboard.startInterview')}
-                </Link>
-              </div>
-            ) : (
-              <>
-                {/* Mobile: Card-based layout */}
-                <div className="sm:hidden space-y-3">
-                  {recentInterviews.slice(0, 5).map((interview) => (
-                    <Link 
-                      key={interview.id}
-                      to={`/interview/${interview.id}`}
-                      className="block p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium text-gray-900 truncate">{interview.roleTitle || 'Practice'}</p>
-                          <p className="text-sm text-gray-600 truncate">{interview.companyName || 'Practice'}</p>
-                          <p className="text-xs text-gray-400 mt-1">
-                            {new Date(interview.date).toLocaleDateString()}
-                          </p>
-                        </div>
-                        <div className="flex flex-col items-end gap-1">
-                          <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                              (interview.score ?? 0) >= 80
-                                ? 'bg-purple-100 text-purple-800'
-                                : (interview.score ?? 0) >= 60
-                                  ? 'bg-purple-50 text-purple-700'
-                                  : 'bg-gray-100 text-gray-800'
-                            }`}
-                          >
-                            {interview.score ?? 0}%
-                          </span>
-                          <ChevronRight className="h-4 w-4 text-gray-400" />
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-
-                {/* Desktop: Table layout */}
-                <div className="hidden sm:block overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-gray-200">
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{t('dashboard.table.role')}</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{t('dashboard.table.company')}</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{t('dashboard.table.date')}</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{t('dashboard.table.score')}</th>
-                        <th className="text-right py-3 px-4 text-sm font-medium text-gray-500">{t('dashboard.table.action')}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {recentInterviews.slice(0, 5).map((interview) => (
-                        <tr key={interview.id} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="py-3 px-4 font-medium text-gray-900">{interview.roleTitle || 'Practice'}</td>
-                          <td className="py-3 px-4 text-gray-600">{interview.companyName || 'Practice'}</td>
-                          <td className="py-3 px-4 text-gray-600">
-                            {new Date(interview.date).toLocaleDateString()}
-                          </td>
-                          <td className="py-3 px-4">
-                            <span
-                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium ${
-                                (interview.score ?? 0) >= 80
-                                  ? 'bg-purple-100 text-purple-800'
-                                  : (interview.score ?? 0) >= 60
-                                    ? 'bg-purple-50 text-purple-700'
-                                    : 'bg-gray-100 text-gray-800'
-                              }`}
-                            >
-                              {interview.score ?? 0}%
-                            </span>
-                          </td>
-                          <td className="py-3 px-4 text-right">
-                            <Link 
-                              to={`/interview/${interview.id}`}
-                              className="text-purple-600 hover:text-purple-700 font-medium text-sm"
-                            >
-                              {t('dashboard.table.view', 'View')}
-                            </Link>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </>
-            )}
-          </motion.div>
-
-          {/* New Widgets Row: Skill Breakdown, Weekly Activity, Uploaded Resumes */}
+                    {/* New Widgets Row: Skill Breakdown, Weekly Activity, Uploaded Resumes */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {/* Skill Breakdown */}
             <motion.div variants={itemVariants} className="bg-white rounded-xl p-4 sm:p-6 border border-gray-200 shadow-sm">
@@ -735,6 +609,123 @@ export default function B2CDashboard() {
               )}
             </motion.div>
           </div>
+
+          {/* Recent Interviews */}
+          <motion.div variants={itemVariants} className="bg-white rounded-xl p-4 sm:p-6 border border-gray-200 shadow-sm">
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900">{t('dashboard.recentInterviews')}</h2>
+              <Link
+                to="/app/b2c/interviews"
+                className="text-xs sm:text-sm text-purple-600 hover:text-purple-700 font-medium flex items-center gap-1"
+              >
+                {t('dashboard.viewAll')} <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
+              </Link>
+            </div>
+
+            {isLoadingDashboard ? (
+              <div className="text-center py-8 sm:py-12">
+                <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 text-purple-600 mx-auto mb-4 animate-spin" />
+                <p className="text-sm text-gray-500">{t('common.loading', 'Loading...')}</p>
+              </div>
+            ) : recentInterviews.length === 0 ? (
+              <div className="text-center py-8 sm:py-12">
+                <History className="h-10 w-10 sm:h-12 sm:w-12 text-gray-300 mx-auto mb-4" />
+                <p className="text-sm sm:text-base text-gray-500">{t('dashboard.noInterviews')}</p>
+                <p className="text-xs sm:text-sm text-gray-400 mt-1">{t('dashboard.noInterviewsHint')}</p>
+                <Link
+                  to="/app/b2c/interview/new"
+                  className="mt-4 inline-flex items-center gap-2 px-4 py-2.5 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors text-sm min-h-[44px]"
+                >
+                  <PlayCircle className="h-4 w-4" />
+                  {t('dashboard.startInterview')}
+                </Link>
+              </div>
+            ) : (
+              <>
+                {/* Mobile: Card-based layout */}
+                <div className="sm:hidden space-y-3">
+                  {recentInterviews.slice(0, 5).map((interview) => (
+                    <Link 
+                      key={interview.id}
+                      to={`/interview/${interview.id}`}
+                      className="block p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-gray-900 truncate">{interview.roleTitle || 'Practice'}</p>
+                          <p className="text-sm text-gray-600 truncate">{interview.companyName || 'Practice'}</p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            {new Date(interview.date).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                              (interview.score ?? 0) >= 80
+                                ? 'bg-purple-100 text-purple-800'
+                                : (interview.score ?? 0) >= 60
+                                  ? 'bg-purple-50 text-purple-700'
+                                  : 'bg-gray-100 text-gray-800'
+                            }`}
+                          >
+                            {interview.score ?? 0}%
+                          </span>
+                          <ChevronRight className="h-4 w-4 text-gray-400" />
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+
+                {/* Desktop: Table layout */}
+                <div className="hidden sm:block overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{t('dashboard.table.role')}</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{t('dashboard.table.company')}</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{t('dashboard.table.date')}</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">{t('dashboard.table.score')}</th>
+                        <th className="text-right py-3 px-4 text-sm font-medium text-gray-500">{t('dashboard.table.action')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recentInterviews.slice(0, 5).map((interview) => (
+                        <tr key={interview.id} className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="py-3 px-4 font-medium text-gray-900">{interview.roleTitle || 'Practice'}</td>
+                          <td className="py-3 px-4 text-gray-600">{interview.companyName || 'Practice'}</td>
+                          <td className="py-3 px-4 text-gray-600">
+                            {new Date(interview.date).toLocaleDateString()}
+                          </td>
+                          <td className="py-3 px-4">
+                            <span
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium ${
+                                (interview.score ?? 0) >= 80
+                                  ? 'bg-purple-100 text-purple-800'
+                                  : (interview.score ?? 0) >= 60
+                                    ? 'bg-purple-50 text-purple-700'
+                                    : 'bg-gray-100 text-gray-800'
+                              }`}
+                            >
+                              {interview.score ?? 0}%
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            <Link 
+                              to={`/interview/${interview.id}`}
+                              className="text-purple-600 hover:text-purple-700 font-medium text-sm"
+                            >
+                              {t('dashboard.table.view', 'View')}
+                            </Link>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </motion.div>
 
           {/* Credits CTA */}
           {credits <= 3 && (
