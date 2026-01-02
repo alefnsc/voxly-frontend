@@ -82,22 +82,16 @@ function collectFingerprint(): string {
     components.push('webgl:error');
   }
   
-  // Audio context fingerprint
+  // Audio context fingerprint (simplified, without deprecated ScriptProcessorNode)
   try {
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const analyser = audioContext.createAnalyser();
-    const gainNode = audioContext.createGain();
-    const scriptProcessor = audioContext.createScriptProcessor(4096, 1, 1);
-    
-    gainNode.gain.value = 0;
-    oscillator.type = 'triangle';
-    oscillator.connect(analyser);
-    analyser.connect(scriptProcessor);
-    scriptProcessor.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    components.push(`audio:${audioContext.sampleRate}`);
+    // Just use basic audio context properties for fingerprinting
+    const properties = [
+      audioContext.sampleRate,
+      audioContext.baseLatency || 0,
+      audioContext.state,
+    ];
+    components.push(`audio:${properties.join('-')}`);
     audioContext.close();
   } catch (e) {
     components.push('audio:error');

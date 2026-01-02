@@ -332,10 +332,12 @@ export function ComparisonLineChart({
 // EXPORTS
 // ========================================
 
-export default {
+const Charts = {
   PerformanceLineChart,
   PerformanceAreaChart,
   ScoreDistributionChart,
   CompetencyRadarChart,
   ComparisonLineChart,
 };
+
+export default Charts;

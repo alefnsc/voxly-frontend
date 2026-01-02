@@ -117,7 +117,7 @@ const PrivacyPolicyContent: React.FC = () => {
   return (
     <div className="prose prose-zinc prose-sm max-w-none">
       <p className="text-zinc-600 mb-6">
-        <em>Last Updated: January 15, 2025</em>
+        <em>Last Updated: January 5, 2026</em>
       </p>
 
       {/* Section 1: Introduction */}
@@ -329,7 +329,7 @@ const TermsOfUseContent: React.FC = () => {
   return (
     <div className="prose prose-zinc prose-sm max-w-none">
       <p className="text-zinc-600 mb-6">
-        <em>Last Updated: January 15, 2025</em>
+        <em>Last Updated: January 5, 2026</em>
       </p>
 
       {/* Section 1: Acceptance of Terms */}

@@ -15,6 +15,6 @@
       "strict": false,
       "noEmit": true
     },
-    "include": ["src/**/*"],
+    "include": ["src/**/*", "../legacy", "../Legacy"],
     "exclude": ["node_modules"]
   }

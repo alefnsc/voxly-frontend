@@ -3,7 +3,7 @@
  * Exports all analytics-related components for InterviewDetails page
  */
 
-// Import types for use in interfaces below
+// Import types for use in this file
 import type { TimelineDataPoint, SoftSkillsData } from './AnalysisDashboard';
 import type { TranscriptSegment } from './TranscriptViewer';
 import type { BenchmarkData } from './ComparativeBenchmark';
@@ -16,10 +16,10 @@ export { default as ComparativeBenchmark } from './ComparativeBenchmark';
 export { default as LearningPath } from './LearningPath';
 
 // Re-export types
-export type { TimelineDataPoint, SoftSkillsData } from './AnalysisDashboard';
-export type { TranscriptSegment } from './TranscriptViewer';
-export type { BenchmarkData } from './ComparativeBenchmark';
-export type { StudyTopic, WeakArea, LearningPathData } from './LearningPath';
+export type { TimelineDataPoint, SoftSkillsData };
+export type { TranscriptSegment };
+export type { BenchmarkData };
+export type { StudyTopic, WeakArea, LearningPathData };
 
 // Convenience type aliases for InterviewDetails page usage
 export interface AnalyticsData {

@@ -25,6 +25,7 @@ export const ProtectedInterviewRoute: React.FC<ProtectedRouteProps> = ({ childre
         parseInt(tokenExpiration) > Date.now());
 
       // Check if we have the state data with required metadata
+      // Note: interview_id is required - resume is fetched server-side from Azure Blob
       const metadata = location.state?.body?.metadata;
       const hasValidStateData = Boolean(
         location.state?.body &&
@@ -32,8 +33,7 @@ export const ProtectedInterviewRoute: React.FC<ProtectedRouteProps> = ({ childre
         metadata?.job_title?.trim() &&
         metadata?.company_name?.trim() &&
         metadata?.job_description?.trim() &&
-        metadata?.interviewee_cv?.trim() &&
-        metadata?.interview_id
+        metadata?.interview_id?.trim()
       );
 
       // Token match check (only if both exist)

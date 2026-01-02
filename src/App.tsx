@@ -2,15 +2,16 @@ import React, { Suspense, lazy } from 'react';
 import { ClerkProvider } from '@clerk/clerk-react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
+import { ApolloProvider } from '@apollo/client';
 import Layout from './components/layout';
 import { LoggedLayout } from './components/logged-layout';
 import { QueryProvider } from './lib/queryClient';
+import { apolloClient } from './lib/apolloClient';
 
 // Route Guards & Providers (must be imported before lazy components)
 import { ProtectedInterviewRoute } from './components/protected-interview-route';
 import { HandshakeFallback } from './components/auth/HandshakeFallback';
 import { ConsentGuard } from './components/auth/ConsentGuard';
-import { RequireRole } from './components/auth/RequireRole';
 import ErrorBoundary from './components/error-boundary';
 import { InterviewFlowProvider } from './hooks/use-interview-flow';
 import { UserProvider } from './contexts/UserContext';
@@ -21,7 +22,6 @@ import { LanguageProvider } from './hooks/use-language';
 import Home from './pages/Home';
 import SignUp from './pages/SignUp';
 import SignIn from './pages/SignIn';
-import SignInClerk from './pages/SignInClerk';
 import SSOCallback from './pages/SSOCallback';
 
 // ============================================
@@ -33,7 +33,6 @@ const Feedback = lazy(() => import('./pages/Feedback'));
 const PaymentResult = lazy(() => import('./pages/PaymentResult'));
 const InterviewDetails = lazy(() => import('./pages/InterviewDetails'));
 const About = lazy(() => import('./pages/About'));
-const InterviewSetup = lazy(() => import('./pages/InterviewSetup'));
 const ResumeLibrary = lazy(() => import('./pages/ResumeLibrary'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 const TermsOfUse = lazy(() => import('./pages/TermsOfUse'));
@@ -43,15 +42,11 @@ const UnderConstruction = lazy(() => import('./pages/UnderConstruction'));
 const AccessDenied = lazy(() => import('./pages/AccessDenied'));
 
 // New 3-in-1 Platform Pages (lazy loaded)
-const B2CDashboard = lazy(() => import('./pages/app/b2c/dashboard'));
-const B2CInterviewNew = lazy(() => import('./pages/app/b2c/interview/new'));
-const B2CRepository = lazy(() => import('./pages/app/b2c/repository'));
-const B2CBilling = lazy(() => import('./pages/app/b2c/billing'));
-const ConsentPage = lazy(() => import('./pages/onboarding/ConsentPage'));
-
-// Placeholder Pages for B2B Roles (lazy loaded)
-const CandidatePortal = lazy(() => import('./pages/app/candidate'));
-const EmployeePortal = lazy(() => import('./pages/app/employee'));
+const B2CDashboard = lazy(() => import('./pages/App/b2c/dashboard'));
+const B2CInterviewNew = lazy(() => import('./pages/App/b2c/interview/new'));
+const B2CInterviews = lazy(() => import('./pages/App/b2c/interviews'));
+const B2CBilling = lazy(() => import('./pages/App/b2c/billing'));
+const ConsentPage = lazy(() => import('./pages/Onboarding/ConsentPage'));
 
 // ============================================
 // SUSPENSE FALLBACK
@@ -76,8 +71,9 @@ if (process.env.NODE_ENV === 'development' && !CLERK_PUBLISHABLE_KEY) {
 const App: React.FC = () => {
   return (
     <ErrorBoundary>
-      <QueryProvider>
-        <ClerkProvider 
+      <ApolloProvider client={apolloClient}>
+        <QueryProvider>
+          <ClerkProvider 
           publishableKey={CLERK_PUBLISHABLE_KEY} 
           afterSignOutUrl="/"
           signInUrl="/sign-in"
@@ -98,7 +94,6 @@ const App: React.FC = () => {
                           {/* ============================================ */}
                           <Route path="sign-up" element={<SignUp />} />
                           <Route path="sign-in" element={<SignIn />} />
-                          <Route path="sign-in-clerk/*" element={<SignInClerk />} />
                           <Route path="sso-callback" element={<SSOCallback />} />
                           <Route path="under-construction" element={<UnderConstruction />} />
                           
@@ -115,7 +110,7 @@ const App: React.FC = () => {
                             <Route path="app/b2c/dashboard" element={<B2CDashboard />} />
                             <Route path="app/b2c/interview/new" element={<B2CInterviewNew />} />
                             <Route path="app/b2c/interview/:id" element={<InterviewDetails />} />
-                            <Route path="app/b2c/interviews" element={<B2CRepository />} />
+                            <Route path="app/b2c/interviews" element={<B2CInterviews />} />
                             <Route path="app/b2c/resumes" element={<ResumeLibrary />} />
                             
                             {/* Billing - B2C context */}
@@ -127,10 +122,8 @@ const App: React.FC = () => {
                             {/* Account Settings */}
                             <Route path="account" element={<Account />} />
                             
-                            {/* Static pages with logged layout for authenticated users */}
+                            {/* About page with logged layout for authenticated users */}
                             <Route path="about" element={<About />} />
-                            <Route path="privacy-policy" element={<PrivacyPolicy />} />
-                            <Route path="terms-of-use" element={<TermsOfUse />} />
                           
                           {/* Legacy Interview Details - redirect to new canonical route */}
                           <Route path="interview/:id" element={<InterviewDetails />} />
@@ -138,20 +131,13 @@ const App: React.FC = () => {
                           {/* Feedback page */}
                           <Route path="feedback" element={<Feedback />} />
                         </Route>
-
-                        {/* ============================================ */}
-                        {/* B2B Candidate Portal - Role restricted */}
-                        {/* ============================================ */}
-                        <Route element={<RequireRole allowedRoles={['CANDIDATE']} fallbackPath="/access-denied"><LoggedLayout /></RequireRole>}>
-                          <Route path="app/candidate/*" element={<CandidatePortal />} />
-                        </Route>
                         
                         {/* ============================================ */}
-                        {/* Employee Portal - Role restricted */}
+                        {/* LEGAL PAGES - Public, no auth required */}
+                        {/* These have their own TopBar + Footer */}
                         {/* ============================================ */}
-                        <Route element={<RequireRole allowedRoles={['EMPLOYEE']} fallbackPath="/access-denied"><LoggedLayout /></RequireRole>}>
-                          <Route path="app/employee/*" element={<EmployeePortal />} />
-                        </Route>
+                        <Route path="privacy-policy" element={<PrivacyPolicy />} />
+                        <Route path="terms-of-use" element={<TermsOfUse />} />
 
                         {/* ============================================ */}
                         {/* PUBLIC ROUTES - Use basic Layout (with Footer) */}
@@ -194,7 +180,7 @@ const App: React.FC = () => {
                           {/* Interview flow - special handling (active interview uses minimal UI) */}
                           <Route path="interview-setup" element={
                             <ConsentGuard>
-                              <InterviewSetup />
+                              <B2CInterviewNew />
                             </ConsentGuard>
                           } />
                           <Route path="interview" element={
@@ -208,10 +194,8 @@ const App: React.FC = () => {
                           {/* Password reset confirmation */}
                           <Route path="auth/password-confirm" element={<AuthPasswordConfirm />} />
                           
-                          {/* Static Pages (no consent required) */}
+                          {/* About page for unauthenticated users */}
                           <Route path="about" element={<About />} />
-                          <Route path="privacy-policy" element={<PrivacyPolicy />} />
-                          <Route path="terms-of-use" element={<TermsOfUse />} />
                           
                           {/* Payment result routes (no consent check - transactional) */}
                           <Route path="payment/success" element={<PaymentResult />} />
@@ -227,7 +211,8 @@ const App: React.FC = () => {
             </WorkspaceProvider>
           </UserProvider>
         </ClerkProvider>
-    </QueryProvider>
+      </QueryProvider>
+      </ApolloProvider>
     </ErrorBoundary>
   );
 }

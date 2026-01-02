@@ -6,12 +6,12 @@
  * @module hooks/queries
  */
 
-// Dashboard
+// Dashboard / GraphQL
 export {
-  useDashboardQuery,
+  useGraphQLQuery,
   usePrefetchDashboard,
   useRefreshDashboard,
-} from './useDashboardQueries';
+} from './useGraphQLQuery';
 
 // Interviews
 export {

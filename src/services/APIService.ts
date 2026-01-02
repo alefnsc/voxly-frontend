@@ -2,9 +2,9 @@ import { RetellWebClient } from "retell-client-js-sdk";
 import { config } from "../lib/config";
 import { getDeviceFingerprint } from "./deviceFingerprint";
 
-// Note: This service still requires backend API for Retell interview functionality
-// Backend is NOT needed for: Authentication (Clerk), Credits (Clerk metadata), Payments (MercadoPago)
-// Backend IS needed for: Interview calls (Retell API proxy), Feedback generation
+// Note: This service uses Clerk for authentication
+// Backend API validates x-user-id header with Clerk user IDs
+// Backend IS needed for: Interview calls (Retell API proxy), Feedback generation, Payments
 
 // Backend URL from environment config
 const BACKEND_URL = config.backendUrl;
@@ -147,26 +147,14 @@ async function safeJsonParse<T>(response: Response, endpointName: string): Promi
     }
 }
 
-/**
- * Make a fetch request with safe JSON handling
-     */
-async function safeFetch<T>(
-    url: string,
-    options: RequestInit,
-    endpointName: string
-): Promise<{ response: Response; data: T }> {
-    const response = await fetch(url, options);
-    const data = await safeJsonParse<T>(response, endpointName);
-    return { response, data };
-}
-
-// Get headers with optional user authentication
+// Get headers with Clerk x-user-id
 const getHeaders = (userId?: string): Record<string, string> => {
     const headers: Record<string, string> = {
         'Content-Type': 'application/json',
         'ngrok-skip-browser-warning': 'true', // Required for ngrok free tier
     };
     
+    // Use Clerk user ID via x-user-id header
     if (userId) {
         headers['x-user-id'] = userId;
     }
@@ -188,10 +176,8 @@ interface Metadata {
     seniority?: string; // Candidate seniority: intern, junior, mid, senior, staff, principal
     company_name: string;
     job_description: string;
-    interviewee_cv: string; // Base64 encoded resume content
-    resume_file_name?: string;
-    resume_mime_type?: string;
-    interview_id?: string;
+    // Resume is fetched server-side from Azure Blob via interview_id
+    interview_id: string; // Required: Used to fetch resume from database
     preferred_language?: string; // Language code for multilingual support (e.g., 'en-US', 'zh-CN')
 }
 
@@ -308,9 +294,8 @@ export interface CreateInterviewData {
     companyName: string;
     jobDescription: string;
     language?: string; // Interview language code
-    resumeData?: string;
-    resumeFileName?: string;
-    resumeMimeType?: string;
+    resumeId: string; // Required: UUID reference to ResumeDocument
+    resumeFileName?: string; // Optional: for display purposes
 }
 
 export interface CreatedInterview {
@@ -381,7 +366,10 @@ class APIService {
         const response = await fetch(`${BACKEND_URL}/api/interviews`, {
             method: "POST",
             headers: getHeaders(userId),
-            body: JSON.stringify(data),
+            body: JSON.stringify({
+                ...data,
+                userId,  // Include userId in body as backend expects
+            }),
         });
         
         if (!response.ok) {
@@ -673,32 +661,16 @@ class APIService {
             preferredLanguage: body.metadata.preferred_language || 'not_provided'
         });
         
-        // Step 1: Create interview record in database (skip if interview_id is already a UUID)
-        let interviewId: string | undefined;
-        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-        if (body.metadata?.interview_id && uuidRegex.test(body.metadata.interview_id)) {
-            interviewId = body.metadata.interview_id;
-        } else if (body.userId) {
-            try {
-                const interview = await this.createInterview(body.userId, {
-                    jobTitle: body.metadata.job_title,
-                    seniority: body.metadata.seniority,
-                    companyName: body.metadata.company_name,
-                    jobDescription: body.metadata.job_description,
-                    language: body.metadata.preferred_language,
-                    resumeData: body.metadata.interviewee_cv, // Now Base64 encoded
-                    resumeFileName: body.metadata.resume_file_name,
-                    resumeMimeType: body.metadata.resume_mime_type,
-                });
-                interviewId = interview.id;
-                console.log('✅ Interview record created:', interviewId);
-            } catch (err) {
-                console.error('⚠️ Failed to create interview record, continuing with call:', err);
-                // Don't fail the call if interview creation fails
-            }
+        // interview_id is now required (created before navigating to interview page)
+        // Resume is fetched server-side from Azure Blob via interview_id -> ResumeDocument.storageKey
+        const interviewId = body.metadata.interview_id;
+        if (!interviewId) {
+            console.error('❌ interview_id is required but missing from metadata');
+            throw new Error('interview_id is required to start an interview');
         }
+        console.log('✅ Using existing interview_id:', interviewId);
         
-        // Step 2: Register Retell call
+        // Register Retell call (resume fetched server-side)
         const response = await fetch(`${BACKEND_URL}/register-call`, {
             method: "POST",
             headers: getHeaders(body.userId),
@@ -1850,7 +1822,7 @@ class APIService {
             isPrimary: boolean;
         };
     }> {
-        const response = await fetch(`${BACKEND_URL}/api/resumes`, {
+        const response = await fetch(`${BACKEND_URL}/api/resumes/upload`, {
             method: 'POST',
             headers: getHeaders(userId),
             body: JSON.stringify(data),
@@ -2591,8 +2563,8 @@ class APIService {
             cacheKey,
             async () => {
                 const query = `
-                  query CandidateDashboard($filters: DashboardFiltersInput) {
-                    candidateDashboard(filters: $filters) {
+                  query GetDashboardData($filters: DashboardFilters) {
+                    dashboardData(filters: $filters) {
                       kpis {
                         totalInterviews
                         completedInterviews
@@ -2641,41 +2613,24 @@ class APIService {
                           title
                         }
                       }
-                      skillBreakdown {
-                        skill
-                        category
-                        score
-                        maxScore
-                        interviewCount
-                        trend
-                      }
-                      weeklyActivity {
-                        day
-                        date
-                        interviews
-                        averageScore
-                        totalDurationMinutes
-                      }
                       filters {
                         startDate
                         endDate
                         roleTitle
                         seniority
                         resumeId
-                        weekStart
-                        weekEnd
                       }
                     }
                   }
                 `;
 
-                const data = await this.graphqlRequest<{ candidateDashboard: CandidateDashboardResponse }>(
+                const data = await this.graphqlRequest<{ dashboardData: CandidateDashboardResponse }>(
                     userId,
                     query,
                     { filters: filters || {} }
                 );
 
-                return data.candidateDashboard;
+                return data.dashboardData;
             },
             60000,
             forceRefresh

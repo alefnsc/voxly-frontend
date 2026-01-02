@@ -16,7 +16,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
-import { BrandLockup, CopyrightNotice, BRAND } from './Brand';
+import { BrandLockup, CopyrightNotice } from './Brand';
 
 // ============================================
 // FOOTER LINKS CONFIG
@@ -217,15 +217,6 @@ function SimpleFooter({ className = '' }: { className?: string }) {
 
 function AppShellFooter({ isSignedIn, className = '' }: { isSignedIn?: boolean; className?: string }) {
   const { t } = useTranslation();
-  
-  const scrollToSection = (href: string) => {
-    if (href.startsWith('#')) {
-      const element = document.querySelector(href);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
-      }
-    }
-  };
 
   // Footer spans full width - no sidebar offset needed since it's inside the main content area
   // which already has the sidebar offset applied

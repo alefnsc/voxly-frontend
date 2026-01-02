@@ -35,8 +35,7 @@ describe('ProtectedInterviewRoute', () => {
                     job_title: 'Developer',
                     company_name: 'Tech Corp',
                     job_description: 'Job description',
-                    interviewee_cv: 'CV content',
-                    interview_id: '123',
+                    interview_id: '123', // Resume is fetched server-side from Azure Blob
                 },
             },
         },

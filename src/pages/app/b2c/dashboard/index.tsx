@@ -17,7 +17,6 @@ import { useUser } from '@clerk/clerk-react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import {
-  PlayCircle,
   FileText,
   TrendingUp,
   TrendingDown,
@@ -38,6 +37,11 @@ import {
   X,
 } from 'lucide-react';
 import {
+  MobileStartInterviewButton,
+  DesktopStartInterviewButton,
+  StartInterviewButton,
+} from '../../../../components/start-interview-button';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -57,7 +61,7 @@ import {
 } from 'recharts';
 
 import { useResumesQuery } from '../../../../hooks/queries/useResumeQueries';
-import { useDashboardQuery } from '../../../../hooks/queries/useDashboardQueries';
+import { useGraphQLQuery } from '../../../../hooks/queries/useGraphQLQuery';
 import { useAuthCheck } from '../../../../hooks/use-auth-check';
 
 const containerVariants = {
@@ -105,18 +109,28 @@ export default function B2CDashboard() {
   // Fetch real data from APIs
   const { userCredits, isLoading: isLoadingCredits } = useAuthCheck();
   const { data: resumes, isLoading: isLoadingResumes } = useResumesQuery();
-  const { data: dashboardData, isLoading: isLoadingDashboard, refetch } = useDashboardQuery({
+  const { data: dashboardData, isLoading: isLoadingDashboard, refetch } = useGraphQLQuery({
     filters: apiFilters,
   });
 
   const credits = userCredits ?? 0;
   const resumeCount = resumes?.length ?? 0;
-  const recentInterviews = dashboardData?.recentInterviews ?? [];
+  const recentInterviews = React.useMemo(
+    () => dashboardData?.recentInterviews ?? [],
+    [dashboardData?.recentInterviews]
+  );
   // Use kpis.totalInterviews for accurate count (source of truth from backend)
   const totalInterviewCount = dashboardData?.kpis?.totalInterviews ?? 0;
   const averageScore = dashboardData?.kpis?.averageScore ?? 0;
-  const scoreChange = dashboardData?.kpis?.scoreChange ?? 0;
   const totalDuration = dashboardData?.kpis?.averageDurationMinutes ?? 0;
+  // Score change is derived from scoreEvolution if available
+  const scoreChange = React.useMemo(() => {
+    const scoreEvolution = dashboardData?.scoreEvolution ?? [];
+    if (scoreEvolution.length < 2) return 0;
+    const recent = scoreEvolution[scoreEvolution.length - 1]?.score ?? 0;
+    const previous = scoreEvolution[scoreEvolution.length - 2]?.score ?? 0;
+    return Math.round(recent - previous);
+  }, [dashboardData?.scoreEvolution]);
 
   // Extract filter options from API response
   const filterOptions = dashboardData?.filterOptions;
@@ -150,18 +164,17 @@ export default function B2CDashboard() {
     ];
   }, [recentInterviews.length, averageScore, t]);
 
-  // Day keys for translation (Sunday=0 through Saturday=6)
-  const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
-
   // Weekly activity data (derived from recent interviews)
   const weeklyActivity = React.useMemo(() => {
+    // Day keys for translation (Sunday=0 through Saturday=6)
+    const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
     const activity = DAY_KEYS.map(key => ({ day: t(`days.${key}`), interviews: 0 }));
-    
+
     recentInterviews.forEach(interview => {
       const dayIndex = new Date(interview.date).getDay();
       activity[dayIndex].interviews++;
     });
-    
+
     // Rotate to start from Monday
     return [...activity.slice(1), activity[0]];
   }, [recentInterviews, t]);
@@ -177,17 +190,8 @@ export default function B2CDashboard() {
         >
           {/* Header */}
           <motion.div variants={itemVariants} className="flex flex-col gap-4">
-            {/* Mobile: CTA first for priority */}
-            <div className="flex sm:hidden">
-              <Link
-                to="/app/b2c/interview/new"
-                className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors shadow-sm"
-              >
-                <PlayCircle className="h-5 w-5" />
-                {t('dashboard.startInterview')}
-              </Link>
-            </div>
-            
+
+
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="flex-1 min-w-0">
                 <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900 truncate">
@@ -197,14 +201,10 @@ export default function B2CDashboard() {
                   {t('dashboard.readyToPractice')}
                 </p>
               </div>
+              {/* Mobile: CTA first for priority */}
+              <MobileStartInterviewButton breakpoint="sm" />
               {/* Desktop: CTA in header */}
-              <Link
-                to="/app/b2c/interview/new"
-                className="hidden sm:inline-flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors shadow-sm whitespace-nowrap"
-              >
-                <PlayCircle className="h-5 w-5" />
-                {t('dashboard.startInterview')}
-              </Link>
+              <DesktopStartInterviewButton breakpoint="sm" />
             </div>
           </motion.div>
 
@@ -215,7 +215,7 @@ export default function B2CDashboard() {
                 <Filter className="w-4 h-4 text-gray-400" />
                 <span className="text-sm text-gray-500">{t('common.filters', 'Filters')}:</span>
               </div>
-              
+
               <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                 {/* Role Filter */}
                 <Select value={roleFilter} onValueChange={setRoleFilter}>
@@ -229,7 +229,7 @@ export default function B2CDashboard() {
                     ))}
                   </SelectContent>
                 </Select>
-                
+
                 {/* Seniority Filter */}
                 <Select value={seniorityFilter} onValueChange={setSeniorityFilter}>
                   <SelectTrigger className="w-full sm:w-[180px] bg-white text-sm border-gray-200 min-h-[44px]">
@@ -269,9 +269,9 @@ export default function B2CDashboard() {
           )}
 
           {/* Stats Grid - 2 columns on small mobile, 4 on desktop */}
-          {/* <motion.div variants={itemVariants} className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"> */}
+          <motion.div variants={itemVariants} className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {/* Credits Balance */}
-            {/* <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm">
+            <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm">
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="p-1.5 sm:p-2 bg-purple-100 rounded-lg flex-shrink-0">
                   <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
@@ -292,10 +292,10 @@ export default function B2CDashboard() {
                 <span className="truncate">{t('dashboard.lowCredits.buyMore')}</span>
                 <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
               </Link>
-            </div> */}
+            </div>
 
             {/* Total Interviews */}
-            {/* <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm">
+            <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm">
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="p-1.5 sm:p-2 bg-purple-100 rounded-lg flex-shrink-0">
                   <History className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
@@ -316,10 +316,10 @@ export default function B2CDashboard() {
                 <span className="truncate">{t('dashboard.viewAll')}</span>
                 <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
               </Link>
-            </div> */}
+            </div>
 
             {/* Average Score */}
-            {/* <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm">
+            <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm">
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="p-1.5 sm:p-2 bg-purple-100 rounded-lg flex-shrink-0">
                   <Target className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
@@ -339,10 +339,10 @@ export default function B2CDashboard() {
                   {scoreChange > 0 ? '+' : ''}{scoreChange}% <span className="hidden sm:inline">{t('dashboard.stats.thisMonth')}</span>
                 </p>
               )}
-            </div> */}
+            </div>
 
             {/* Resumes */}
-            {/* <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm">
+            <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm">
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="p-1.5 sm:p-2 bg-purple-100 rounded-lg flex-shrink-0">
                   <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
@@ -364,7 +364,7 @@ export default function B2CDashboard() {
                 <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
               </Link>
             </div>
-          </motion.div> */}
+          </motion.div>
 
           {/* On mobile: Quick Actions first (most important), then charts */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -463,7 +463,7 @@ export default function B2CDashboard() {
             </motion.div>
           </div>
 
-                    {/* New Widgets Row: Skill Breakdown, Weekly Activity, Uploaded Resumes */}
+          {/* New Widgets Row: Skill Breakdown, Weekly Activity, Uploaded Resumes */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {/* Skill Breakdown */}
             <motion.div variants={itemVariants} className="bg-white rounded-xl p-4 sm:p-6 border border-gray-200 shadow-sm">
@@ -489,7 +489,7 @@ export default function B2CDashboard() {
                         </div>
                       </div>
                       <div className="w-full bg-gray-100 rounded-full h-1.5 sm:h-2">
-                        <div 
+                        <div
                           className="bg-purple-600 h-1.5 sm:h-2 rounded-full transition-all duration-500"
                           style={{ width: `${skill.score}%` }}
                         />
@@ -530,9 +530,9 @@ export default function B2CDashboard() {
                         }}
                         formatter={(value: number) => [`${value} interview${value !== 1 ? 's' : ''}`, '']}
                       />
-                      <Bar 
-                        dataKey="interviews" 
-                        fill="#7c3aed" 
+                      <Bar
+                        dataKey="interviews"
+                        fill="#7c3aed"
                         radius={[4, 4, 0, 0]}
                       />
                     </BarChart>
@@ -566,8 +566,8 @@ export default function B2CDashboard() {
               ) : resumes && resumes.length > 0 ? (
                 <div className="space-y-2 sm:space-y-3">
                   {resumes.slice(0, 3).map((resume: { id: string; fileName: string; createdAt?: string; title?: string }) => (
-                    <div 
-                      key={resume.id} 
+                    <div
+                      key={resume.id}
                       className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
                     >
                       <div className="p-1.5 sm:p-2 bg-purple-100 rounded-lg flex-shrink-0">
@@ -632,20 +632,16 @@ export default function B2CDashboard() {
                 <History className="h-10 w-10 sm:h-12 sm:w-12 text-gray-300 mx-auto mb-4" />
                 <p className="text-sm sm:text-base text-gray-500">{t('dashboard.noInterviews')}</p>
                 <p className="text-xs sm:text-sm text-gray-400 mt-1">{t('dashboard.noInterviewsHint')}</p>
-                <Link
-                  to="/app/b2c/interview/new"
-                  className="mt-4 inline-flex items-center gap-2 px-4 py-2.5 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors text-sm min-h-[44px]"
-                >
-                  <PlayCircle className="h-4 w-4" />
-                  {t('dashboard.startInterview')}
-                </Link>
+                <div className="mt-4">
+                  <StartInterviewButton />
+                </div>
               </div>
             ) : (
               <>
                 {/* Mobile: Card-based layout */}
                 <div className="sm:hidden space-y-3">
                   {recentInterviews.slice(0, 5).map((interview) => (
-                    <Link 
+                    <Link
                       key={interview.id}
                       to={`/interview/${interview.id}`}
                       className="block p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
@@ -660,13 +656,12 @@ export default function B2CDashboard() {
                         </div>
                         <div className="flex flex-col items-end gap-1">
                           <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                              (interview.score ?? 0) >= 80
+                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${(interview.score ?? 0) >= 80
                                 ? 'bg-purple-100 text-purple-800'
                                 : (interview.score ?? 0) >= 60
                                   ? 'bg-purple-50 text-purple-700'
                                   : 'bg-gray-100 text-gray-800'
-                            }`}
+                              }`}
                           >
                             {interview.score ?? 0}%
                           </span>
@@ -699,19 +694,18 @@ export default function B2CDashboard() {
                           </td>
                           <td className="py-3 px-4">
                             <span
-                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium ${
-                                (interview.score ?? 0) >= 80
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium ${(interview.score ?? 0) >= 80
                                   ? 'bg-purple-100 text-purple-800'
                                   : (interview.score ?? 0) >= 60
                                     ? 'bg-purple-50 text-purple-700'
                                     : 'bg-gray-100 text-gray-800'
-                              }`}
+                                }`}
                             >
                               {interview.score ?? 0}%
                             </span>
                           </td>
                           <td className="py-3 px-4 text-right">
-                            <Link 
+                            <Link
                               to={`/interview/${interview.id}`}
                               className="text-purple-600 hover:text-purple-700 font-medium text-sm"
                             >

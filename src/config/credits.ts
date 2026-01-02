@@ -45,10 +45,12 @@ export function getSignupCTA(): string {
   return `Start free — ${formatCreditsText(FREE_TRIAL_CREDITS)} included`;
 }
 
-export default {
+const creditsConfig = {
   FREE_TRIAL_CREDITS,
   MIN_INTERVIEW_DURATION_MS,
   CREDIT_RESTORATION_THRESHOLD_MS,
   formatCreditsText,
   getSignupCTA,
 };
+
+export default creditsConfig;

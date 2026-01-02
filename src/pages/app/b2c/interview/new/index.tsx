@@ -14,7 +14,7 @@
  */
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -29,7 +29,6 @@ import {
   Loader2,
   ArrowRight,
   Upload,
-  X,
   Check,
   ChevronDown,
   Search,
@@ -43,7 +42,6 @@ import { useWalletBalanceQuery } from 'hooks/queries/useWalletQueries';
 import {
   INTERVIEW_LANGUAGES,
   getAllCountries,
-  type Country,
   type InterviewLanguageCode,
 } from 'lib/geo/languageCountries';
 import { cn } from 'lib/utils';
@@ -329,9 +327,13 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
 const B2CNewInterviewPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useUser();
   const { currentLanguage } = useLanguage();
   const { setStage, setMetadata } = useInterviewFlow();
+  
+  // Get pre-selected resume from navigation state
+  const preSelectedResumeId = (location.state as { selectedResumeId?: string })?.selectedResumeId;
   
   // Queries
   const { data: resumes, isLoading: isLoadingResumes } = useResumesQuery();
@@ -344,9 +346,9 @@ const B2CNewInterviewPage: React.FC = () => {
     seniority: '',
     company: '',
     jobDescription: '',
-    language: (currentLanguage?.split('-')[0] as InterviewLanguageCode) || 'en',
+    language: (currentLanguage as InterviewLanguageCode) || 'en-US',
     country: '',
-    resumeId: '',
+    resumeId: preSelectedResumeId || '',
   });
   
   const [errors, setErrors] = useState<FormErrors>({});
@@ -416,8 +418,18 @@ const B2CNewInterviewPage: React.FC = () => {
       });
     }
     
+    // If we have a selected resumeId that's not in the list yet (just uploaded),
+    // add a temporary option for it using the uploaded file name
+    if (formData.resumeId && uploadedFile && !resumes?.find((r: any) => r.id === formData.resumeId)) {
+      options.push({
+        value: formData.resumeId,
+        label: uploadedFile.name.replace(/\.[^/.]+$/, ''),
+        icon: <FileText className="w-4 h-4" />,
+      });
+    }
+    
     return options;
-  }, [resumes, t]);
+  }, [resumes, t, formData.resumeId, uploadedFile]);
   
   // Handle form field changes
   const handleChange = useCallback((field: keyof FormData, value: string) => {
@@ -555,25 +567,17 @@ const B2CNewInterviewPage: React.FC = () => {
     setSubmitError(null);
     
     try {
-      // Get resume data for the interview
+      // Get resume filename for display
       const selectedResume = resumes?.find((r: any) => r.id === formData.resumeId);
-      let resumeData: { base64Data?: string; fileName?: string; mimeType?: string } | null = null;
-      if (user?.id && formData.resumeId) {
-        try {
-          const resumeResponse = await apiService.getResumeById(user.id, formData.resumeId, true);
-          resumeData = resumeResponse?.data || null;
-        } catch (error) {
-          console.error('Failed to fetch resume data for interview:', error);
-        }
-      }
       
-      // Create interview
+      // Create interview with resumeId (resume fetched server-side from Azure Blob)
       const interview = await apiService.createInterview(user.id, {
         jobTitle: formData.jobTitle.trim(),
         seniority: formData.seniority,
         companyName: formData.company.trim(),
         jobDescription: formData.jobDescription.trim(),
         language: formData.language,
+        resumeId: formData.resumeId,
         resumeFileName: selectedResume?.fileName,
       });
       
@@ -587,16 +591,13 @@ const B2CNewInterviewPage: React.FC = () => {
           jobDescription: formData.jobDescription,
         });
 
-        if (!resumeData?.base64Data) {
-          throw new Error(t('interview.errors.resumeMissingData', 'Resume data is missing. Please re-upload your resume.'));
-        }
-
         // Generate validation token and set expiration (1 hour from now)
         const tokenExpiration = Date.now() + (60 * 60 * 1000);
         localStorage.setItem('interviewValidationToken', interview.id);
         localStorage.setItem('tokenExpiration', tokenExpiration.toString());
 
         // Navigate to live interview with required metadata
+        // Resume is fetched server-side from Azure Blob via interview_id
         navigate('/interview', {
           state: {
             body: {
@@ -607,10 +608,7 @@ const B2CNewInterviewPage: React.FC = () => {
                 company_name: formData.company.trim(),
                 job_title: formData.jobTitle.trim(),
                 job_description: formData.jobDescription.trim(),
-                interviewee_cv: resumeData.base64Data,
-                resume_file_name: resumeData.fileName || selectedResume?.fileName,
-                resume_mime_type: resumeData.mimeType,
-                interview_id: interview.id,
+                interview_id: interview.id, // Required: used to fetch resume server-side
                 preferred_language: formData.language,
                 seniority: formData.seniority,
               }
@@ -634,13 +632,6 @@ const B2CNewInterviewPage: React.FC = () => {
     <DefaultLayout>
       <div className="min-h-screen bg-gray-50">
         <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 py-4 sm:py-6 lg:py-8">
-          {/* Breadcrumbs */}
-          <InterviewBreadcrumbs
-            currentStage="details"
-            showBackArrow
-            className="mb-4 sm:mb-8"
-          />
-          
           {/* Header */}
           <div className="text-center mb-6 sm:mb-8">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
@@ -650,6 +641,13 @@ const B2CNewInterviewPage: React.FC = () => {
               {t('interview.newInterview.subtitle', 'Configure your practice interview details')}
             </p>
           </div>
+          
+          {/* Breadcrumbs */}
+          <InterviewBreadcrumbs
+            currentStage="details"
+            showBackArrow
+            className="mb-4 sm:mb-8"
+          />
           
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">

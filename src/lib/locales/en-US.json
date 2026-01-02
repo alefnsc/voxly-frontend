@@ -1272,7 +1272,7 @@
     "about": "About",
     "privacyPolicy": "Privacy Policy",
     "termsOfUse": "Terms of Use",
-    "tagline": "Built with care for interview excellence.",
+    "tagline": "Built with care for HR excellence.",
     "privacy": "Privacy",
     "terms": "Terms"
   },
@@ -2053,7 +2053,9 @@
       "agreeToTerms": "I agree to the",
       "termsOfUse": "Terms of Use",
       "privacyPolicy": "Privacy Policy",
-      "continue": "Continue"
+      "continue": "Continue",
+      "maybeLater": "Maybe later",
+      "declineNote": "You can always come back when you're ready."
     },
     "step2": {
       "title": "Communication preferences",

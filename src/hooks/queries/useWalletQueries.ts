@@ -9,7 +9,7 @@
  * @module hooks/queries/useWalletQueries
  */
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { useUser } from '@clerk/clerk-react';
 import { useUserContext } from '../../contexts/UserContext';
 import { queryKeys, invalidateWallet } from '../../lib/queryClient';
@@ -122,7 +122,6 @@ export function useBillingHistoryQuery() {
  * Mutation for using credits (consumes a credit for interview)
  */
 export function useConsumeCreditMutation() {
-  const queryClient = useQueryClient();
   const { user } = useUser();
 
   return useMutation({
@@ -140,7 +139,6 @@ export function useConsumeCreditMutation() {
  * Mutation for restoring credits (e.g., after failed interview)
  */
 export function useRestoreCreditMutation() {
-  const queryClient = useQueryClient();
   const { user } = useUser();
 
   return useMutation({
@@ -196,7 +194,6 @@ export function useCreatePaymentMutation() {
  * Mutation for checking payment status
  */
 export function useCheckPaymentStatusMutation() {
-  const queryClient = useQueryClient();
   const { user } = useUser();
 
   return useMutation({

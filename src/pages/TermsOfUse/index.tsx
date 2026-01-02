@@ -3,6 +3,8 @@
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ArrowLeft, AlertCircle } from 'lucide-react'
+import TopBar from 'components/top-bar'
+import Footer from 'components/footer'
 
 export default function TermsOfUse() {
   const navigate = useNavigate()
@@ -12,37 +14,40 @@ export default function TermsOfUse() {
   const isEnglish = i18n.language === 'en-US' || i18n.language.startsWith('en')
 
   return (
-    <div className="min-h-screen bg-zinc-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-6 sm:mb-8">
+    <div className="min-h-screen bg-zinc-50 flex flex-col">
+      <TopBar showLogo={true} />
+      
+      <main className="flex-1">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Header */}
+          <div className="mb-6 sm:mb-8">
 
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6 sm:mb-8">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <ArrowLeft onClick={() => navigate('/about')} className="w-5 h-5 text-zinc-600 hover:text-zinc-900 transition-colors cursor-pointer" aria-label={t('common.goBack')} />
-                <h1 className="text-2xl sm:text-3xl font-bold text-zinc-900">
-                  {t('legal.terms.title')} <span className="text-purple-600">{t('legal.terms.titleHighlight')}</span>
-                </h1>
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6 sm:mb-8">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <ArrowLeft onClick={() => navigate(-1)} className="w-5 h-5 text-zinc-600 hover:text-zinc-900 transition-colors cursor-pointer" aria-label={t('common.goBack')} />
+                  <h1 className="text-2xl sm:text-3xl font-bold text-zinc-900">
+                    {t('legal.terms.title')} <span className="text-purple-600">{t('legal.terms.titleHighlight')}</span>
+                  </h1>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Disclaimer for non-English */}
-        {!isEnglish && (
-          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-            <p className="text-sm text-amber-800">
-              {t('legal.disclaimer')}
-            </p>
-          </div>
-        )}
+          {/* Disclaimer for non-English */}
+          {!isEnglish && (
+            <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <p className="text-sm text-amber-800">
+                {t('legal.disclaimer')}
+              </p>
+            </div>
+          )}
 
         {/* Content */}
         <div className="p-6 bg-white border border-zinc-200 rounded-xl prose prose-zinc max-w-none">
           <p className="text-zinc-600 mb-8">
-            <em>Last Updated: January 15, 2025</em>
+            <em>Last Updated: January 5, 2026</em>
           </p>
 
           {/* Section 1: Acceptance of Terms */}
@@ -277,7 +282,10 @@ export default function TermsOfUse() {
             </div>
           </section>
         </div>
-      </div>
+        </div>
+      </main>
+      
+      <Footer />
     </div>
   )
 }

@@ -322,15 +322,16 @@ export function getCountryByCode(countryCode: string): Country | undefined {
 
 /**
  * Supported interview languages with metadata
+ * Uses full locale codes to match backend SupportedLanguageCode
  */
 export const INTERVIEW_LANGUAGES = [
-  { code: 'en', name: 'English', nativeName: 'English', flag: '🇺🇸' },
-  { code: 'zh', name: 'Chinese', nativeName: '中文', flag: '🇨🇳' },
-  { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', flag: '🇮🇳' },
-  { code: 'es', name: 'Spanish', nativeName: 'Español', flag: '🇪🇸' },
-  { code: 'pt', name: 'Portuguese', nativeName: 'Português', flag: '🇧🇷' },
-  { code: 'fr', name: 'French', nativeName: 'Français', flag: '🇫🇷' },
-  { code: 'ru', name: 'Russian', nativeName: 'Русский', flag: '🇷🇺' },
+  { code: 'en-US', name: 'English', nativeName: 'English', flag: '🇺🇸' },
+  { code: 'zh-CN', name: 'Chinese', nativeName: '中文', flag: '🇨🇳' },
+  { code: 'hi-IN', name: 'Hindi', nativeName: 'हिन्दी', flag: '🇮🇳' },
+  { code: 'es-ES', name: 'Spanish', nativeName: 'Español', flag: '🇪🇸' },
+  { code: 'pt-BR', name: 'Portuguese', nativeName: 'Português', flag: '🇧🇷' },
+  { code: 'fr-FR', name: 'French', nativeName: 'Français', flag: '🇫🇷' },
+  { code: 'ru-RU', name: 'Russian', nativeName: 'Русский', flag: '🇷🇺' },
 ] as const;
 
 export type InterviewLanguageCode = typeof INTERVIEW_LANGUAGES[number]['code'];

@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useUser } from '@clerk/clerk-react';
-import { DefaultLayout } from 'components/default-layout';
+import TopBar from 'components/top-bar';
 import Loading from 'components/loading';
 import apiService from 'services/APIService';
 
@@ -123,41 +123,45 @@ const Interview = () => {
     }
 
     return (
-        <DefaultLayout className="min-h-screen bg-zinc-50" hideSidebar>
-            <div className="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
-                {/* Breadcrumbs */}
-                <div className="mb-4 sm:mb-6">
-                    <InterviewBreadcrumbs 
-                        currentStage="interview" 
-                        showBackArrow={false}
+        <div className="min-h-screen bg-zinc-50 flex flex-col">
+            <TopBar showLogo={true} />
+            
+            <main className="flex-1">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+                    {/* Breadcrumbs */}
+                    <div className="mb-4 sm:mb-6">
+                        <InterviewBreadcrumbs 
+                            currentStage="interview" 
+                            showBackArrow={false}
+                        />
+                    </div>
+
+                    {/* Microphone permission modal */}
+                    <MicPermissionModal
+                        onPermissionGranted={handleMicPermission}
                     />
-                </div>
 
-                {/* Microphone permission modal */}
-                <MicPermissionModal
-                    onPermissionGranted={handleMicPermission}
-                />
-
-                {/* Quit confirmation modal */}
-                <QuitInterviewModal
-                    isOpen={isQuitModalOpen}
-                    onClose={toggleQuitModal}
-                    onQuit={stopCall}
-                />
-
-                {/* Main interview content */}
-                <div className="flex items-center justify-center">
-                    <InterviewContent
-                        isConnecting={isConnecting}
-                        isAgentTalking={isAgentTalking}
-                        minutes={minutes}
-                        seconds={seconds}
-                        onQuitClick={toggleQuitModal}
-                        audioSamples={audioSamples}
+                    {/* Quit confirmation modal */}
+                    <QuitInterviewModal
+                        isOpen={isQuitModalOpen}
+                        onClose={toggleQuitModal}
+                        onQuit={stopCall}
                     />
+
+                    {/* Main interview content */}
+                    <div className="flex items-center justify-center">
+                        <InterviewContent
+                            isConnecting={isConnecting}
+                            isAgentTalking={isAgentTalking}
+                            minutes={minutes}
+                            seconds={seconds}
+                            onQuitClick={toggleQuitModal}
+                            audioSamples={audioSamples}
+                        />
+                    </div>
                 </div>
-            </div>
-        </DefaultLayout>
+            </main>
+        </div>
     );
 };
 

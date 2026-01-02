@@ -174,7 +174,7 @@ export default function PaymentResult() {
     } finally {
       setIsRefreshing(false)
     }
-  }, [user, pollAttempts, invalidateCache, onCreditsPurchased, paymentDetails.external_reference, getPackageFromReference])
+  }, [user, pollAttempts, invalidateCache, onCreditsPurchased, paymentDetails.external_reference, getPackageFromReference, hasPolledOnce])
 
   // Auto-poll on success page with exponential backoff
   useEffect(() => {

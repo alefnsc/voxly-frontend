@@ -26,7 +26,6 @@ import {
   Linkedin,
   Target,
   TrendingUp,
-  Filter as FilterIcon,
   RefreshCw
 } from 'lucide-react';
 import apiService, { ResumeListItem } from 'services/APIService';
@@ -90,7 +89,7 @@ const ResumeLibrary: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [user?.id]);
+  }, [user?.id, t]);
 
   useEffect(() => {
     if (isSignedIn && user?.id) {
@@ -456,7 +455,7 @@ const ResumeLibrary: React.FC = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredResumes.map((resume) => (
+            {sortedResumes.map((resume) => (
               <div
                 key={resume.id}
                 className={`relative bg-white border rounded-xl p-4 transition-all hover:shadow-md ${
@@ -651,7 +650,7 @@ const ResumeLibrary: React.FC = () => {
 
                 {/* Start Interview Button */}
                 <button
-                  onClick={() => navigate('/interview-setup', { state: { selectedResumeId: resume.id } })}
+                  onClick={() => navigate('/app/b2c/interview/new', { state: { selectedResumeId: resume.id } })}
                   className="mt-4 w-full py-2 px-3 bg-purple-50 hover:bg-purple-100 text-purple-700 text-sm font-medium rounded-lg transition-colors"
                 >
                   {t('resumeLibrary.startInterview', 'Start Interview')}

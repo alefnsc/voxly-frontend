@@ -1,7 +1,7 @@
 /**
- * Dashboard Query Hooks
+ * GraphQL Query Hooks
  * 
- * React Query hooks for dashboard data fetching with:
+ * React Query hooks for GraphQL data fetching with:
  * - Automatic caching and deduplication
  * - Background refetching
  * - Optimistic updates
@@ -10,7 +10,7 @@
  * 
  * These hooks wrap the existing APIService methods with React Query.
  * 
- * @module hooks/queries/useDashboardQueries
+ * @module hooks/queries/useGraphQLQuery
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -23,32 +23,32 @@ import apiService, {
 } from '../../services/APIService';
 
 // ============================================
-// DASHBOARD QUERY
+// GRAPHQL QUERY
 // ============================================
 
-interface UseDashboardQueryOptions {
+interface UseGraphQLQueryOptions {
   filters?: CandidateDashboardFilters;
   enabled?: boolean;
 }
 
 /**
- * Query hook for fetching candidate dashboard data
+ * Query hook for fetching candidate dashboard data via GraphQL
  * 
  * Supports mock data fallback when REACT_APP_USE_MOCK_DATA=true
  * 
  * @example
- * const { data, isLoading, error, refetch } = useDashboardQuery({
+ * const { data, isLoading, error, refetch } = useGraphQLQuery({
  *   filters: { roleTitle: 'Software Engineer', limit: 10 }
  * });
  */
-export function useDashboardQuery(options: UseDashboardQueryOptions = {}) {
+export function useGraphQLQuery(options: UseGraphQLQueryOptions = {}) {
   const { user, isSignedIn, isLoaded } = useUser();
   const { isSynced } = useUserContext();
   const { filters = {}, enabled = true } = options;
 
   // Debug logging for development
   if (process.env.NODE_ENV === 'development') {
-    console.log('📊 useDashboardQuery state:', {
+    console.log('📊 useGraphQLQuery state:', {
       userId: user?.id?.slice(0, 15),
       isSignedIn,
       isLoaded,
@@ -124,4 +124,4 @@ export function useRefreshDashboard() {
   });
 }
 
-export default useDashboardQuery;
+export default useGraphQLQuery;

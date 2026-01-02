@@ -2,7 +2,6 @@
 
 import TopBar from 'components/top-bar'
 import Sidebar from 'components/sidebar'
-import BottomNav from 'components/bottom-nav'
 import { cn } from 'lib/utils'
 import React, { createContext, useContext } from 'react'
 import { useUser } from '@clerk/clerk-react'
@@ -114,9 +113,6 @@ export const DefaultLayout = ({
           </div>
         </div>
       </main>
-      
-      {/* Bottom Navigation - only for authenticated users on mobile/tablet */}
-      {showSidebar && <BottomNav hasRecentInterview={hasRecentInterview} />}
     </div>
   )
 }

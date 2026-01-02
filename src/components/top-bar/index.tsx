@@ -50,7 +50,22 @@ const getB2BNavItems = (): NavItem[] => {
   }));
 };
 
-const TopBar: React.FC = () => {
+interface TopBarProps {
+  /** 
+   * Variant for different page contexts
+   * - 'default': White background with full navigation
+   * - 'minimal': Gray background with logo only (for consent/onboarding pages)
+   */
+  variant?: 'default' | 'minimal';
+  /**
+   * Whether to show the logo on the left side
+   * - true: Show logo (useful for legal pages without sidebar)
+   * - false: Hide logo (default behavior)
+   */
+  showLogo?: boolean;
+}
+
+const TopBar: React.FC<TopBarProps> = ({ variant = 'default', showLogo = false }) => {
   const { user, isSignedIn } = useUser();
   const { userCredits } = useAuthCheck();
   const location = useLocation();
@@ -103,13 +118,36 @@ const TopBar: React.FC = () => {
   // Filter nav items based on auth
   // Unauthenticated users see landing nav; authenticated users use sidebar navigation
   const visibleNavItems = landingNavItems;
+
+  // Minimal variant - just logo with gray styling (for consent/onboarding pages)
+  if (variant === 'minimal') {
+    return (
+      <nav 
+        className="flex h-[60px] sm:h-[80px] items-center justify-center border-b border-zinc-200 bg-zinc-50" 
+        role="navigation" 
+        aria-label="Main navigation"
+      >
+        <div className="flex flex-row items-center w-full max-w-7xl px-4 sm:px-6 lg:px-8 justify-center">
+          <Link to="/" aria-label="Vocaid Home">
+            <BrandMark size="lg" linkToHome={false} />
+          </Link>
+        </div>
+      </nav>
+    );
+  }
   
   return (
     <>
       <nav className="flex h-[60px] sm:h-[80px] items-center justify-center border-b border-zinc-200 bg-white" role="navigation" aria-label="Main navigation">
-        <div className={`flex flex-row items-center w-full max-w-7xl px-4 sm:px-6 lg:px-8 ${isSignedIn ? 'justify-between lg:justify-end' : 'justify-between'}`}>
-          {/* Logo - Hidden on desktop when authenticated (sidebar has the logo) */}
-          {isSignedIn ? (
+        <div className={`flex flex-row items-center w-full max-w-7xl px-4 sm:px-6 lg:px-8 ${showLogo ? 'justify-between' : isSignedIn ? 'justify-between lg:justify-end' : 'justify-between'}`}>
+          {/* Logo - Show if showLogo prop is true, or follow default behavior */}
+          {showLogo ? (
+            <div className="flex items-center">
+              <Link to={isSignedIn ? "/app/b2c/dashboard" : "/"} aria-label="Vocaid Home">
+                <BrandMark size="lg" linkToHome={false} />
+              </Link>
+            </div>
+          ) : isSignedIn ? (
             <div className="flex justify-center items-center lg:hidden">
               <Link to="/" aria-label="Vocaid Home">
                 <BrandMark size="lg" linkToHome={false} />
@@ -166,7 +204,7 @@ const TopBar: React.FC = () => {
             {user ? (
               <div className="hidden md:flex items-center gap-3">
                 {/* Credits Display - Desktop */}
-                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-50 border border-zinc-200 rounded-full">
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-zinc-200 rounded-full">
                   <span className="text-xs text-purple-600 font-medium">{t('nav.credits')}</span>
                   <span className="text-sm font-semibold text-zinc-900">{userCredits}</span>
                 </div>

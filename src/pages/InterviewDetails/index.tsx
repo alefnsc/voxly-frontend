@@ -5,7 +5,6 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useUser } from '@clerk/clerk-react'
 import { useTranslation } from 'react-i18next'
 import Loading from 'components/loading'
-import ContactButton from 'components/contact-button'
 import PurpleButton from 'components/ui/purple-button'
 import StatsCard from 'components/ui/stats-card'
 import apiService, { InterviewDetail } from 'services/APIService'
@@ -347,7 +346,6 @@ export default function InterviewDetails() {
             </PurpleButton>
           </div>
         </div>
-        <ContactButton />
       </div>
     )
   }
@@ -688,7 +686,6 @@ export default function InterviewDetails() {
         )}
 
       </div>
-      <ContactButton />
     </div>
   )
 }

@@ -150,9 +150,11 @@ export function CopyrightNotice({ className = '' }: CopyrightNoticeProps) {
 // EXPORTS
 // ============================================
 
-export default {
+const BrandExports = {
   BrandMark,
   BrandLockup,
   CopyrightNotice,
   BRAND,
 };
+
+export default BrandExports;

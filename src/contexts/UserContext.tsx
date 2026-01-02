@@ -180,10 +180,9 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       try {
         console.log('🔐 Validating and syncing user to backend...');
         
-        // Get device fingerprint for abuse detection
-        let deviceFingerprint: string | undefined;
+        // Get device fingerprint for abuse detection (logged on backend)
         try {
-          deviceFingerprint = await getDeviceFingerprint();
+          await getDeviceFingerprint();
         } catch {
           console.warn('⚠️ Could not get device fingerprint');
         }

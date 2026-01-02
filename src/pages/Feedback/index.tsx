@@ -21,12 +21,6 @@ import {
   StructuredFeedback, 
   FeedbackApiResponse, 
   hasStructuredFeedback,
-  getDisplayScore,
-  getStrengths,
-  getImprovements,
-  getStudyPlan,
-  getCompetencies,
-  getCommunicationAnalysis,
   CompetencyScore,
   StudyPlanItem,
   CommunicationAnalysis
@@ -153,7 +147,8 @@ const Feedback = () => {
   const RETRY_DELAY = 3000; // 3 seconds
   
   // Structured feedback state (v2.0)
-  const [structuredFeedback, setStructuredFeedback] = useState<StructuredFeedback | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_structuredFeedback, setStructuredFeedback] = useState<StructuredFeedback | null>(null);
   const [competencies, setCompetencies] = useState<CompetencyScore[]>([]);
   const [studyPlan, setStudyPlan] = useState<StudyPlanItem[]>([]);
   const [communication, setCommunication] = useState<CommunicationAnalysis | null>(null);
@@ -444,7 +439,7 @@ const Feedback = () => {
   // Loading state
   if (isLoading) {
     return (
-      <DefaultLayout className="flex flex-col items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-100 min-h-screen">
+      <DefaultLayout className="flex flex-col items-center justify-center bg-zinc-50 min-h-screen">
         <Card className="max-w-md p-8 text-center bg-white border-gray-200">
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-purple-100 flex items-center justify-center">
             <div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
@@ -464,7 +459,7 @@ const Feedback = () => {
   // Error state
   if (error) {
     return (
-      <DefaultLayout className="flex flex-col items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-100 min-h-screen">
+      <DefaultLayout className="flex flex-col items-center justify-center bg-zinc-50 min-h-screen">
         <Card className="max-w-md p-8 text-center bg-white border-gray-200">
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
             <span className="text-2xl">⚠️</span>
@@ -483,7 +478,7 @@ const Feedback = () => {
   }
 
   return (
-    <DefaultLayout className="flex flex-col overflow-hidden items-center bg-gradient-to-br from-gray-50 via-white to-gray-100 min-h-screen py-6 sm:py-10">
+    <DefaultLayout className="flex flex-col overflow-hidden items-center bg-zinc-50 min-h-screen py-6 sm:py-10">
       {/* Breadcrumbs */}
       <div className="w-full max-w-5xl px-4 sm:px-6 lg:px-8 mb-6">
         <InterviewBreadcrumbs

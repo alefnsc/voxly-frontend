@@ -14,7 +14,7 @@
 'use client';
 
 import React from 'react';
-import { useLocation, Navigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { AuthenticateWithRedirectCallback } from '@clerk/clerk-react';
 import { useTranslation } from 'react-i18next';
 

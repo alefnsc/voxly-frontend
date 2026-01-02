@@ -1984,7 +1984,9 @@
       "agreeToTerms": "Eu concordo com",
       "termsOfUse": "Termos de Uso",
       "privacyPolicy": "Política de Privacidade",
-      "continue": "Continuar"
+      "continue": "Continuar",
+      "maybeLater": "Talvez depois",
+      "declineNote": "Você pode voltar quando estiver pronto."
     },
     "step2": {
       "title": "Preferências de comunicação",
@@ -2082,7 +2084,7 @@
     "about": "Sobre",
     "privacyPolicy": "Política de Privacidade",
     "termsOfUse": "Termos de Uso",
-    "tagline": "Construído com cuidado para excelência em entrevistas.",
+    "tagline": "Construído com cuidado para excelência em RH.",
     "privacy": "Privacidade",
     "terms": "Termos"
   },

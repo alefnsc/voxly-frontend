@@ -46,7 +46,6 @@ const SentimentTimeline: React.FC<{ data: TimelineDataPoint[]; duration: number;
   t
 }) => {
   const chartHeight = 200;
-  const padding = { top: 20, right: 20, bottom: 40, left: 50 };
   
   // Normalize data points to chart coordinates
   const normalizedData = useMemo(() => {
@@ -68,7 +67,8 @@ const SentimentTimeline: React.FC<{ data: TimelineDataPoint[]; duration: number;
       tone: createPath('tone'),
       pace: createPath('pace')
     };
-  }, [data, duration, padding.top, padding.right, padding.bottom, padding.left]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, duration]);
 
   // Format time for axis labels
   const formatTime = (seconds: number) => {
@@ -203,8 +203,9 @@ const SentimentTimeline: React.FC<{ data: TimelineDataPoint[]; duration: number;
 // SOFT SKILLS RADAR CHART COMPONENT
 // ========================================
 
+const SKILL_KEYS = ['communication', 'problemSolving', 'technicalDepth', 'leadership', 'adaptability'] as const;
+
 const SoftSkillsRadar: React.FC<{ skills: SoftSkillsData; t: TFunction }> = ({ skills, t }) => {
-  const skillKeys = ['communication', 'problemSolving', 'technicalDepth', 'leadership', 'adaptability'] as const;
   
   const centerX = 150;
   const centerY = 150;
@@ -213,10 +214,10 @@ const SoftSkillsRadar: React.FC<{ skills: SoftSkillsData; t: TFunction }> = ({ s
   
   // Calculate polygon points for the skill values
   const skillPoints = useMemo(() => {
-    const angleStep = (2 * Math.PI) / skillKeys.length;
+    const angleStep = (2 * Math.PI) / SKILL_KEYS.length;
     const startAngle = -Math.PI / 2; // Start from top
     
-    return skillKeys.map((key, i) => {
+    return SKILL_KEYS.map((key, i) => {
       const angle = startAngle + i * angleStep;
       const value = skills[key] / 100;
       const radius = value * maxRadius;
@@ -230,7 +231,7 @@ const SoftSkillsRadar: React.FC<{ skills: SoftSkillsData; t: TFunction }> = ({ s
         value: skills[key]
       };
     });
-  }, [skills, skillKeys, t]);
+  }, [skills, t]);
   
   // Create polygon path
   const polygonPath = skillPoints.map((p, i) => 
@@ -240,13 +241,13 @@ const SoftSkillsRadar: React.FC<{ skills: SoftSkillsData; t: TFunction }> = ({ s
   // Create grid lines
   const gridPaths = useMemo(() => {
     const paths = [];
-    const angleStep = (2 * Math.PI) / skillKeys.length;
+    const angleStep = (2 * Math.PI) / SKILL_KEYS.length;
     const startAngle = -Math.PI / 2;
     
     // Concentric pentagons
     for (let level = 1; level <= levels; level++) {
       const radius = (level / levels) * maxRadius;
-      const points = skillKeys.map((_, i) => {
+      const points = SKILL_KEYS.map((_, i) => {
         const angle = startAngle + i * angleStep;
         return `${i === 0 ? 'M' : 'L'} ${centerX + radius * Math.cos(angle)} ${centerY + radius * Math.sin(angle)}`;
       }).join(' ') + ' Z';
@@ -254,7 +255,7 @@ const SoftSkillsRadar: React.FC<{ skills: SoftSkillsData; t: TFunction }> = ({ s
     }
     
     // Radial lines from center
-    const radialLines = skillKeys.map((_, i) => {
+    const radialLines = SKILL_KEYS.map((_, i) => {
       const angle = startAngle + i * angleStep;
       return {
         x1: centerX,
@@ -265,7 +266,7 @@ const SoftSkillsRadar: React.FC<{ skills: SoftSkillsData; t: TFunction }> = ({ s
     });
     
     return { polygons: paths, radials: radialLines };
-  }, [skillKeys]);
+  }, []);
 
   return (
     <motion.div
@@ -348,7 +349,7 @@ const SoftSkillsRadar: React.FC<{ skills: SoftSkillsData; t: TFunction }> = ({ s
       
       {/* Skill scores list */}
       <div className="mt-6 pt-4 border-t border-zinc-200 grid grid-cols-2 sm:grid-cols-5 gap-3">
-        {skillKeys.map((key) => (
+        {SKILL_KEYS.map((key) => (
           <div key={key} className="text-center">
             <p className="text-2xl font-bold text-purple-600">{skills[key]}</p>
             <p className="text-xs text-zinc-500 mt-1">{t(`analytics.softSkills.skills.${key}`)}</p>

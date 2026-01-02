@@ -98,7 +98,6 @@ export function useResumeScoresQuery(resumeId: string | undefined) {
  * Mutation for uploading a new resume
  */
 export function useUploadResumeMutation() {
-  const queryClient = useQueryClient();
   const { user } = useUser();
 
   return useMutation({
@@ -150,7 +149,6 @@ export function useUpdateResumeMutation() {
  * Mutation for setting a resume as primary
  */
 export function useSetPrimaryResumeMutation() {
-  const queryClient = useQueryClient();
   const { user } = useUser();
 
   return useMutation({
@@ -168,7 +166,6 @@ export function useSetPrimaryResumeMutation() {
  * Mutation for deleting a resume
  */
 export function useDeleteResumeMutation() {
-  const queryClient = useQueryClient();
   const { user } = useUser();
 
   return useMutation({
@@ -211,7 +208,6 @@ export function useScoreResumeMutation() {
  * Mutation for creating resume from LinkedIn
  */
 export function useLinkedInResumeMutation() {
-  const queryClient = useQueryClient();
   const { user } = useUser();
 
   return useMutation({

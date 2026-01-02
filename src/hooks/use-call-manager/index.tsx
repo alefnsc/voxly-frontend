@@ -15,7 +15,7 @@ export const useCallManager = (body, navigate) => {
     const { user } = useUser();
     const { t } = useTranslation();
     const [callId, setCallId] = useState('');
-    const [interviewId, setInterviewId] = useState('');
+    const [, setInterviewId] = useState('');
     const [isCalling, setIsCalling] = useState(false);
     const [isAgentTalking, setIsAgentTalking] = useState(false);
     const [isConnecting, setIsConnecting] = useState(true); // Track initial connection - agent hasn't spoken yet

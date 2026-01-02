@@ -242,10 +242,12 @@ export function getMockResumes(): MockResume[] {
   ];
 }
 
-export default {
+const mockDataExports = {
   isMockDataEnabled,
   shouldUseMockData,
   getMockDashboardData,
   getMockWalletData,
   getMockResumes,
 };
+
+export default mockDataExports;

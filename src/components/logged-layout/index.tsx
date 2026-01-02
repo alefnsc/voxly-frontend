@@ -31,7 +31,6 @@ import { CustomAvatar } from 'components/auth/CustomAvatar';
 import { AppFooter } from 'components/shared/AppFooter';
 import { LayoutProvider } from 'components/default-layout';
 import { BetaFeedbackFab } from 'components/beta-feedback';
-import ContactButton from 'components/contact-button';
 import { isClosedBetaFeedbackEnabled } from 'config/featureFlags';
 
 // ========================================
@@ -80,7 +79,6 @@ export const useLoggedLayout = () => {
 const SIDEBAR_WIDTH = 260;
 const TOPBAR_HEIGHT = 80;
 const BOTTOM_NAV_HEIGHT = 64;
-const SIDEBAR_STATE_KEY = 'vocaid_sidebar_collapsed';
 
 // Main navigation items - B2C focused
 const mainNavItems: NavItem[] = [
@@ -550,7 +548,6 @@ BottomNav.displayName = 'BottomNav';
 // ========================================
 
 const LoggedTopBar = memo(() => {
-  const { user } = useUser();
   const { userCredits } = useAuthCheck();
   const { t } = useTranslation();
   const { isMobileDrawerOpen, toggleMobileDrawer } = useLoggedLayout();
@@ -708,7 +705,7 @@ export const LoggedLayout: React.FC<LoggedLayoutProps> = ({ children }) => {
           <BottomNav hasRecentInterview={hasRecentInterview} />
 
           {/* Feedback FAB (global) */}
-          {isClosedBetaFeedbackEnabled() ? <BetaFeedbackFab /> : <ContactButton />}
+          {isClosedBetaFeedbackEnabled() && <BetaFeedbackFab />}
         </div>
       </LayoutProvider>
     </LoggedLayoutContext.Provider>

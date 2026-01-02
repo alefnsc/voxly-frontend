@@ -329,6 +329,7 @@ export function useBetaFeedbackFlow() {
         );
         break;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.feedbackType, state.refId, state.submissionError, t, addAssistantMessage]);
 
   // Build review summary
@@ -450,6 +451,7 @@ export function useBetaFeedbackFlow() {
         }
         break;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.step, addUserMessage, goToStep, nextStep]);
 
   const handleTextInput = useCallback((value: string) => {

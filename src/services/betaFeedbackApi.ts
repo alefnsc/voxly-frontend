@@ -77,7 +77,9 @@ export async function checkBetaFeedbackStatus(): Promise<{
   }
 }
 
-export default {
+const betaFeedbackApi = {
   submitBetaFeedback,
   checkBetaFeedbackStatus,
 };
+
+export default betaFeedbackApi;
