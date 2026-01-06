@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { DefaultLayout } from 'components/default-layout';
 import { cn } from 'lib/utils';
+import { validatePasswordPolicy } from 'components/auth/validation';
 import apiService from 'services/APIService';
 
 const AuthPasswordConfirm: React.FC = () => {
@@ -26,8 +27,10 @@ const AuthPasswordConfirm: React.FC = () => {
       return;
     }
 
-    if (password.length < 8) {
-      setError(t('account.validation.passwordTooShort', 'Password must be at least 8 characters'));
+    // Validate password against policy
+    const validation = validatePasswordPolicy(password);
+    if (!validation.valid) {
+      setError(validation.errors[0] || t('account.validation.passwordInvalid', 'Password does not meet requirements'));
       return;
     }
 

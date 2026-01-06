@@ -26,7 +26,15 @@
     "submitting": "Submitting...",
     "gotIt": "Got it",
     "soon": "Soon",
-    "refreshData": "Refresh data"
+    "refreshData": "Refresh data",
+    "na": "N/A",
+    "clear": "Clear",
+    "clearFilters": "Clear",
+    "allTime": "All Time",
+    "lastWeek": "Last Week",
+    "lastMonth": "Last Month",
+    "last3Months": "Last 3 Months",
+    "lastYear": "Last Year"
   },
   "features": {
     "underConstruction": {
@@ -100,6 +108,7 @@
   "nav": {
     "home": "Home",
     "dashboard": "Dashboard",
+    "performance": "Performance",
     "about": "About",
     "credits": "Credits",
     "contact": "Contact",
@@ -119,6 +128,23 @@
     "main": "Main",
     "settings": "Settings",
     "accountSettings": "Account Settings"
+  },
+  "performance": {
+    "title": "Performance",
+    "subtitle": "Track your interview progress and get AI-powered insights",
+    "kpis": {
+      "totalInterviews": "Total Interviews",
+      "avgScore": "Avg. Score",
+      "totalTime": "Total Time",
+      "resumeQuality": "Resume Quality"
+    },
+    "viewResumes": "View resumes",
+    "quickLinks": "Quick Links",
+    "links": {
+      "interviewsDesc": "View all your practice sessions",
+      "resumesDesc": "Manage and score your resumes",
+      "dashboardDesc": "Overview and quick start"
+    }
   },
   "platform": {
     "b2c": {
@@ -216,33 +242,33 @@
     }
   },
   "about": {
-    "title": "About",
-    "subtitle": "AI-powered interview preparation platform",
+    "title": "<black>About</black> <purple>Vocaid</purple>",
+    "subtitle": "Your AI performance chat assistant for interview mastery",
     "mission": {
       "title": "Ace Every Interview",
-      "description": "Practice with our AI interviewer, get instant feedback, and build confidence. Upload your resume, enter job details, and start improving today."
+      "description": "Chat with your AI assistant to analyze interview transcripts, optimize your resume with ATS scoring, and get personalized feedback PDFs. Upload your resume, enter job details, and let your performance coach guide you to success."
     },
     "whyVocaid": "Why Vocaid?",
     "features": {
       "realistic": {
-        "title": "Realistic",
-        "desc": "Natural conversation flow"
+        "title": "AI Chat Assistant",
+        "desc": "Interactive performance coaching"
       },
       "analytics": {
-        "title": "Analytics",
-        "desc": "Track your progress"
+        "title": "Smart Analytics",
+        "desc": "Transcripts & progress tracking"
       },
       "practice247": {
         "title": "Practice 24/7",
         "desc": "No scheduling needed"
       },
       "feedback": {
-        "title": "Feedback",
-        "desc": "Actionable insights"
+        "title": "Feedback PDFs",
+        "desc": "Downloadable insights"
       },
       "roleSpecific": {
-        "title": "Role-Specific",
-        "desc": "Tailored questions"
+        "title": "ATS Scoring",
+        "desc": "Resume optimization"
       },
       "payPerUse": {
         "title": "Pay Per Use",
@@ -453,6 +479,10 @@
     }
   },
   "interview": {
+    "newInterview": {
+      "title": "<black>Set Up Your</black> <purple>Interview</purple>",
+      "subtitle": "Configure your practice interview details"
+    },
     "setup": {
       "title": "Interview Setup",
       "subtitle": "Let's prepare your mock interview",
@@ -749,6 +779,7 @@
     "readyToPractice": "Ready to practice your next interview?",
     "startNewInterview": "Start New Interview",
     "startInterview": "Start Interview",
+    "openChat": "Open Chat",
     "filters": {
       "role": "Filter by Role",
       "seniority": "Filter by Level",
@@ -774,7 +805,14 @@
       "noScoreData": "No score data available",
       "noScoreDataDesc": "Complete interviews to track your progress",
       "noSpendingData": "No spending data available",
-      "noSpendingDataDesc": "Purchase credits to see your history"
+      "noSpendingDataDesc": "Purchase credits to see your history",
+      "noData": "Complete interviews to see your performance trend"
+    },
+    "periods": {
+      "1w": "1W",
+      "1m": "1M",
+      "6m": "6M",
+      "all": "All"
     },
     "quickActions": {
       "title": "Quick Actions",
@@ -821,8 +859,7 @@
     "score": "Score",
     "new": "New",
     "repository": {
-      "title": "Interview",
-      "titleHighlight": "Repository",
+      "title": "<black>Interview</black> <purple>Repository</purple>",
       "subtitle": "Browse, filter, and analyze all your interview sessions in one place.",
       "description": "Your complete interview history with advanced filtering and analytics.",
       "filters": {
@@ -961,7 +998,7 @@
       "admin": "Admin",
       "employee": "Employee"
     },
-    "tagline": "Interview Practice. Feedback. Progress.",
+    "tagline": "HR Intelligence Hub for Fast Progress.",
     "divider": "or",
     "features": {
       "feedbackPdf": "Feedback PDF",
@@ -1014,13 +1051,17 @@
     "sections": {
       "profile": "Profile",
       "security": "Security",
+      "creditsPurchase": "Buy Credits",
+      "billingHistory": "Transaction History",
       "danger": "Danger Zone"
     },
     "profile": {
       "title": "Profile Information",
       "avatar": "Profile Picture",
       "avatarHint": "Managed through your OAuth provider",
-      "save": "Save Changes"
+      "save": "Save Changes",
+      "phone": "Phone Number",
+      "phoneDescription": "Verify your phone number to claim free interview credits."
     },
     "security": {
       "title": "Reset Password",
@@ -1069,7 +1110,8 @@
     "selectButton": "Select Workspace"
   },
   "feedback": {
-    "title": "Interview Feedback",
+    "title": "<black>Interview</black> <purple>Feedback</purple>",
+    "subtitle": "Your AI-generated performance analysis and personalized coaching insights",
     "loading": {
       "title": "Generating Feedback",
       "analyzing": "Analyzing your interview performance...",
@@ -1314,8 +1356,7 @@
     }
   },
   "interviewDetails": {
-    "title": "Interview",
-    "titleHighlight": "Details",
+    "title": "<black>Interview</black> <purple>Details</purple>",
     "subtitle": "Review your interview performance and feedback",
     "notFound": "Interview not found",
     "notFoundDesc": "We couldn't find the interview you're looking for.",
@@ -1367,7 +1408,16 @@
     "completeToProceed": "Please complete your interview session to receive AI-generated feedback.",
     "interviewIssue": "This interview may have ended early or encountered an issue.",
     "loadingAnalytics": "Loading analytics...",
-    "loadingAdvancedAnalytics": "Loading advanced analytics..."
+    "loadingAdvancedAnalytics": "Loading advanced analytics...",
+    "transcript": {
+      "title": "Interview Transcript",
+      "notAvailable": "Transcript not available yet",
+      "refreshHint": "The transcript may still be processing. Try refreshing to retrieve it.",
+      "refreshButton": "Retrieve Transcript",
+      "refreshing": "Retrieving...",
+      "refreshError": "Failed to retrieve transcript"
+    },
+    "transcriptRefreshError": "Unable to retrieve transcript. Please try again later."
   },
   "hrChat": {
     "title": "HR Intelligence Chat",
@@ -2070,7 +2120,15 @@
       },
       "back": "Back",
       "saving": "Saving...",
-      "getStarted": "Get started"
+      "getStarted": "Get started",
+      "continue": "Continue"
+    },
+    "step3": {
+      "skipForNow": "Skip for now",
+      "skipNote": "You can verify later from your dashboard to claim free credits",
+      "finishing": "Finishing...",
+      "skipFailed": "Something went wrong. Please try again.",
+      "tryAgain": "Try again"
     },
     "footer": {
       "notice": "By continuing, you agree to receive essential transactional emails."
@@ -2114,8 +2172,29 @@
       "deleteFailed": "Failed to delete resume",
       "updateFailed": "Failed to update resume",
       "uploadFailed": "Failed to upload resume",
-      "readFailed": "Failed to read file"
-    }
+      "readFailed": "Failed to read file",
+      "titleRequired": "Resume title cannot be empty"
+    },
+    "roleOptions": {
+      "softwareEngineer": "Software Engineer",
+      "productManager": "Product Manager",
+      "dataAnalyst": "Data Analyst",
+      "dataScientist": "Data Scientist",
+      "uxDesigner": "UX Designer",
+      "marketingManager": "Marketing Manager",
+      "projectManager": "Project Manager",
+      "devopsEngineer": "DevOps Engineer",
+      "frontendDeveloper": "Frontend Developer",
+      "backendDeveloper": "Backend Developer",
+      "fullStackDeveloper": "Full Stack Developer"
+    },
+    "linkedIn": {
+      "placeholder": "Senior Software Engineer at Tech Company"
+    },
+    "allRoles": "All Roles",
+    "sortByDate": "Sort by Date",
+    "sortByQuality": "Sort by Quality",
+    "sortByUsage": "Sort by Usage"
   },
   "scoreDisplay": {
     "excellent": "Excellent",
@@ -2361,5 +2440,41 @@
     "thu": "Thu",
     "fri": "Fri",
     "sat": "Sat"
+  },
+  "phoneVerification": {
+    "verified": "Phone Verified",
+    "cta": {
+      "title": "Claim Free Credits",
+      "description": "Verify your phone to get 5 free interview credits",
+      "button": "Verify Phone"
+    },
+    "phone": {
+      "title": "Enter Phone Number",
+      "placeholder": "(555) 000-0000",
+      "hint": "We'll send a 6-digit code via SMS",
+      "send": "Send Code",
+      "searchCountry": "Search country...",
+      "noCountries": "No countries found"
+    },
+    "code": {
+      "title": "Enter Verification Code",
+      "sent": "Code sent to {{phone}}",
+      "resend": "Resend Code",
+      "resendIn": "Resend in {{seconds}}s",
+      "verify": "Verify"
+    },
+    "success": {
+      "title": "Phone Verified!",
+      "description": "Your free credits have been added"
+    },
+    "errors": {
+      "alreadyVerified": "You have already verified a phone number.",
+      "sendFailed": "Failed to send verification code",
+      "incompleteCode": "Please enter the complete 6-digit code",
+      "invalidCode": "Invalid verification code",
+      "verifyFailed": "Verification failed",
+      "resendFailed": "Failed to resend code",
+      "invalidPhone": "Please enter a valid phone number"
+    }
   }
 }

@@ -27,12 +27,10 @@ export {
 export {
   useResumesQuery,
   useResumeDetailQuery,
-  useResumeScoresQuery,
   useUploadResumeMutation,
   useUpdateResumeMutation,
   useSetPrimaryResumeMutation,
   useDeleteResumeMutation,
-  useScoreResumeMutation,
   useLinkedInResumeMutation,
 } from './useResumeQueries';
 

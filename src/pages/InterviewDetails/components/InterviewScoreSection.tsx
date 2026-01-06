@@ -18,10 +18,10 @@ import { Award, BarChart3, FileText, MessageSquare, TrendingUp, Target } from 'l
 
 interface FeedbackScores {
   overallScore: number;
-  contentScore: number;
-  communicationScore: number;
-  confidenceScore: number;
-  technicalScore: number;
+  contentScore: number | null;
+  communicationScore: number | null;
+  confidenceScore: number | null;
+  technicalScore: number | null;
 }
 
 interface InterviewScoreSectionProps {
@@ -32,7 +32,10 @@ interface InterviewScoreSectionProps {
 // HELPER COMPONENTS
 // ========================================
 
-const ScoreBar: React.FC<{ label: string; score: number; icon: React.ReactNode }> = ({ label, score, icon }) => {
+const ScoreBar: React.FC<{ label: string; score: number | null; icon: React.ReactNode }> = ({ label, score, icon }) => {
+  // Don't render if score is null
+  if (score === null) return null;
+  
   return (
     <div className="mb-5 last:mb-0">
       <div className="flex items-center justify-between mb-2">

@@ -2,6 +2,7 @@
  * Consent Guard
  * 
  * Higher-order component that checks if a user has completed required consents.
+ * Redirects to /onboarding/password if password is not set (OAuth users).
  * Redirects to /onboarding/consent if consent is missing or needs update.
  * 
  * Usage:
@@ -11,7 +12,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from '../../contexts/AuthContext';
 import apiService from '../../services/APIService';
 
 interface ConsentGuardProps {
@@ -84,6 +85,19 @@ export function ConsentGuard({ children, showLoading = true }: ConsentGuardProps
       return;
     }
 
+    // First, check if user needs to set a password
+    if (user.hasPassword === false) {
+      navigate('/onboarding/password', {
+        replace: true,
+        state: {
+          returnTo: location.pathname + location.search,
+        },
+      });
+      setHasConsent(false);
+      setIsChecking(false);
+      return;
+    }
+
     // Check cache first
     const cached = getCachedConsentStatus();
     if (cached?.hasConsent) {
@@ -94,7 +108,7 @@ export function ConsentGuard({ children, showLoading = true }: ConsentGuardProps
 
     // Check from backend
     try {
-      const status = await apiService.getConsentStatus(user.id);
+      const status = await apiService.getConsentStatus();
       
       const needsConsent = !status.hasRequiredConsents || status.needsReConsent;
       setHasConsent(!needsConsent);
@@ -102,7 +116,7 @@ export function ConsentGuard({ children, showLoading = true }: ConsentGuardProps
 
       if (needsConsent) {
         // Determine source for OAuth users
-        const source = user.externalAccounts?.length ? 'OAUTH' : 'FORM';
+        const source = user.authProviders?.includes('google') ? 'OAUTH' : 'FORM';
         
         navigate('/onboarding/consent', {
           replace: true,
@@ -113,31 +127,20 @@ export function ConsentGuard({ children, showLoading = true }: ConsentGuardProps
         });
       }
     } catch (error) {
-      // If we can't check consent, check if user has onboarding flags
-      // This handles new users who haven't been synced to DB yet
-      const publicMeta = user.publicMetadata as any;
-      const unsafeMeta = user.unsafeMetadata as any;
+      // Backend check failed (likely user not yet synced to DB).
+      // For new users, redirect to consent to complete onboarding.
+      // The consent page will create the user record via validateUser/submitConsent.
+      console.warn('Consent check failed, redirecting to onboarding:', error);
       
-      const hasOnboarding = 
-        publicMeta?.onboardingComplete === true ||
-        unsafeMeta?.onboarding_complete === true;
-
-      if (!hasOnboarding) {
-        // New user, needs consent
-        const source = user.externalAccounts?.length ? 'OAUTH' : 'FORM';
-        navigate('/onboarding/consent', {
-          replace: true,
-          state: {
-            returnTo: location.pathname + location.search,
-            source,
-          },
-        });
-        setHasConsent(false);
-      } else {
-        // Existing user with onboarding complete
-        setHasConsent(true);
-        setCachedConsentStatus(true);
-      }
+      const source = user.authProviders?.includes('google') ? 'OAUTH' : 'FORM';
+      navigate('/onboarding/consent', {
+        replace: true,
+        state: {
+          returnTo: location.pathname + location.search,
+          source,
+        },
+      });
+      setHasConsent(false);
     } finally {
       setIsChecking(false);
     }
@@ -188,33 +191,39 @@ export function useConsentStatus() {
     isLoading: boolean;
     hasConsent: boolean | null;
     needsReConsent: boolean;
+    needsPassword: boolean;
   }>({
     isLoading: true,
     hasConsent: null,
     needsReConsent: false,
+    needsPassword: false,
   });
 
   useEffect(() => {
     const fetchStatus = async () => {
       if (!isLoaded || !isSignedIn || !user?.id) {
-        setStatus({ isLoading: false, hasConsent: null, needsReConsent: false });
+        setStatus({ isLoading: false, hasConsent: null, needsReConsent: false, needsPassword: false });
         return;
       }
 
+      // Check password status first
+      const needsPassword = user.hasPassword === false;
+
       try {
-        const result = await apiService.getConsentStatus(user.id);
+        const result = await apiService.getConsentStatus();
         setStatus({
           isLoading: false,
           hasConsent: result.hasRequiredConsents && !result.needsReConsent,
           needsReConsent: result.needsReConsent,
+          needsPassword,
         });
       } catch {
-        setStatus({ isLoading: false, hasConsent: null, needsReConsent: false });
+        setStatus({ isLoading: false, hasConsent: null, needsReConsent: false, needsPassword });
       }
     };
 
     fetchStatus();
-  }, [isLoaded, isSignedIn, user?.id]);
+  }, [isLoaded, isSignedIn, user?.id, user?.hasPassword]);
 
   return status;
 }

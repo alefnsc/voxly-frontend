@@ -2,13 +2,14 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom'
-import { useUser } from '@clerk/clerk-react'
+import { useUser } from 'contexts/AuthContext'
 import { useTranslation } from 'react-i18next'
 import { DefaultLayout } from 'components/default-layout'
 import { Check, X, Clock, Loader2, RefreshCw, Coins, ArrowRight, Plus, Wallet } from 'lucide-react'
 import PurpleButton from 'components/ui/purple-button'
 import apiService from 'services/APIService'
 import { useUserContext } from 'contexts/UserContext'
+import { BUY_CREDITS_LINK } from 'utils/routing'
 
 type PaymentStatus = 'success' | 'failure' | 'pending' | 'loading'
 
@@ -24,6 +25,10 @@ interface PaymentDetails {
   site_id?: string
   processing_mode?: string
   merchant_account_id?: string
+
+  // PayPal return params
+  token?: string
+  PayerID?: string
 }
 
 // Credit packages for reference (matching backend)
@@ -53,10 +58,12 @@ export default function PaymentResult() {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [pollAttempts, setPollAttempts] = useState(0)
   const [isPopup, setIsPopup] = useState(false)
+
+  const hasTriggeredCompletionRef = useRef(false)
   
   // Credit tracking
   const [previousCredits, setPreviousCredits] = useState<number | null>(null)
-  const [purchasedCredits, setPurchasedCredits] = useState<number>(0)
+  const [purchasedCredits, setPurchasedCredits] = useState<number | null>(null)
   const [currentCredits, setCurrentCredits] = useState<number>(0)
   const initialCreditsRef = useRef<number | null>(null)
   const hasVerifiedRef = useRef(false)
@@ -126,10 +133,18 @@ export default function PaymentResult() {
 
     try {
       setIsRefreshing(true)
+
+      // Prefer wallet balance (source of truth) over legacy user.credits
+      let fetchedCredits = 0
+      try {
+        const wallet = await apiService.getWalletBalance(user.id)
+        fetchedCredits = wallet?.data?.balance ?? 0
+      } catch {
+        const result = await apiService.getCurrentUser(true)
+        fetchedCredits = result.user?.credits || 0
+      }
+
       if (!hasPolledOnce) setHasPolledOnce(true)
-      
-      const result = await apiService.getCurrentUser(user.id)
-      const fetchedCredits = result.user?.credits || 0
       
       const delay = Math.min(INITIAL_POLL_DELAY * Math.pow(2, pollAttempts), MAX_POLL_DELAY)
       console.log(`📊 Polling credits: attempt ${pollAttempts + 1}/${MAX_POLL_ATTEMPTS}, credits: ${fetchedCredits}, next delay: ${delay}ms`)
@@ -157,13 +172,25 @@ export default function PaymentResult() {
           apiService.invalidatePaymentCaches(user.id)
           await onCreditsPurchased()
         }
-      } else if (fetchedCredits > 0 && pollAttempts >= 2) {
-        // Fallback after a few attempts: no package info but credits exist
-        if (!hasVerifiedRef.current) {
-          hasVerifiedRef.current = true
-          setCreditsVerified(true)
-          invalidateCache()
-          await onCreditsPurchased()
+      } else {
+        // PayPal (and other flows) may not include external_reference.
+        // Infer purchased credits from the delta between initial credits and fetched credits.
+        const initialCredits = initialCreditsRef.current
+        if (initialCredits !== null) {
+          const delta = fetchedCredits - initialCredits
+
+          if (delta > 0) {
+            setPreviousCredits(initialCredits)
+            setPurchasedCredits(delta)
+
+            if (!hasVerifiedRef.current) {
+              hasVerifiedRef.current = true
+              setCreditsVerified(true)
+              invalidateCache()
+              apiService.invalidatePaymentCaches(user.id)
+              await onCreditsPurchased()
+            }
+          }
         }
       }
       
@@ -208,6 +235,9 @@ export default function PaymentResult() {
       site_id: searchParams.get('site_id') || undefined,
       processing_mode: searchParams.get('processing_mode') || undefined,
       merchant_account_id: searchParams.get('merchant_account_id') || undefined,
+
+      token: searchParams.get('token') || undefined,
+      PayerID: searchParams.get('PayerID') || undefined,
     }
     setPaymentDetails(details)
 
@@ -226,6 +256,39 @@ export default function PaymentResult() {
       package: pkg
     })
   }, [location.pathname, searchParams, getPackageFromReference])
+
+  // On success, proactively complete the payment when params are present:
+  // - PayPal requires a server-side capture call
+  // - MercadoPago can be confirmed as a fallback if webhook timing is delayed
+  useEffect(() => {
+    if (status !== 'success') return
+    if (!isLoaded || !user?.id) return
+    if (hasTriggeredCompletionRef.current) return
+
+    const paypalOrderId = searchParams.get('token')
+    const mercadoPagoPaymentId = searchParams.get('payment_id') || searchParams.get('collection_id')
+
+    if (!paypalOrderId && !mercadoPagoPaymentId) return
+
+    hasTriggeredCompletionRef.current = true
+
+    ;(async () => {
+      try {
+        if (paypalOrderId) {
+          console.log('🟦 Completing PayPal payment (capture):', paypalOrderId)
+          await apiService.capturePayPalOrder(user.id, paypalOrderId)
+        } else if (mercadoPagoPaymentId) {
+          console.log('🟩 Confirming MercadoPago payment:', mercadoPagoPaymentId)
+          await apiService.confirmMercadoPagoPayment(user.id, mercadoPagoPaymentId)
+        }
+
+        // Trigger an immediate poll instead of waiting for backoff.
+        await pollForCredits()
+      } catch (e) {
+        console.warn('Payment completion attempt failed (will keep polling):', e)
+      }
+    })()
+  }, [status, isLoaded, user?.id, searchParams, pollForCredits])
 
   // Auto-redirect countdown for success - starts when status is success
   // Don't wait for creditsVerified, just start countdown
@@ -260,7 +323,7 @@ export default function PaymentResult() {
   }
 
   const handleTryAgain = () => {
-    navigate('/credits')
+    navigate(BUY_CREDITS_LINK)
   }
 
   const handleManualRefresh = async () => {
@@ -358,7 +421,11 @@ export default function PaymentResult() {
                         <span className="text-xs text-zinc-500">{t('payment.credits.previous')}</span>
                       </div>
                       <p className="text-xl sm:text-2xl font-bold text-zinc-700">
-                        {previousCredits !== null ? previousCredits : (currentCredits > 0 ? Math.max(0, currentCredits - purchasedCredits) : '—')}
+                        {previousCredits !== null
+                          ? previousCredits
+                          : (purchasedCredits !== null
+                              ? Math.max(0, currentCredits - purchasedCredits)
+                              : (initialCreditsRef.current !== null ? initialCreditsRef.current : '—'))}
                       </p>
                     </div>
                     <div className="flex-shrink-0">
@@ -372,7 +439,7 @@ export default function PaymentResult() {
                         <span className="text-xs text-zinc-500">{t('payment.credits.purchased')}</span>
                       </div>
                       <p className="text-xl sm:text-2xl font-bold text-green-600">
-                        +{purchasedCredits || '—'}
+                        {purchasedCredits === null ? '—' : `+${purchasedCredits}`}
                       </p>
                     </div>
                     <div className="flex-shrink-0">
@@ -384,7 +451,7 @@ export default function PaymentResult() {
                         <span className="text-xs text-zinc-500">{t('payment.credits.total')}</span>
                       </div>
                       <p className="text-xl sm:text-2xl font-bold text-purple-600">
-                        {currentCredits > 0 ? currentCredits : (isRefreshing ? '...' : '—')}
+                        {isRefreshing && !hasPolledOnce ? '...' : currentCredits}
                       </p>
                     </div>
                   </div>

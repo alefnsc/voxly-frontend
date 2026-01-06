@@ -13,7 +13,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from 'contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DefaultLayout } from 'components/default-layout';
 import { useGraphQLQuery } from '../../../../hooks/queries/useGraphQLQuery';
@@ -25,8 +25,10 @@ import {
   DesktopStartInterviewButton,
   StartInterviewButton,
 } from '../../../../components/start-interview-button';
+import { TitleSplit } from '../../../../components/ui/TitleSplit';
 import {
   ChevronRight,
+  ChevronLeft,
   Calendar,
   Clock,
   Briefcase,
@@ -39,6 +41,7 @@ import {
   Building2,
   Globe2
 } from 'lucide-react';
+import { getCountryByCode, INTERVIEW_LANGUAGES } from '../../../../lib/geo/languageCountries';
 
 // ========================================
 // TYPES
@@ -56,6 +59,8 @@ interface FilterState {
   minScore: number | null;
   maxScore: number | null;
   searchQuery: string;
+  language: string;
+  company: string;
 }
 
 // Normalized interview type for consistent UI rendering
@@ -69,6 +74,7 @@ interface NormalizedInterview {
   status: string;
   seniority: string | null;
   language: string | null;
+  country: string | null;
   hasFeedback: boolean;
 }
 
@@ -85,7 +91,7 @@ function normalizeInterview(raw: any): NormalizedInterview {
   if (process.env.NODE_ENV === 'development' && !normalizeInterview._logged) {
     console.log('[InterviewRepository] Raw interview keys:', Object.keys(raw));
     console.log('[InterviewRepository] Normalized:', {
-      roleTitle: raw.jobTitle || raw.position || raw.role || raw.title || '—',
+      roleTitle: raw.roleTitle || raw.jobTitle || raw.position || raw.role || raw.title || '—',
       companyName: raw.companyName || raw.company || raw.targetCompany || '—',
     });
     normalizeInterview._logged = true;
@@ -93,16 +99,17 @@ function normalizeInterview(raw: any): NormalizedInterview {
 
   return {
     id: raw.id,
-    // Normalize role title - check multiple possible field names
-    roleTitle: raw.jobTitle || raw.position || raw.role || raw.title || raw.metadata?.roleTitle || '',
+    // Normalize role title - check roleTitle first (from GraphQL), then other possible field names
+    roleTitle: raw.roleTitle || raw.jobTitle || raw.position || raw.role || raw.title || raw.metadata?.roleTitle || '',
     // Normalize company name - check multiple possible field names
     companyName: raw.companyName || raw.company || raw.targetCompany || raw.metadata?.companyName || '',
-    createdAt: raw.createdAt,
-    callDuration: raw.callDuration ?? raw.duration ?? null,
+    createdAt: raw.createdAt || raw.date,
+    callDuration: raw.callDuration ?? raw.durationMinutes ?? raw.duration ?? null,
     score: raw.score ?? raw.overallScore ?? null,
     status: (raw.status || 'PENDING').toUpperCase(),
     seniority: raw.seniority || null,
     language: raw.language || null,
+    country: raw.country || null,
     hasFeedback: raw.hasFeedback ?? false,
   };
 }
@@ -208,7 +215,7 @@ export default function InterviewRepository() {
   }, [dashboardData?.recentInterviews]);
 
   // Filter state
-  const [filters, setFilters] = useState<FilterState>({
+  const [filters, setFiltersState] = useState<FilterState>({
     dateRange: 'all',
     role: '',
     seniority: '',
@@ -216,10 +223,28 @@ export default function InterviewRepository() {
     minScore: null,
     maxScore: null,
     searchQuery: '',
+    language: '',
+    company: '',
   });
 
   // Sort state
-  const [sortBy, setSortBy] = useState<SortOption>('newest');
+  const [sortBy, setSortByState] = useState<SortOption>('newest');
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 15;
+
+  // Wrapper to reset page on filter change
+  const setFilters = useCallback((updater: FilterState | ((prev: FilterState) => FilterState)) => {
+    setFiltersState(updater);
+    setCurrentPage(1);
+  }, []);
+
+  // Wrapper to reset page on sort change
+  const setSortBy = useCallback((sort: SortOption) => {
+    setSortByState(sort);
+    setCurrentPage(1);
+  }, []);
 
   // UI state
   const [showFilters, setShowFilters] = useState(false);
@@ -233,6 +258,31 @@ export default function InterviewRepository() {
     });
     return Array.from(roles).sort();
   }, [interviews]);
+
+  // Extract unique languages from interviews for filter dropdown
+  const uniqueLanguages = useMemo(() => {
+    const languages = new Set<string>();
+    interviews.forEach(i => {
+      if (i.language) languages.add(i.language);
+    });
+    return Array.from(languages).sort();
+  }, [interviews]);
+
+  // Extract unique companies from interviews for filter dropdown
+  const uniqueCompanies = useMemo(() => {
+    const companies = new Set<string>();
+    interviews.forEach(i => {
+      if (i.companyName) companies.add(i.companyName);
+    });
+    return Array.from(companies).sort();
+  }, [interviews]);
+
+  // Get language display name
+  const getLanguageName = useCallback((code: string | null) => {
+    if (!code) return null;
+    const lang = INTERVIEW_LANGUAGES.find(l => l.code === code);
+    return lang ? lang.name : code;
+  }, []);
 
   // Filter interviews
   const filteredInterviews = useMemo(() => {
@@ -259,6 +309,16 @@ export default function InterviewRepository() {
     // Status filter
     if (filters.status !== 'all') {
       result = result.filter(i => i.status === filters.status);
+    }
+
+    // Language filter
+    if (filters.language) {
+      result = result.filter(i => i.language === filters.language);
+    }
+
+    // Company filter
+    if (filters.company) {
+      result = result.filter(i => i.companyName === filters.company);
     }
 
     // Score filter
@@ -310,10 +370,19 @@ export default function InterviewRepository() {
     if (filters.role) count++;
     if (filters.seniority) count++;
     if (filters.status !== 'all') count++;
+    if (filters.language) count++;
+    if (filters.company) count++;
     if (filters.minScore !== null || filters.maxScore !== null) count++;
     if (filters.searchQuery.trim()) count++;
     return count;
   }, [filters]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredInterviews.length / ITEMS_PER_PAGE);
+  const paginatedInterviews = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredInterviews.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredInterviews, currentPage]);
 
   // Calculate stats
   const stats = useMemo(() => {
@@ -344,8 +413,11 @@ export default function InterviewRepository() {
       minScore: null,
       maxScore: null,
       searchQuery: '',
+      language: '',
+      company: '',
     });
-  }, []);
+    setCurrentPage(1);
+  }, [setFilters]);
 
   // Handle refresh
   const handleRefresh = useCallback(async () => {
@@ -393,47 +465,60 @@ export default function InterviewRepository() {
     );
   }
 
+  // Page animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
+  };
+
   return (
     <DefaultLayout className="flex flex-col overflow-hidden bg-zinc-50">
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+      <motion.div
+        className="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
         {/* Header */}
-        <div className="flex flex-col gap-4 mb-4 sm:mb-6">
+        <motion.div className="flex flex-col gap-4 mb-4 sm:mb-6" variants={itemVariants}>
 
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
             <div className="flex-1 min-w-0">
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900">
-                {t('interviews.repository.title')} <span className="text-purple-600">{t('interviews.repository.titleHighlight')}</span>
-              </h1>
-              <p className="text-sm sm:text-base text-zinc-600 mt-1">
-                {t('interviews.repository.subtitle')}
-              </p>
+              <TitleSplit 
+                i18nKey="interviews.repository.title" 
+                subtitleKey="interviews.repository.subtitle"
+                as="h1"
+                size="lg"
+              />
             </div>
-            {/* Mobile: CTA first */}
-            <MobileStartInterviewButton
-              breakpoint="lg"
-              show={userCredits !== null && userCredits > 0}
-            />
-            {/* Actions - Desktop */}
-            <div className="hidden lg:flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              {/* Refresh Button (match Dashboard) */}
               <button
                 onClick={handleRefresh}
                 disabled={isRefreshing}
-                className="p-2.5 text-zinc-600 hover:text-zinc-900 hover:bg-white rounded-lg border border-zinc-200 transition-colors disabled:opacity-50 min-h-[44px] min-w-[44px]"
-                title={t('common.refreshData')}
+                className="p-2.5 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 transition-colors disabled:opacity-50 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                title={t('common.refreshData', 'Refresh data')}
               >
-                <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-4 h-4 text-gray-500 ${isRefreshing ? 'animate-spin' : ''}`} />
               </button>
-
-              <DesktopStartInterviewButton
-                breakpoint="lg"
-                show={userCredits !== null && userCredits > 0}
-              />
+              {/* Mobile: CTA first for priority */}
+              <MobileStartInterviewButton breakpoint="sm" />
+              {/* Desktop: CTA in header */}
+              <DesktopStartInterviewButton breakpoint="sm" />
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Stats Summary - 3 columns on all screen sizes */}
-        <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
+        {/* <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
           <div className="bg-white rounded-xl border border-zinc-200 p-3 sm:p-4">
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="p-1.5 sm:p-2 bg-purple-50 rounded-lg flex-shrink-0">
@@ -471,25 +556,28 @@ export default function InterviewRepository() {
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Search and Filters Bar */}
-        <div className="bg-white rounded-xl border border-zinc-200 p-3 sm:p-4 mb-4 sm:mb-6">
-          <div className="flex flex-col gap-3 sm:gap-4">
+        <motion.div 
+          className="bg-white rounded-xl border border-zinc-200 p-3 sm:p-4 mb-4 sm:mb-6"
+          variants={itemVariants}
+        >
+          <div className="flex flex-row items-center gap-4 sm:gap-6">
             {/* Search */}
-            <div className="relative w-full">
+            <div className="relative flex-1 min-w-0">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
               <input
                 type="text"
                 placeholder={t('common.search')}
                 value={filters.searchQuery}
                 onChange={(e) => setFilters(f => ({ ...f, searchQuery: e.target.value }))}
-                className="w-full pl-10 pr-4 py-2.5 sm:py-3 bg-zinc-50 border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent min-h-[44px]"
+                className="w-full pl-10 pr-4 py-2 bg-zinc-50 border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent min-h-[40px]"
               />
             </div>
 
-            {/* Quick Filters - Scrollable on mobile */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-3 px-3 sm:mx-0 sm:px-0 sm:flex-wrap sm:overflow-visible">
+            {/* Quick Filters - Right aligned */}
+            <div className="flex items-center gap-2 flex-shrink-0">
               {/* Date Filter */}
               <select
                 value={filters.dateRange}
@@ -533,10 +621,10 @@ export default function InterviewRepository() {
               <button
                 onClick={handleRefresh}
                 disabled={isRefreshing}
-                className="flex-shrink-0 lg:hidden p-2.5 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg border border-zinc-200 transition-colors disabled:opacity-50 min-h-[44px] min-w-[44px]"
-                title={t('common.refreshData')}
+                className="flex-shrink-0 lg:hidden p-2.5 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 transition-colors disabled:opacity-50 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                title={t('common.refreshData', 'Refresh data')}
               >
-                <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-4 h-4 text-gray-500 ${isRefreshing ? 'animate-spin' : ''}`} />
               </button>
 
               {/* Clear Filters */}
@@ -644,6 +732,40 @@ export default function InterviewRepository() {
                       />
                     </div>
                   </div>
+
+                  {/* Language Filter */}
+                  <div>
+                    <label className="block text-xs font-medium text-zinc-500 mb-1.5">
+                      {t('interviews.repository.filters.language', 'Language')}
+                    </label>
+                    <select
+                      value={filters.language}
+                      onChange={(e) => setFilters(f => ({ ...f, language: e.target.value }))}
+                      className="w-full px-3 py-2.5 bg-zinc-50 border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 min-h-[44px]"
+                    >
+                      <option value="">{t('interviews.repository.filters.allLanguages', 'All Languages')}</option>
+                      {uniqueLanguages.map(lang => (
+                        <option key={lang} value={lang}>{getLanguageName(lang) || lang}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Company Filter */}
+                  <div>
+                    <label className="block text-xs font-medium text-zinc-500 mb-1.5">
+                      {t('interviews.repository.filters.company', 'Company')}
+                    </label>
+                    <select
+                      value={filters.company}
+                      onChange={(e) => setFilters(f => ({ ...f, company: e.target.value }))}
+                      className="w-full px-3 py-2.5 bg-zinc-50 border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 min-h-[44px]"
+                    >
+                      <option value="">{t('interviews.repository.filters.allCompanies', 'All Companies')}</option>
+                      {uniqueCompanies.map(company => (
+                        <option key={company} value={company}>{company}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </motion.div>
             )}
@@ -682,6 +804,18 @@ export default function InterviewRepository() {
                     onRemove={() => setFilters(f => ({ ...f, status: 'all' }))}
                   />
                 )}
+                {filters.language && (
+                  <FilterPill
+                    label={getLanguageName(filters.language) || filters.language}
+                    onRemove={() => setFilters(f => ({ ...f, language: '' }))}
+                  />
+                )}
+                {filters.company && (
+                  <FilterPill
+                    label={filters.company}
+                    onRemove={() => setFilters(f => ({ ...f, company: '' }))}
+                  />
+                )}
                 {(filters.minScore !== null || filters.maxScore !== null) && (
                   <FilterPill
                     label={`Score: ${filters.minScore ?? 0}% - ${filters.maxScore ?? 100}%`}
@@ -697,10 +831,13 @@ export default function InterviewRepository() {
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
+        </motion.div>
 
         {/* Interview List */}
-        <div className="bg-white border border-zinc-200 rounded-xl overflow-hidden">
+        <motion.div 
+          className="bg-white border border-zinc-200 rounded-xl overflow-hidden"
+          variants={itemVariants}
+        >
           {filteredInterviews.length === 0 ? (
             <div className="text-center py-12 sm:py-16 px-4 sm:px-6">
               <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 sm:mb-6 rounded-full bg-purple-50 flex items-center justify-center">
@@ -731,17 +868,19 @@ export default function InterviewRepository() {
           ) : (
             <div className="divide-y divide-zinc-100">
               {/* Table Header - Desktop only */}
-              <div className="hidden lg:grid lg:grid-cols-12 gap-4 px-6 py-3 bg-zinc-50 text-xs font-medium uppercase tracking-wider text-zinc-500">
-                <div className="col-span-4">{t('interviews.positionAndCompany')}</div>
-                <div className="col-span-2">{t('interviews.repository.card.seniority')}</div>
-                <div className="col-span-2">{t('interviews.date')}</div>
-                <div className="col-span-1">{t('interviews.duration')}</div>
-                <div className="col-span-2">{t('interviews.score')}</div>
+              <div className="hidden lg:grid lg:grid-cols-[repeat(14,minmax(0,1fr))] gap-6 px-6 py-3 bg-zinc-50 text-xs font-medium uppercase tracking-wider text-zinc-500">
+                <div className="col-span-4 text-center">{t('interviews.positionAndCompany')}</div>
+                <div className="col-span-2 text-center">{t('interviews.repository.card.seniority')}</div>
+                <div className="col-span-2 text-center">{t('interviews.repository.filters.language', 'Language')}</div>
+                <div className="col-span-1 text-center">{t('interviews.repository.filters.country', 'Country')}</div>
+                <div className="col-span-2 text-center">{t('interviews.date')}</div>
+                <div className="col-span-1 text-center">{t('interviews.duration')}</div>
+                <div className="col-span-1 text-center">{t('interviews.score')}</div>
                 <div className="col-span-1"></div>
               </div>
 
               {/* Interview Items */}
-              {filteredInterviews.map((interview, index) => (
+              {paginatedInterviews.map((interview, index) => (
                 <motion.div
                   key={interview.id}
                   initial={{ opacity: 0, y: 10 }}
@@ -794,7 +933,7 @@ export default function InterviewRepository() {
                   </div>
 
                   {/* Desktop Table Row */}
-                  <div className="hidden lg:grid lg:grid-cols-12 gap-4 px-6 py-4">
+                  <div className="hidden lg:grid lg:grid-cols-[repeat(14,minmax(0,1fr))] gap-6 px-6 py-4">
                     {/* Position & Company */}
                     <div className="col-span-4 flex items-start gap-3">
                       <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center flex-shrink-0">
@@ -819,15 +958,28 @@ export default function InterviewRepository() {
                     </div>
 
                     {/* Seniority */}
-                    <div className="col-span-2 flex items-center gap-2 text-sm text-zinc-600">
+                    <div className="col-span-2 flex items-center text-sm text-zinc-600">
                       <span className="px-2 py-0.5 bg-zinc-100 rounded text-xs font-medium">
                         {interview.seniority || 'N/A'}
                       </span>
-                      {interview.language && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-zinc-100 rounded text-xs">
-                          <Globe2 className="w-3 h-3" />
-                          {interview.language}
+                    </div>
+
+                    {/* Language - text only, no flag */}
+                    <div className="col-span-2 flex items-center text-sm text-zinc-600">
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-zinc-100 rounded text-xs">
+                        <Globe2 className="w-3 h-3" />
+                        {getLanguageName(interview.language) || t('common.na', 'N/A')}
+                      </span>
+                    </div>
+
+                    {/* Country - with flag */}
+                    <div className="col-span-1 flex items-center text-sm text-zinc-600">
+                      {interview.country ? (
+                        <span className="inline-flex items-center gap-1 text-xs" title={getCountryByCode(interview.country)?.name || interview.country}>
+                          <span className="text-base">{getCountryByCode(interview.country)?.flag || ''}</span>
                         </span>
+                      ) : (
+                        <span className="text-zinc-400">—</span>
                       )}
                     </div>
 
@@ -842,7 +994,7 @@ export default function InterviewRepository() {
                     </div>
 
                     {/* Score */}
-                    <div className="col-span-2 flex items-center gap-2">
+                    <div className="col-span-1 flex items-center gap-2">
                       <ScoreBadge score={interview.score} />
                       {interview.hasFeedback && (
                         <span className="inline-flex items-center gap-1 text-xs text-purple-600">
@@ -860,15 +1012,73 @@ export default function InterviewRepository() {
               ))}
             </div>
           )}
-        </div>
+        </motion.div>
 
-        {/* Results Count */}
+        {/* Results Count and Pagination */}
         {filteredInterviews.length > 0 && (
-          <p className="text-center text-sm text-zinc-500 mt-4">
-            Showing {filteredInterviews.length} of {interviews.length} interviews
-          </p>
+          <motion.div 
+            className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4"
+            variants={itemVariants}
+          >
+            {/* Results Count */}
+            <p className="text-sm text-zinc-500">
+              {t('interviews.repository.showing', 'Showing')} {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredInterviews.length)} {t('interviews.repository.of', 'of')} {filteredInterviews.length} {t('interviews.repository.interviews', 'interviews')}
+            </p>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  aria-label={t('common.previous', 'Previous')}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+
+                {/* Page Numbers */}
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum: number;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`inline-flex items-center justify-center min-w-[36px] h-9 px-2 rounded-lg text-sm font-medium transition-colors ${
+                          currentPage === pageNum
+                            ? 'bg-purple-600 text-white'
+                            : 'border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  aria-label={t('common.next', 'Next')}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          </motion.div>
         )}
-      </div>
+      </motion.div>
     </DefaultLayout>
   );
 }

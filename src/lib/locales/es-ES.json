@@ -26,7 +26,8 @@
     "soon": "Pronto",
     "goBack": "Volver",
     "filters": "Filtros",
-    "refreshData": "Actualizar datos"
+    "refreshData": "Actualizar datos",
+    "na": "N/A"
   },
   "features": {
     "underConstruction": {
@@ -100,6 +101,7 @@
   "nav": {
     "home": "Inicio",
     "dashboard": "Panel",
+    "performance": "Rendimiento",
     "about": "Acerca de",
     "credits": "Créditos",
     "contact": "Contacto",
@@ -119,6 +121,23 @@
     "main": "Principal",
     "settings": "Configuración",
     "accountSettings": "Configuración de Cuenta"
+  },
+  "performance": {
+    "title": "Rendimiento",
+    "subtitle": "Rastrea tu progreso en entrevistas y obtén insights con IA",
+    "kpis": {
+      "totalInterviews": "Total de Entrevistas",
+      "avgScore": "Puntuación Media",
+      "totalTime": "Tiempo Total",
+      "resumeQuality": "Calidad del Currículum"
+    },
+    "viewResumes": "Ver currículums",
+    "quickLinks": "Enlaces Rápidos",
+    "links": {
+      "interviewsDesc": "Ver todas tus sesiones de práctica",
+      "resumesDesc": "Gestionar y puntuar tus currículums",
+      "dashboardDesc": "Resumen e inicio rápido"
+    }
   },
   "sidebar": {
     "menu": "Menú",
@@ -202,33 +221,33 @@
     }
   },
   "about": {
-    "title": "Acerca de",
-    "subtitle": "Plataforma de preparación para entrevistas con IA",
+    "title": "<black>Acerca de</black> <purple>Vocaid</purple>",
+    "subtitle": "Tu asistente de chat con IA para dominar las entrevistas",
     "mission": {
       "title": "Triunfa en Cada Entrevista",
-      "description": "Practica con nuestro entrevistador de IA, obtén retroalimentación instantánea y construye confianza. Sube tu currículum, ingresa los detalles del trabajo y comienza a mejorar hoy."
+      "description": "Chatea con tu asistente de IA para analizar transcripciones de entrevistas, optimizar tu currículum con puntuación ATS y obtener PDFs de retroalimentación personalizados. Sube tu currículum, ingresa los detalles del trabajo y deja que tu coach de rendimiento te guíe al éxito."
     },
     "whyVocaid": "¿Por qué Vocaid?",
     "features": {
       "realistic": {
-        "title": "Realista",
-        "desc": "Flujo de conversación natural"
+        "title": "Asistente IA",
+        "desc": "Coaching interactivo de rendimiento"
       },
       "analytics": {
-        "title": "Analíticas",
-        "desc": "Sigue tu progreso"
+        "title": "Análisis Inteligentes",
+        "desc": "Transcripciones y seguimiento"
       },
       "practice247": {
         "title": "Practica 24/7",
         "desc": "Sin programación"
       },
       "feedback": {
-        "title": "Retroalimentación",
-        "desc": "Insights accionables"
+        "title": "PDFs de Feedback",
+        "desc": "Insights descargables"
       },
       "roleSpecific": {
-        "title": "Específico",
-        "desc": "Preguntas personalizadas"
+        "title": "Puntuación ATS",
+        "desc": "Optimización de currículum"
       },
       "payPerUse": {
         "title": "Pago por Uso",
@@ -308,6 +327,10 @@
     }
   },
   "interview": {
+    "newInterview": {
+      "title": "<black>Configura Tu</black> <purple>Entrevista</purple>",
+      "subtitle": "Configura los detalles de tu entrevista de práctica"
+    },
     "setup": {
       "title": "Configuración de Entrevista",
       "subtitle": "Preparemos tu entrevista simulada",
@@ -623,7 +646,14 @@
       "noScoreDataDesc": "Completa entrevistas para seguir tu progreso",
       "noSpendingData": "No hay datos de gastos disponibles",
       "noSpendingDataDesc": "Compra créditos para ver tu historial",
-      "performanceTrend": "Performance Trend"
+      "performanceTrend": "Tendencia de Rendimiento",
+      "noData": "Completa entrevistas para ver tu tendencia de rendimiento"
+    },
+    "periods": {
+      "1w": "1S",
+      "1m": "1M",
+      "6m": "6M",
+      "all": "Todo"
     },
     "recentInterviews": "Entrevistas Recientes",
     "noInterviews": "Sin entrevistas aún. ¡Comienza tu primera sesión de práctica!",
@@ -678,8 +708,7 @@
     "score": "Puntuación",
     "new": "Nueva",
     "repository": {
-      "title": "Repositorio de",
-      "titleHighlight": "Entrevistas",
+      "title": "<black>Repositorio de</black> <purple>Entrevistas</purple>",
       "subtitle": "Explora, filtra y analiza todas tus sesiones de entrevista en un solo lugar.",
       "description": "Tu historial completo de entrevistas con filtros avanzados y análisis.",
       "filters": {
@@ -758,7 +787,8 @@
     "current": "Actual: {{language}}"
   },
   "feedback": {
-    "title": "Feedback de la Entrevista",
+    "title": "<black>Feedback de la</black> <purple>Entrevista</purple>",
+    "subtitle": "Análisis de rendimiento generado por IA e insights de coaching personalizados",
     "loading": {
       "title": "Generando Feedback",
       "analyzing": "Analizando tu desempeño en la entrevista...",
@@ -986,8 +1016,7 @@
     }
   },
   "interviewDetails": {
-    "title": "Detalles de la",
-    "titleHighlight": "Entrevista",
+    "title": "<black>Detalles de la</black> <purple>Entrevista</purple>",
     "subtitle": "Revisa tu desempeño y feedback de la entrevista",
     "loadError": "Error al cargar los detalles de la entrevista. Inténtelo de nuevo.",
     "notFound": "Entrevista no encontrada",
@@ -1873,14 +1902,34 @@
       "title": "Información del Perfil",
       "avatar": "Foto de Perfil",
       "avatarHint": "Administrado a través de tu proveedor OAuth",
-      "save": "Guardar Cambios"
+      "save": "Guardar Cambios",
+      "phone": "Número de Teléfono",
+      "phoneDescription": "Verifica tu número de teléfono para reclamar créditos de entrevista gratis."
     },
     "security": {
-      "title": "Cambiar Contraseña",
+      "title": "Restablecer Contraseña",
       "currentPassword": "Contraseña Actual",
       "newPassword": "Nueva Contraseña",
       "confirmPassword": "Confirmar Nueva Contraseña",
-      "changePassword": "Cambiar Contraseña"
+      "changePassword": "Cambiar Contraseña",
+      "resetDescription": "Te enviaremos un enlace seguro por email para completar el cambio de contraseña.",
+      "sendResetLink": "Enviar enlace de restablecimiento",
+      "sendingReset": "Enviando...",
+      "resetEmailSent": "Hemos enviado un enlace de restablecimiento a tu email.",
+      "resetEmailFailed": "Error al enviar el enlace de restablecimiento."
+    },
+    "passwordResetConfirm": {
+      "title": "Establecer nueva contraseña",
+      "subtitle": "Ingresa una nueva contraseña para tu cuenta.",
+      "passwordLabel": "Nueva contraseña",
+      "confirmLabel": "Confirmar nueva contraseña",
+      "submit": "Actualizar contraseña",
+      "updating": "Actualizando...",
+      "successTitle": "Contraseña actualizada",
+      "successMessage": "Tu contraseña ha sido actualizada. Ya puedes iniciar sesión.",
+      "missingToken": "Token de restablecimiento faltante.",
+      "invalidToken": "Este enlace de restablecimiento es inválido o ha expirado.",
+      "backToSignIn": "Volver a iniciar sesión"
     },
     "danger": {
       "title": "Eliminar Cuenta",
@@ -2110,6 +2159,22 @@
       "updateFailed": "Error al actualizar currículum",
       "uploadFailed": "Error al subir currículum",
       "readFailed": "Error al leer archivo"
+    },
+    "roleOptions": {
+      "softwareEngineer": "Ingeniero de Software",
+      "productManager": "Gerente de Producto",
+      "dataAnalyst": "Analista de Datos",
+      "dataScientist": "Científico de Datos",
+      "uxDesigner": "Diseñador UX",
+      "marketingManager": "Gerente de Marketing",
+      "projectManager": "Gerente de Proyectos",
+      "devopsEngineer": "Ingeniero DevOps",
+      "frontendDeveloper": "Desarrollador Frontend",
+      "backendDeveloper": "Desarrollador Backend",
+      "fullStackDeveloper": "Desarrollador Full Stack"
+    },
+    "linkedIn": {
+      "placeholder": "Ingeniero de Software Senior en Empresa Tech"
     }
   },
   "scoreDisplay": {
@@ -2230,5 +2295,41 @@
   "accessDenied": {
     "title": "Acceso Denegado",
     "description": "No tienes permiso para acceder a esta página. Esta área está restringida a roles de usuario específicos."
+  },
+  "phoneVerification": {
+    "verified": "Teléfono Verificado",
+    "cta": {
+      "title": "Reclama Créditos Gratis",
+      "description": "Verifica tu teléfono para obtener 5 créditos de entrevista gratis",
+      "button": "Verificar Teléfono"
+    },
+    "phone": {
+      "title": "Ingresa Número de Teléfono",
+      "placeholder": "(555) 000-0000",
+      "hint": "Te enviaremos un código de 6 dígitos por SMS",
+      "send": "Enviar Código",
+      "searchCountry": "Buscar país...",
+      "noCountries": "No se encontraron países"
+    },
+    "code": {
+      "title": "Ingresa el Código de Verificación",
+      "sent": "Código enviado a {{phone}}",
+      "resend": "Reenviar Código",
+      "resendIn": "Reenviar en {{seconds}}s",
+      "verify": "Verificar"
+    },
+    "success": {
+      "title": "¡Teléfono Verificado!",
+      "description": "Tus créditos gratis han sido añadidos"
+    },
+    "errors": {
+      "alreadyVerified": "Ya has verificado un número de teléfono.",
+      "sendFailed": "Error al enviar el código de verificación",
+      "incompleteCode": "Por favor ingresa el código completo de 6 dígitos",
+      "invalidCode": "Código de verificación inválido",
+      "verifyFailed": "Error en la verificación",
+      "resendFailed": "Error al reenviar el código",
+      "invalidPhone": "Por favor ingresa un número de teléfono válido"
+    }
   }
 }

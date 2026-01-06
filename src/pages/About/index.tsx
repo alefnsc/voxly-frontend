@@ -2,8 +2,24 @@
 
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { motion } from 'framer-motion'
 import { FileText, Shield, Sparkles, Info } from 'lucide-react'
 import InterviewReady from 'components/interview-ready'
+import { TitleSplit } from 'components/ui/TitleSplit'
+
+// Animation variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
+}
 
 export default function About() {
   const { t } = useTranslation()
@@ -19,21 +35,33 @@ export default function About() {
   
   return (
     <div className="min-h-screen bg-zinc-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <motion.div 
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
         {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6 sm:mb-8">
+        <motion.div 
+          className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6 sm:mb-8"
+          variants={itemVariants}
+        >
           <div className="flex-1">
-            <h1 className="text-2xl sm:text-3xl font-bold text-zinc-900">
-              {t('about.title')} <span className="text-purple-600">Vocaid</span>
-            </h1>
-            <p className="text-zinc-600 mt-1">
-              {t('about.subtitle')}
-            </p>
+            <TitleSplit 
+              i18nKey="about.title"
+              subtitleKey="about.subtitle"
+              as="h1"
+              className="text-2xl sm:text-3xl"
+              subtitleClassName="text-base mt-1"
+            />
           </div>
-        </div>
+        </motion.div>
 
         {/* Hero Section - Logo + Mission */}
-        <div className="p-6 bg-white border border-zinc-200 rounded-xl mb-6 sm:mb-8">
+        <motion.div 
+          className="p-6 bg-white border border-zinc-200 rounded-xl mb-6 sm:mb-8"
+          variants={itemVariants}
+        >
           <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-8">
             <img 
               src="/Main.png" 
@@ -49,29 +77,36 @@ export default function About() {
               </p>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Features Section */}
-        <div className="mb-6 sm:mb-8">
+        <motion.div className="mb-6 sm:mb-8" variants={itemVariants}>
           <div className="flex items-center gap-2 mb-3 sm:mb-4">
             <Sparkles className="w-5 h-5 text-purple-600" />
             <h2 className="text-lg sm:text-xl font-semibold text-zinc-900">{t('about.whyVocaid')}</h2>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
             {features.map((feature, index) => (
-              <div key={index} className="p-4 bg-white border border-zinc-200 rounded-xl flex flex-col items-center text-center">
+              <motion.div 
+                key={index} 
+                className="p-4 bg-white border border-zinc-200 rounded-xl flex flex-col items-center text-center hover:border-purple-300 transition-colors"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2 + index * 0.05 }}
+                whileHover={{ scale: 1.02 }}
+              >
                 <div className={`w-2 h-2 rounded-full mb-3 ${feature.highlight ? 'bg-purple-600' : 'bg-zinc-300'}`} />
                 <h3 className={`font-semibold text-sm mb-1 ${feature.highlight ? 'text-purple-600' : 'text-zinc-900'}`}>
                   {feature.title}
                 </h3>
                 <p className="text-xs text-zinc-500">{feature.desc}</p>
-              </div>
+              </motion.div>
             ))}
           </div>
-        </div>
+        </motion.div>
 
         {/* Legal Links Section */}
-        <div className="mb-6 sm:mb-8">
+        <motion.div className="mb-6 sm:mb-8" variants={itemVariants}>
           <div className="flex items-center gap-2 mb-3 sm:mb-4">
             <Info className="w-5 h-5 text-purple-600" />
             <h2 className="text-lg sm:text-xl font-semibold text-zinc-900">{t('about.legal')}</h2>
@@ -102,11 +137,13 @@ export default function About() {
               </div>
             </Link>
           </div>
-        </div>
+        </motion.div>
 
         {/* CTA Section */}
-        <InterviewReady />
-      </div>
+        <motion.div variants={itemVariants}>
+          <InterviewReady />
+        </motion.div>
+      </motion.div>
     </div>
   )
 }

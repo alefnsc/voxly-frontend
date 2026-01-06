@@ -13,6 +13,21 @@ jest.mock('components/footer', () => ({
     default: () => <div data-testid="footer">Footer Content</div>,
 }));
 
+jest.mock('components/header', () => ({
+    __esModule: true,
+    default: () => <div data-testid="header">Header Content</div>,
+}));
+
+jest.mock('components/beta-feedback', () => ({
+    __esModule: true,
+    BetaFeedbackFab: () => <div data-testid="beta-fab">Beta Fab</div>,
+}));
+
+jest.mock('config/featureFlags', () => ({
+    __esModule: true,
+    isClosedBetaFeedbackEnabled: () => false,
+}));
+
 jest.mock('components/metadata', () => ({
     __esModule: true,
     default: () => <div data-testid="metadata">Metadata Content</div>,

@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from 'contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { 
   MessageCircle, 
@@ -43,11 +43,13 @@ interface PerformanceChatProps {
   onClose?: () => void;
   onBack?: () => void;
   isOpen: boolean;
+  /** 'modal' = fullscreen overlay (default), 'embedded' = inline within a container */
+  variant?: 'modal' | 'embedded';
 }
 
 const BACKEND_URL = config.backendUrl;
 
-const PerformanceChat: React.FC<PerformanceChatProps> = ({ onClose, onBack, isOpen }) => {
+const PerformanceChat: React.FC<PerformanceChatProps> = ({ onClose, onBack, isOpen, variant = 'modal' }) => {
   const { user, isSignedIn } = useUser();
   const { t } = useTranslation();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -86,9 +88,9 @@ const PerformanceChat: React.FC<PerformanceChatProps> = ({ onClose, onBack, isOp
       const response = await fetch(`${BACKEND_URL}/api/analytics/filters`, {
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': user.id,
           'ngrok-skip-browser-warning': 'true'
-        }
+        },
+        credentials: 'include'
       });
       
       // Check content type before parsing
@@ -116,9 +118,9 @@ const PerformanceChat: React.FC<PerformanceChatProps> = ({ onClose, onBack, isOp
       const response = await fetch(`${BACKEND_URL}/api/chat/insights`, {
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': user.id,
           'ngrok-skip-browser-warning': 'true'
-        }
+        },
+        credentials: 'include'
       });
       
       // Check content type before parsing
@@ -188,9 +190,9 @@ const PerformanceChat: React.FC<PerformanceChatProps> = ({ onClose, onBack, isOp
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': user.id,
           'ngrok-skip-browser-warning': 'true'
         },
+        credentials: 'include',
         body: JSON.stringify({
           message: userMessage.content,
           sessionId,
@@ -262,12 +264,17 @@ const PerformanceChat: React.FC<PerformanceChatProps> = ({ onClose, onBack, isOp
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div 
-        className="bg-white w-full h-full sm:h-auto sm:max-h-[85vh] sm:w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
+  // Embedded mode: render inline without modal overlay
+  const isEmbedded = variant === 'embedded';
+
+  const chatContent = (
+    <div
+      className={isEmbedded
+        ? 'bg-white w-full h-full flex flex-col overflow-hidden rounded-xl'
+        : 'bg-white w-full h-full sm:h-auto sm:max-h-[85vh] sm:w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden'
+      }
+      onClick={(e) => e.stopPropagation()}
+    >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gradient-to-r from-purple-600 to-violet-600 text-white">
           <div className="flex items-center gap-3">
@@ -303,12 +310,14 @@ const PerformanceChat: React.FC<PerformanceChatProps> = ({ onClose, onBack, isOp
             >
               <RefreshCw className="w-5 h-5" />
             </button>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-white/10 rounded-full transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
+{onClose && (
+              <button
+                onClick={onClose}
+                className="p-2 hover:bg-white/10 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
           </div>
         </div>
 
@@ -460,7 +469,17 @@ const PerformanceChat: React.FC<PerformanceChatProps> = ({ onClose, onBack, isOp
             </button>
           </div>
         </div>
-      </div>
+    </div>
+  );
+
+  // For embedded mode, return content directly; for modal, wrap in overlay
+  if (isEmbedded) {
+    return chatContent;
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+      {chatContent}
     </div>
   );
 };

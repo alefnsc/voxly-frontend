@@ -1,6 +1,6 @@
 'use client'
 
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from 'contexts/AuthContext';
 import { AppFooter } from 'components/shared/AppFooter';
 
 /**

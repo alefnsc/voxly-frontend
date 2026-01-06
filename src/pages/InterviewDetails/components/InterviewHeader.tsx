@@ -16,6 +16,7 @@ import { ArrowLeft, Download } from 'lucide-react';
 import { useWorkspace } from 'contexts/WorkspaceContext';
 import { b2cInterviewsList } from 'routes/b2cRoutes';
 import { cn } from 'lib/utils';
+import { TitleSplit } from 'components/ui/TitleSplit';
 
 // ========================================
 // TYPES
@@ -93,14 +94,15 @@ export const InterviewHeader: React.FC<InterviewHeaderProps> = ({
           >
             <ArrowLeft className="w-5 h-5 text-zinc-600 hover:text-zinc-900 transition-colors" />
           </button>
-          <h1 className="text-2xl sm:text-3xl font-bold text-zinc-900">
-            {t('interviewDetails.title', 'Interview')}{' '}
-            <span className="text-purple-600">{t('interviewDetails.titleHighlight', 'Details')}</span>
-          </h1>
+          <TitleSplit 
+            i18nKey="interviewDetails.title"
+            subtitleKey="interviewDetails.subtitle"
+            as="h1"
+            className="text-2xl sm:text-3xl"
+            containerClassName="flex flex-col gap-1"
+            subtitleClassName="text-zinc-600"
+          />
         </div>
-        <p className="text-zinc-600 mt-1 ml-9">
-          {t('interviewDetails.subtitle', 'Review your performance and feedback')}
-        </p>
       </div>
 
       {/* Action Buttons */}

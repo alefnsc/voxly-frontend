@@ -72,7 +72,6 @@ function generateRequestId(): string {
 
 interface AuthState {
   token?: string;
-  userId?: string;
 }
 
 interface LocaleState {
@@ -120,9 +119,6 @@ function buildHeaders(options: RequestOptions = {}): Headers {
   // Auth headers
   if (authState.token) {
     headers.set('Authorization', `Bearer ${authState.token}`);
-  }
-  if (authState.userId) {
-    headers.set('x-user-id', authState.userId);
   }
 
   // Locale headers
@@ -260,7 +256,7 @@ async function makeRequest<T>(
   } = options;
 
   const url = `${config.backendUrl}${endpoint}`;
-  const requestKey = `${method}:${url}:${authState.userId || 'anon'}`;
+  const requestKey = `${method}:${url}`;
   const endpointName = endpoint.split('?')[0];
 
   // Deduplication for GET requests
@@ -283,7 +279,8 @@ async function makeRequest<T>(
   const fetchOptions: RequestInit = {
     method,
     headers,
-    signal: controller.signal
+    signal: controller.signal,
+    credentials: 'include' // Include cookies for session-based auth
   };
 
   if (body && method !== 'GET') {

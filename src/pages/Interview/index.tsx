@@ -1,8 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useUser } from '@clerk/clerk-react';
-import TopBar from 'components/top-bar';
+import { useUser } from 'contexts/AuthContext';
 import Loading from 'components/loading';
 import apiService from 'services/APIService';
 
@@ -48,7 +47,7 @@ const Interview = () => {
             
             try {
                 console.log('🔐 Validating user session for interview...');
-                const result = await apiService.validateUser(user.id);
+                const result = await apiService.validateUser();
                 
                 if (result.status === 'success' && result.user) {
                     console.log('✅ User validated for interview:', {
@@ -124,8 +123,6 @@ const Interview = () => {
 
     return (
         <div className="min-h-screen bg-zinc-50 flex flex-col">
-            <TopBar showLogo={true} />
-            
             <main className="flex-1">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
                     {/* Breadcrumbs */}

@@ -10,7 +10,7 @@
  */
 
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from 'contexts/AuthContext';
 import { useUserContext } from '../../contexts/UserContext';
 import { queryKeys, invalidateWallet } from '../../lib/queryClient';
 import apiService from '../../services/APIService';
@@ -127,7 +127,7 @@ export function useConsumeCreditMutation() {
   return useMutation({
     mutationFn: async (callId?: string) => {
       if (!user?.id) throw new Error('User not authenticated');
-      return apiService.consumeCredit(user.id, callId);
+      return apiService.consumeCredit(callId);
     },
     onSuccess: () => {
       invalidateWallet();
@@ -150,7 +150,7 @@ export function useRestoreCreditMutation() {
       callId?: string;
     }) => {
       if (!user?.id) throw new Error('User not authenticated');
-      return apiService.restoreCredit(user.id, reason, callId);
+      return apiService.restoreCredit(reason, callId);
     },
     onSuccess: () => {
       invalidateWallet();

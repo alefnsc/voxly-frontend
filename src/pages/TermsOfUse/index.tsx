@@ -3,8 +3,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ArrowLeft, AlertCircle } from 'lucide-react'
-import TopBar from 'components/top-bar'
-import Footer from 'components/footer'
 
 export default function TermsOfUse() {
   const navigate = useNavigate()
@@ -14,10 +12,8 @@ export default function TermsOfUse() {
   const isEnglish = i18n.language === 'en-US' || i18n.language.startsWith('en')
 
   return (
-    <div className="min-h-screen bg-zinc-50 flex flex-col">
-      <TopBar showLogo={true} />
-      
-      <main className="flex-1">
+    <div className="min-h-screen bg-zinc-50">
+      <main>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
           <div className="mb-6 sm:mb-8">
@@ -269,12 +265,6 @@ export default function TermsOfUse() {
               <p className="text-zinc-700 mb-2"><strong>Vocaid Legal Team</strong></p>
               <p className="text-zinc-600 mb-1">
                 Email:{' '}
-                <a href="mailto:legal@vocaid.ai" className="text-purple-600 hover:underline">
-                  legal@vocaid.ai
-                </a>
-              </p>
-              <p className="text-zinc-600">
-                For general inquiries:{' '}
                 <a href="mailto:support@vocaid.ai" className="text-purple-600 hover:underline">
                   support@vocaid.ai
                 </a>
@@ -284,8 +274,6 @@ export default function TermsOfUse() {
         </div>
         </div>
       </main>
-      
-      <Footer />
     </div>
   )
 }

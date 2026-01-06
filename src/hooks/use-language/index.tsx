@@ -1,13 +1,13 @@
 /**
  * Language Context Hook
  * 
- * Manages user language preferences with sync to Clerk metadata.
+ * Manages user language preferences with sync to backend preferences.
  * Provides language state across the application with persistence.
  * 
  * Features:
  * - Auto-detection from browser/system
  * - IP-based geolocation detection
- * - Sync with Clerk user metadata
+ * - Sync with backend preferences
  * - Persistent storage in localStorage
  * - Real-time language switching
  * 
@@ -15,7 +15,7 @@
  */
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from 'contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { 
   changeLanguage as i18nChangeLanguage, 
@@ -45,11 +45,13 @@ interface LanguageContextType {
   changeLanguage: (language: SupportedLanguageCode) => Promise<void>;
   detectAndSetLanguage: () => Promise<void>;
   refreshGeolocation: () => Promise<GeoLocation | null>;
+  setPreferredPhoneCountry: (country: string) => Promise<void>;
   
   // Region-based info (from geolocation)
   geolocation: GeoLocation | null;
   detectedRegion?: string;
   detectedCountry?: string;
+  preferredPhoneCountry?: string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -79,6 +81,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   const [geolocation, setGeolocation] = useState<GeoLocation | null>(null);
   const [detectedRegion, setDetectedRegion] = useState<string>();
   const [detectedCountry, setDetectedCountry] = useState<string>();
+  const [preferredPhoneCountry, setPreferredPhoneCountryState] = useState<string>();
   
   // Get language info for current language
   const languageInfo = SUPPORTED_LANGUAGES[currentLanguage];
@@ -103,7 +106,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   }, []);
   
   /**
-   * Change language and sync to Clerk
+  * Change language and sync to backend
    */
   const changeLanguage = useCallback(async (language: SupportedLanguageCode) => {
     if (!isLanguageSupported(language)) {
@@ -118,7 +121,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
       await i18nChangeLanguage(language);
       setCurrentLanguage(language);
       
-      // Sync to Clerk if user is logged in
+      // Sync to backend if user is logged in
       if (user) {
         try {
           await apiService.updateUserPreferences({
@@ -126,7 +129,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
             languageSetByUser: true,
           });
         } catch (error) {
-          console.warn('Failed to sync language to Clerk:', error);
+          console.warn('Failed to sync language preference:', error);
           // Continue anyway - language is saved locally
         }
       }
@@ -144,6 +147,29 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   }, [user, languageInfo.dir]);
   
   /**
+  * Update preferred phone country and sync to backend
+   */
+  const setPreferredPhoneCountry = useCallback(async (country: string) => {
+    if (!user) {
+      console.warn('Cannot set phone country: user not logged in');
+      return;
+    }
+    
+    setIsSyncing(true);
+    try {
+      await apiService.updateUserPreferences({
+        preferredPhoneCountry: country,
+      });
+      setPreferredPhoneCountryState(country);
+    } catch (error) {
+      console.error('Failed to update phone country preference:', error);
+      throw error;
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [user]);
+  
+  /**
    * Auto-detect language from geolocation/browser and set if not manually configured
    */
   const detectAndSetLanguage = useCallback(async () => {
@@ -157,25 +183,27 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
         return;
       }
       
-      // Try to get from Clerk metadata first (user has previously set preference)
+      // Try to get from user metadata first (user has previously set preference)
       if (user?.publicMetadata) {
-        const clerkLanguage = user.publicMetadata.preferred_language as string;
+        const storedLanguage = user.publicMetadata.preferred_language as string;
         const userSetLanguage = user.publicMetadata.languageSetByUser as boolean;
         
-        if (clerkLanguage && isLanguageSupported(clerkLanguage)) {
+        if (storedLanguage && isLanguageSupported(storedLanguage)) {
           if (userSetLanguage) {
             // User explicitly set this language, don't override
-            await changeLanguage(clerkLanguage as SupportedLanguageCode);
+            await changeLanguage(storedLanguage as SupportedLanguageCode);
             setIsLoading(false);
             return;
           }
         }
         
-        // Get region info from Clerk if available
+        // Get region info from user metadata if available
         const region = user.publicMetadata.registration_region as string;
         const country = user.publicMetadata.registration_country as string;
+        const phoneCountry = user.publicMetadata.preferredPhoneCountry as string;
         if (region) setDetectedRegion(region);
         if (country) setDetectedCountry(country);
+        if (phoneCountry) setPreferredPhoneCountryState(phoneCountry);
       }
       
       // Use IP-based geolocation for better accuracy
@@ -232,9 +260,11 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     changeLanguage,
     detectAndSetLanguage,
     refreshGeolocation,
+    setPreferredPhoneCountry,
     geolocation,
     detectedRegion,
     detectedCountry,
+    preferredPhoneCountry,
   };
   
   return (

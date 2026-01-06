@@ -9,7 +9,7 @@
 
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from 'contexts/AuthContext';
 import { useUserContext } from '../../contexts/UserContext';
 import Loading from 'components/loading';
 

@@ -14,7 +14,7 @@ export { AuthInput } from './AuthInput';
 export { AuthSelect } from './AuthSelect';
 
 // OAuth buttons
-export { AuthButtons, AuthDivider } from './AuthButtons';
+export { FirstPartyAuthButtons, FirstPartyAuthDivider } from './FirstPartyAuthButtons';
 
 // Layout components
 export { AuthShell } from './AuthShell';
@@ -24,6 +24,10 @@ export { AuthLegalNotice } from './AuthLegalNotice';
 // Avatar
 export { CustomAvatar } from './CustomAvatar';
 
-// Main auth forms
-export { CustomSignUp } from './CustomSignUp';
-export { CustomSignIn } from './CustomSignIn';
+// Auth forms (first-party authentication)
+export { FirstPartySignIn } from './FirstPartySignIn';
+export { FirstPartySignUp } from './FirstPartySignUp';
+
+// Password setup (for OAuth users)
+export { SetPasswordForm } from './SetPasswordForm';
+export { SetPasswordModal } from './SetPasswordModal';

@@ -26,7 +26,8 @@
     "soon": "जल्द",
     "goBack": "Go Back",
     "filters": "फ़िल्टर",
-    "refreshData": "डेटा रीफ़्रेश करें"
+    "refreshData": "डेटा रीफ़्रेश करें",
+    "na": "लागू नहीं"
   },
   "features": {
     "badge": "Vocaid क्यों चुनें",
@@ -112,6 +113,7 @@
   "nav": {
     "home": "होम",
     "dashboard": "डैशबोर्ड",
+    "performance": "प्रदर्शन",
     "about": "हमारे बारे में",
     "credits": "क्रेडिट्स",
     "contact": "संपर्क",
@@ -131,6 +133,23 @@
     "main": "मुख्य",
     "settings": "सेटिंग्स",
     "accountSettings": "अकाउंट सेटिंग्स"
+  },
+  "performance": {
+    "title": "प्रदर्शन",
+    "subtitle": "अपने इंटरव्यू प्रगति को ट्रैक करें और AI इनसाइट्स पाएं",
+    "kpis": {
+      "totalInterviews": "कुल इंटरव्यू",
+      "avgScore": "औसत स्कोर",
+      "totalTime": "कुल समय",
+      "resumeQuality": "रिज्यूमे क्वालिटी"
+    },
+    "viewResumes": "रिज्यूमे देखें",
+    "quickLinks": "क्विक लिंक्स",
+    "links": {
+      "interviewsDesc": "सभी अभ्यास सत्र देखें",
+      "resumesDesc": "रिज्यूमे प्रबंधित और स्कोर करें",
+      "dashboardDesc": "अवलोकन और त्वरित प्रारंभ"
+    }
   },
   "sidebar": {
     "menu": "मेन्यू",
@@ -214,33 +233,33 @@
     }
   },
   "about": {
-    "title": "के बारे में",
-    "subtitle": "AI-संचालित इंटरव्यू तैयारी प्लेटफॉर्म",
+    "title": "<black>के बारे में</black> <purple>Vocaid</purple>",
+    "subtitle": "इंटरव्यू में महारत हासिल करने के लिए आपका AI परफॉर्मेंस चैट असिस्टेंट",
     "mission": {
       "title": "हर इंटरव्यू में सफल हों",
-      "description": "हमारे AI इंटरव्यूअर के साथ अभ्यास करें, तुरंत फीडबैक पाएं और आत्मविश्वास बनाएं। अपना रिज्यूमे अपलोड करें, जॉब डिटेल्स डालें और आज ही सुधार शुरू करें।"
+      "description": "इंटरव्यू ट्रांसक्रिप्ट का विश्लेषण करने, ATS स्कोरिंग के साथ अपने रिज्यूमे को ऑप्टिमाइज़ करने और व्यक्तिगत फीडबैक PDF पाने के लिए अपने AI असिस्टेंट से चैट करें। अपना रिज्यूमे अपलोड करें, जॉब डिटेल्स डालें और अपने परफॉर्मेंस कोच को सफलता की ओर मार्गदर्शन करने दें।"
     },
     "whyVocaid": "Vocaid क्यों?",
     "features": {
       "realistic": {
-        "title": "यथार्थवादी",
-        "desc": "प्राकृतिक बातचीत प्रवाह"
+        "title": "AI चैट असिस्टेंट",
+        "desc": "इंटरैक्टिव परफॉर्मेंस कोचिंग"
       },
       "analytics": {
-        "title": "विश्लेषण",
-        "desc": "अपनी प्रगति ट्रैक करें"
+        "title": "स्मार्ट एनालिटिक्स",
+        "desc": "ट्रांसक्रिप्ट और प्रगति ट्रैकिंग"
       },
       "practice247": {
         "title": "24/7 अभ्यास",
         "desc": "कोई शेड्यूलिंग नहीं"
       },
       "feedback": {
-        "title": "फीडबैक",
-        "desc": "कार्रवाई योग्य सुझाव"
+        "title": "फीडबैक PDF",
+        "desc": "डाउनलोड योग्य सुझाव"
       },
       "roleSpecific": {
-        "title": "विशिष्ट",
-        "desc": "अनुकूलित प्रश्न"
+        "title": "ATS स्कोरिंग",
+        "desc": "रिज्यूमे ऑप्टिमाइजेशन"
       },
       "payPerUse": {
         "title": "उपयोग पर भुगतान",
@@ -320,6 +339,10 @@
     }
   },
   "interview": {
+    "newInterview": {
+      "title": "<black>अपना</black> <purple>इंटरव्यू</purple> <black>सेटअप करें</black>",
+      "subtitle": "अपने अभ्यास इंटरव्यू के विवरण कॉन्फ़िगर करें"
+    },
     "setup": {
       "title": "इंटरव्यू सेटअप",
       "subtitle": "आइए आपका मॉक इंटरव्यू तैयार करें",
@@ -611,8 +634,7 @@
     "score": "स्कोर",
     "new": "नया",
     "repository": {
-      "title": "इंटरव्यू",
-      "titleHighlight": "भंडार",
+      "title": "<black>इंटरव्यू</black> <purple>भंडार</purple>",
       "subtitle": "अपने सभी इंटरव्यू सत्रों को एक जगह ब्राउज़, फ़िल्टर और विश्लेषण करें।",
       "description": "उन्नत फ़िल्टरिंग और विश्लेषण के साथ आपका पूर्ण इंटरव्यू इतिहास।",
       "filters": {
@@ -783,7 +805,8 @@
     "current": "वर्तमान: {{language}}"
   },
   "feedback": {
-    "title": "इंटरव्यू फीडबैक",
+    "title": "<black>इंटरव्यू</black> <purple>फीडबैक</purple>",
+    "subtitle": "AI-जनित परफॉर्मेंस विश्लेषण और व्यक्तिगत कोचिंग सुझाव",
     "loading": {
       "title": "फीडबैक जनरेट हो रहा है",
       "analyzing": "आपके इंटरव्यू प्रदर्शन का विश्लेषण हो रहा है...",
@@ -1068,8 +1091,7 @@
     "askAiInstead": "इसके बजाय AI से पूछें"
   },
   "interviewDetails": {
-    "title": "इंटरव्यू",
-    "titleHighlight": "विवरण",
+    "title": "<black>इंटरव्यू</black> <purple>विवरण</purple>",
     "subtitle": "अपने इंटरव्यू प्रदर्शन और फीडबैक की समीक्षा करें",
     "loadError": "साक्षात्कार विवरण लोड करने में विफल। कृपया पुनः प्रयास करें।",
     "notFound": "इंटरव्यू नहीं मिला",
@@ -1890,29 +1912,49 @@
     "switchWorkspace": "Switch Workspace",
     "selectWorkspace": "Select Workspace",
     "sections": {
-      "profile": "Profile",
-      "security": "Security",
-      "danger": "Danger Zone"
+      "profile": "प्रोफ़ाइल",
+      "security": "सुरक्षा",
+      "danger": "खतरे का क्षेत्र"
     },
     "profile": {
-      "title": "Profile Information",
-      "avatar": "Profile Picture",
-      "avatarHint": "Managed through your OAuth provider",
-      "save": "Save Changes"
+      "title": "प्रोफ़ाइल जानकारी",
+      "avatar": "प्रोफ़ाइल फ़ोटो",
+      "avatarHint": "आपके OAuth प्रदाता द्वारा प्रबंधित",
+      "save": "परिवर्तन सहेजें",
+      "phone": "फ़ोन नंबर",
+      "phoneDescription": "मुफ्त साक्षात्कार क्रेडिट प्राप्त करने के लिए अपना फ़ोन नंबर सत्यापित करें।"
     },
     "security": {
-      "title": "Change Password",
-      "currentPassword": "Current Password",
-      "newPassword": "New Password",
-      "confirmPassword": "Confirm New Password",
-      "changePassword": "Change Password"
+      "title": "पासवर्ड रीसेट करें",
+      "currentPassword": "वर्तमान पासवर्ड",
+      "newPassword": "नया पासवर्ड",
+      "confirmPassword": "नए पासवर्ड की पुष्टि करें",
+      "changePassword": "पासवर्ड बदलें",
+      "resetDescription": "हम आपको पासवर्ड बदलने के लिए एक सुरक्षित लिंक ईमेल करेंगे।",
+      "sendResetLink": "रीसेट लिंक भेजें",
+      "sendingReset": "भेज रहे हैं...",
+      "resetEmailSent": "हमने आपके ईमेल पर रीसेट लिंक भेज दिया है।",
+      "resetEmailFailed": "रीसेट लिंक भेजने में विफल।"
+    },
+    "passwordResetConfirm": {
+      "title": "नया पासवर्ड सेट करें",
+      "subtitle": "अपने खाते के लिए एक नया पासवर्ड दर्ज करें।",
+      "passwordLabel": "नया पासवर्ड",
+      "confirmLabel": "नए पासवर्ड की पुष्टि करें",
+      "submit": "पासवर्ड अपडेट करें",
+      "updating": "अपडेट हो रहा है...",
+      "successTitle": "पासवर्ड अपडेट हो गया",
+      "successMessage": "आपका पासवर्ड अपडेट हो गया है। अब आप साइन इन कर सकते हैं।",
+      "missingToken": "रीसेट टोकन गायब है।",
+      "invalidToken": "यह रीसेट लिंक अमान्य है या समाप्त हो गया है।",
+      "backToSignIn": "साइन इन पर वापस जाएं"
     },
     "danger": {
-      "title": "Delete Account",
-      "warning": "This action is permanent and cannot be undone. All your data will be permanently deleted.",
-      "confirmLabel": "Type DELETE to confirm",
-      "deleteButton": "Permanently Delete Account",
-      "deleting": "Deleting..."
+      "title": "खाता हटाएं",
+      "warning": "यह क्रिया स्थायी है और इसे वापस नहीं किया जा सकता। आपका सारा डेटा स्थायी रूप से हटा दिया जाएगा।",
+      "confirmLabel": "पुष्टि के लिए DELETE टाइप करें",
+      "deleteButton": "खाता स्थायी रूप से हटाएं",
+      "deleting": "हटाया जा रहा है..."
     },
     "validation": {
       "failedToUpdateProfile": "प्रोफ़ाइल अपडेट करने में विफल",
@@ -2056,6 +2098,22 @@
       "updateFailed": "रिज्यूमे अपडेट करने में विफल",
       "uploadFailed": "रिज्यूमे अपलोड करने में विफल",
       "readFailed": "फ़ाइल पढ़ने में विफल"
+    },
+    "roleOptions": {
+      "softwareEngineer": "सॉफ्टवेयर इंजीनियर",
+      "productManager": "प्रोडक्ट मैनेजर",
+      "dataAnalyst": "डेटा एनालिस्ट",
+      "dataScientist": "डेटा साइंटिस्ट",
+      "uxDesigner": "यूएक्स डिज़ाइनर",
+      "marketingManager": "मार्केटिंग मैनेजर",
+      "projectManager": "प्रोजेक्ट मैनेजर",
+      "devopsEngineer": "डेवऑप्स इंजीनियर",
+      "frontendDeveloper": "फ्रंटएंड डेवलपर",
+      "backendDeveloper": "बैकएंड डेवलपर",
+      "fullStackDeveloper": "फुल स्टैक डेवलपर"
+    },
+    "linkedIn": {
+      "placeholder": "टेक कंपनी में सीनियर सॉफ्टवेयर इंजीनियर"
     }
   },
   "scoreDisplay": {
@@ -2255,5 +2313,41 @@
   "accessDenied": {
     "title": "पहुंच अस्वीकृत",
     "description": "आपको इस पेज तक पहुंचने की अनुमति नहीं है। यह क्षेत्र विशिष्ट उपयोगकर्ता भूमिकाओं के लिए प्रतिबंधित है।"
+  },
+  "phoneVerification": {
+    "verified": "फोन सत्यापित",
+    "cta": {
+      "title": "मुफ्त क्रेडिट प्राप्त करें",
+      "description": "5 मुफ्त इंटरव्यू क्रेडिट पाने के लिए अपना फोन सत्यापित करें",
+      "button": "फोन सत्यापित करें"
+    },
+    "phone": {
+      "title": "फोन नंबर दर्ज करें",
+      "placeholder": "98765 43210",
+      "hint": "हम SMS द्वारा 6 अंकों का कोड भेजेंगे",
+      "send": "कोड भेजें",
+      "searchCountry": "देश खोजें...",
+      "noCountries": "कोई देश नहीं मिला"
+    },
+    "code": {
+      "title": "सत्यापन कोड दर्ज करें",
+      "sent": "कोड {{phone}} पर भेजा गया",
+      "resend": "कोड पुनः भेजें",
+      "resendIn": "{{seconds}}s में पुनः भेजें",
+      "verify": "सत्यापित करें"
+    },
+    "success": {
+      "title": "फोन सत्यापित!",
+      "description": "आपके मुफ्त क्रेडिट जोड़ दिए गए हैं"
+    },
+    "errors": {
+      "alreadyVerified": "आपने पहले ही एक फोन नंबर सत्यापित कर लिया है।",
+      "sendFailed": "सत्यापन कोड भेजने में विफल",
+      "incompleteCode": "कृपया पूर्ण 6 अंकों का कोड दर्ज करें",
+      "invalidCode": "अमान्य सत्यापन कोड",
+      "verifyFailed": "सत्यापन विफल",
+      "resendFailed": "कोड पुनः भेजने में विफल",
+      "invalidPhone": "कृपया एक मान्य फोन नंबर दर्ज करें"
+    }
   }
 }

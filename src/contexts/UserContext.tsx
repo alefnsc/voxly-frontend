@@ -12,7 +12,7 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from 'contexts/AuthContext';
 import apiService from '../services/APIService';
 import { getDeviceFingerprint } from '../services/deviceFingerprint';
 
@@ -33,7 +33,7 @@ interface UserContextType {
   isSynced: boolean;
   userCredits: number | null;
   dbUser: any | null;
-  clerkUser: any | null;
+  user: any | null;
   
   // Modals
   showCreditsModal: boolean;
@@ -126,7 +126,7 @@ interface UserProviderProps {
 }
 
 export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
-  const { isLoaded, isSignedIn, user: clerkUser } = useUser();
+  const { isLoaded, isSignedIn, user } = useUser();
   
   // State
   const [isLoading, setIsLoading] = useState(true);
@@ -142,11 +142,11 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   // Initial validation and sync
   useEffect(() => {
     const validateAndSyncUser = async () => {
-      // Wait for Clerk to load
+      // Wait for auth to load
       if (!isLoaded) return;
       
       // User not signed in
-      if (!isSignedIn || !clerkUser?.id) {
+      if (!isSignedIn || !user?.id) {
         setIsLoading(false);
         setUserCredits(0);
         setDbUser(null);
@@ -188,7 +188,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         }
         
         const result = await retryWithBackoff(
-          () => apiService.validateUser(clerkUser.id),
+          () => apiService.validateUser(),
           3,
           500
         );
@@ -203,16 +203,11 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         // Cache the result
         setCachedUser(result.user, credits);
         
-        if (result.freeTrialGranted) {
-          console.log('🎉 Free trial credit granted to new user!');
-        }
-        
-        if (result.freeCreditBlocked) {
-          console.log('🚫 Free credit blocked (abuse detection)');
-        }
       } catch (error) {
         console.error('⚠️ Failed to validate/sync user:', error);
+        console.log('ℹ️ User sync failed but dashboard queries will still work');
         setIsSynced(false);
+        setUserCredits(0); // Assume 0 credits if sync fails
         syncAttemptedRef.current = false; // Allow retry on error
       } finally {
         setIsLoading(false);
@@ -221,7 +216,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     };
     
     validateAndSyncUser();
-  }, [isLoaded, isSignedIn, clerkUser?.id]);
+  }, [isLoaded, isSignedIn, user?.id]);
   
   // Clear state on sign out
   useEffect(() => {
@@ -237,11 +232,11 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   
   // Refresh credits from backend (skips cache)
   const refreshCredits = useCallback(async () => {
-    if (!clerkUser?.id) return;
+    if (!user?.id) return;
     
     try {
       console.log('🔄 Refreshing credits from backend...');
-      const result = await apiService.getCurrentUser(clerkUser.id);
+      const result = await apiService.getCurrentUser(true);
       
       if (result.user?.credits !== undefined) {
         setUserCredits(result.user.credits);
@@ -252,7 +247,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     } catch (error) {
       console.error('Failed to refresh credits:', error);
     }
-  }, [clerkUser?.id]);
+  }, [user?.id]);
   
   // Invalidate cache (forces next mount to fetch fresh data)
   const invalidateCache = useCallback(() => {
@@ -263,7 +258,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   
   // Consume credit
   const consumeCredit = useCallback(async (callId?: string): Promise<number> => {
-    if (!isSignedIn || !clerkUser) {
+    if (!isSignedIn || !user) {
       throw new Error('User not authenticated');
     }
     
@@ -272,7 +267,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     }
     
     console.log('💳 Consuming credit via backend...');
-    const response = await apiService.consumeCredit(clerkUser.id, callId);
+    const response = await apiService.consumeCredit(callId);
     
     if (response.status === 'success') {
       const newCredits = response.newCredits ?? (userCredits ?? 1) - 1;
@@ -283,16 +278,16 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     } else {
       throw new Error(response.message || 'Failed to consume credit');
     }
-  }, [isSignedIn, clerkUser, userCredits, dbUser]);
+  }, [isSignedIn, user, userCredits, dbUser]);
   
   // Restore credit
   const restoreCredit = useCallback(async (reason?: string): Promise<number> => {
-    if (!isSignedIn || !clerkUser) {
+    if (!isSignedIn || !user) {
       throw new Error('User not authenticated');
     }
     
     console.log('💳 Restoring credit via backend...');
-    const response = await apiService.restoreCredit(clerkUser.id, reason);
+    const response = await apiService.restoreCredit(reason || 'Interview cancelled');
     
     if (response.status === 'success') {
       const newCredits = response.newCredits ?? (userCredits ?? 0) + 1;
@@ -303,7 +298,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     } else {
       throw new Error(response.message || 'Failed to restore credit');
     }
-  }, [isSignedIn, clerkUser, userCredits, dbUser]);
+  }, [isSignedIn, user, userCredits, dbUser]);
   
   // Event handlers for credit changes
   const onCreditsPurchased = useCallback(async () => {
@@ -324,7 +319,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     isSynced,
     userCredits,
     dbUser,
-    clerkUser,
+    user,
     showCreditsModal,
     setShowCreditsModal,
     refreshCredits,
@@ -357,7 +352,7 @@ export const useAuthCheck = () => {
   
   return {
     isSignedIn: ctx.isAuthenticated,
-    user: ctx.clerkUser,
+    user: ctx.user,
     isLoading: ctx.isLoading,
     userCredits: ctx.userCredits,
     showCreditsModal: ctx.showCreditsModal,

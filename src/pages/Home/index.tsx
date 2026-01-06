@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuthCheck } from 'hooks/use-auth-check'
-import { useUser } from '@clerk/clerk-react'
+import { useUser } from 'contexts/AuthContext'
 import Loading from 'components/loading'
 import Landing from 'pages/Landing'
 

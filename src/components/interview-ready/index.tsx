@@ -40,7 +40,7 @@ const InterviewReady: React.FC = () => {
         <PurpleButton
           variant="secondary"
           size="lg"
-          onClick={() => navigate('/interview-setup')}
+          onClick={() => navigate('/app/b2c/interview/new')}
           className="bg-white text-purple-600 hover:bg-zinc-100 border-0 shadow-lg"
         >
           <Plus className="w-5 h-5" />

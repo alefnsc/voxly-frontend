@@ -12,7 +12,7 @@
 
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
-import { useUser, useAuth } from '@clerk/clerk-react';
+import { useUser, useAuth } from 'contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from 'lib/utils';
@@ -156,7 +156,7 @@ const AppShellInner: React.FC<AppShellProps> = ({
   // Redirect to sign-in if not authenticated on protected route
   useEffect(() => {
     if (authLoaded && !isSignedIn && !isPublicPath) {
-      navigate('/sign-in', { 
+      navigate('/', { 
         state: { returnTo: location.pathname },
         replace: true 
       });

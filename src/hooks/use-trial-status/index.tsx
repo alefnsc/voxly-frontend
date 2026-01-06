@@ -2,8 +2,8 @@
  * Trial Status Hook
  * 
  * Provides access to the user's trial credit status including:
- * - Whether trial credits have been granted
- * - Promo period status
+ * - Whether trial credits have been claimed
+ * - Claim eligibility + block reason
  * - Current balance
  * 
  * Uses the /api/credits/trial-status endpoint.
@@ -12,63 +12,36 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from 'contexts/AuthContext';
 import apiService from '../../services/APIService';
-import { isWithinOpenBetaWindow, getCurrentFreeCredits, getDaysRemaining, PROMO_END_DATE } from '../../config/openBeta';
 
 // ==========================================
 // TYPES
 // ==========================================
 
 export interface TrialStatus {
-  /** Whether trial credits have been granted to this user */
-  trialCreditsGranted: boolean;
+  /** Whether trial credits have been claimed by this user */
+  trialCreditsClaimed: boolean;
   
-  /** Amount of trial credits granted */
+  /** Amount of trial credits */
   trialCreditsAmount: number;
   
-  /** When trial credits were granted (ISO string) */
-  trialCreditsGrantedAt: string | null;
-  
-  /** Whether the promotional period is currently active */
-  isPromoActive: boolean;
-  
-  /** When the promo period ends (ISO string) */
-  promoEndsAt: string;
-  
-  /** Days remaining in promo period */
-  promoRemainingDays: number;
+  /** When trial credits were claimed (ISO string) */
+  trialCreditsClaimedAt: string | null;
   
   /** Current credit balance */
   currentBalance: number;
-  
-  /** Risk level assigned during signup */
-  riskLevel: 'low' | 'medium' | 'high';
-}
 
-export interface PromoInfo {
-  /** Whether promo is currently active */
-  isPromoActive: boolean;
-  
-  /** When promo ends (ISO string) */
-  promoEndsAt: string;
-  
-  /** Days remaining in promo */
-  promoRemainingDays: number;
-  
-  /** Credits offered during promo */
-  promoCredits: number;
-  
-  /** Credits offered after promo */
-  standardCredits: number;
+  /** Whether user can claim trial credits right now */
+  canClaim: boolean;
+
+  /** If blocked, why */
+  blockedReason: string | null;
 }
 
 export interface UseTrialStatusReturn {
   /** Trial status data (null if not yet loaded) */
   status: TrialStatus | null;
-  
-  /** Promo info (available even when not signed in) */
-  promoInfo: PromoInfo;
   
   /** Loading state */
   isLoading: boolean;
@@ -82,8 +55,8 @@ export interface UseTrialStatusReturn {
   /** Check if user has received trial credits */
   hasReceivedTrial: boolean;
   
-  /** Get credits amount for new signups */
-  signupCredits: number;
+  /** Amount of trial credits (fixed policy) */
+  trialCreditsAmount: number;
 }
 
 // ==========================================
@@ -97,17 +70,7 @@ export function useTrialStatus(): UseTrialStatusReturn {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Calculate promo info from config (available without auth)
-  const promoInfo: PromoInfo = {
-    isPromoActive: isWithinOpenBetaWindow(),
-    promoEndsAt: PROMO_END_DATE.toISOString(),
-    promoRemainingDays: getDaysRemaining(),
-    promoCredits: 5,
-    standardCredits: 1
-  };
-
-  // Current signup credits (what new users would get)
-  const signupCredits = getCurrentFreeCredits();
+  const trialCreditsAmount = 5;
 
   // Fetch trial status from API
   const refresh = useCallback(async () => {
@@ -119,7 +82,7 @@ export function useTrialStatus(): UseTrialStatusReturn {
     setError(null);
     
     try {
-      const response = await apiService.getTrialStatus(user.id);
+      const response = await apiService.getTrialStatus();
       
       if (response.status === 'success' && response.data) {
         setStatus(response.data);
@@ -151,12 +114,11 @@ export function useTrialStatus(): UseTrialStatusReturn {
 
   return {
     status,
-    promoInfo,
     isLoading,
     error,
     refresh,
-    hasReceivedTrial: status?.trialCreditsGranted ?? false,
-    signupCredits
+    hasReceivedTrial: status?.trialCreditsClaimed ?? false,
+    trialCreditsAmount
   };
 }
 

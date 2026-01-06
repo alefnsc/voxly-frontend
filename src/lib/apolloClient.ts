@@ -1,8 +1,8 @@
 /**
  * Apollo Client Configuration
- * 
- * Configures Apollo Client for GraphQL queries with Clerk authentication.
- * 
+ *
+ * Configures Apollo Client for GraphQL queries using first-party cookie sessions.
+ *
  * @module lib/apolloClient
  */
 
@@ -10,9 +10,7 @@ import {
   ApolloClient,
   InMemoryCache,
   createHttpLink,
-  ApolloLink,
 } from '@apollo/client';
-import { setContext } from '@apollo/client/link/context';
 
 // Get base URL from environment
 const GRAPHQL_URL = process.env.REACT_APP_API_URL 
@@ -23,35 +21,6 @@ const GRAPHQL_URL = process.env.REACT_APP_API_URL
 const httpLink = createHttpLink({
   uri: GRAPHQL_URL,
   credentials: 'include',
-});
-
-/**
- * Create auth link that adds Clerk user ID to requests
- * 
- * This retrieves the Clerk user ID from session storage (set by Clerk SDK)
- * and adds it to the x-user-id header for authentication.
- */
-const authLink = setContext(async (_, { headers }) => {
-  // Try to get Clerk session token
-  // The Clerk SDK stores the session data in various places
-  let clerkUserId: string | null = null;
-  
-  try {
-    // Check if Clerk is loaded and has a user
-    const clerk = (window as any).Clerk;
-    if (clerk?.user?.id) {
-      clerkUserId = clerk.user.id;
-    }
-  } catch (error) {
-    console.warn('Apollo: Failed to get Clerk user ID', error);
-  }
-
-  return {
-    headers: {
-      ...headers,
-      'x-user-id': clerkUserId || '',
-    },
-  };
 });
 
 /**
@@ -91,12 +60,12 @@ const cache = new InMemoryCache({
  * Apollo Client instance
  * 
  * Configured with:
- * - Auth link for Clerk user ID
+ * - Cookie session auth (credentials: include)
  * - HTTP link to GraphQL endpoint
  * - In-memory cache with type policies
  */
 export const apolloClient = new ApolloClient({
-  link: ApolloLink.from([authLink, httpLink]),
+  link: httpLink,
   cache,
   defaultOptions: {
     watchQuery: {

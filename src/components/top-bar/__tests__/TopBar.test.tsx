@@ -1,87 +1,42 @@
-import React from 'react';
-import { render, screen } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import TopBar from '../index';
-import { useUser } from '@clerk/clerk-react';
+import React from 'react'
+import { render, screen } from '@testing-library/react'
+import '@testing-library/jest-dom'
 
-// Mock the Clerk hooks
-jest.mock('@clerk/clerk-react', () => ({
-    useUser: jest.fn(),
-    SignInButton: () => <div data-testid="sign-in-button">Sign In</div>,
-    UserButton: () => <div data-testid="user-button">User Button</div>,
-}));
+import TopBar from '../index'
 
-// Mock the useMediaQuery hook
-jest.mock('@mantine/hooks', () => ({
-    useMediaQuery: jest.fn(),
-}));
-
-// Mock the MainLogo component
-jest.mock('../../main-logo', () => ({
+jest.mock('components/header', () => ({
     __esModule: true,
-    default: () => <div data-testid="main-logo">Main Logo</div>,
-}));
+    default: jest.fn(() => <div data-testid="app-header" />),
+}))
 
-describe('TopBar Component', () => {
+describe('TopBar', () => {
     beforeEach(() => {
-        jest.clearAllMocks();
-    });
+        jest.clearAllMocks()
+    })
 
-    it('renders the main logo', () => {
-        (useUser as jest.Mock).mockReturnValue({ user: null });
-        (require('@mantine/hooks').useMediaQuery as jest.Mock).mockReturnValue(false);
+    it('renders AppHeader', () => {
+        render(<TopBar />)
+        const AppHeaderMock = require('components/header').default as jest.Mock
+        expect(AppHeaderMock).toHaveBeenCalled()
+    })
 
-        render(<TopBar />);
-        expect(screen.getByTestId('main-logo')).toBeInTheDocument();
-    });
+    it('uses mode="auto" by default', () => {
+        render(<TopBar />)
+        const AppHeaderMock = require('components/header').default as jest.Mock
+        expect(AppHeaderMock.mock.calls[0]?.[0]).toEqual(
+            expect.objectContaining({ mode: 'auto', showLogo: false })
+        )
+    })
 
-    it('renders SignInButton when user is not logged in', () => {
-        (useUser as jest.Mock).mockReturnValue({ user: null });
-        (require('@mantine/hooks').useMediaQuery as jest.Mock).mockReturnValue(false);
+    it('maps variant="minimal" to mode="minimal"', () => {
+        render(<TopBar variant="minimal" />)
+        const AppHeaderMock = require('components/header').default as jest.Mock
+        expect(AppHeaderMock.mock.calls[0]?.[0]).toEqual(expect.objectContaining({ mode: 'minimal' }))
+    })
 
-        render(<TopBar />);
-        expect(screen.getByTestId('sign-in-button')).toBeInTheDocument();
-        expect(screen.queryByTestId('user-button')).not.toBeInTheDocument();
-    });
-
-    it('renders UserButton when user is logged in on desktop', () => {
-        (useUser as jest.Mock).mockReturnValue({ user: { id: '123' } });
-        (require('@mantine/hooks').useMediaQuery as jest.Mock).mockReturnValue(false);
-
-        render(<TopBar />);
-        expect(screen.getByTestId('user-button')).toBeInTheDocument();
-        expect(screen.queryByTestId('sign-in-button')).not.toBeInTheDocument();
-    });
-
-    it('does not render UserButton on mobile when user is logged in', () => {
-        (useUser as jest.Mock).mockReturnValue({ user: { id: '123' } });
-        (require('@mantine/hooks').useMediaQuery as jest.Mock).mockReturnValue(true);
-
-        render(<TopBar />);
-        expect(screen.queryByTestId('user-button')).not.toBeInTheDocument();
-        expect(screen.queryByTestId('sign-in-button')).not.toBeInTheDocument();
-    });
-
-    it('has correct layout classes', () => {
-        (useUser as jest.Mock).mockReturnValue({ user: null });
-        (require('@mantine/hooks').useMediaQuery as jest.Mock).mockReturnValue(false);
-
-        render(<TopBar />);
-
-        // Test the outer container
-        const outerContainer = screen.getByTestId('main-logo').closest('div.flex.h-\\[70px\\]');
-        expect(outerContainer).toBeInTheDocument();
-        expect(outerContainer).toHaveClass('flex');
-        expect(outerContainer).toHaveClass('h-[70px]');
-        expect(outerContainer).toHaveClass('items-center');
-        expect(outerContainer).toHaveClass('justify-center');
-        expect(outerContainer).toHaveClass('border-b');
-        expect(outerContainer).toHaveClass('border-slate-6');
-
-        // Test the inner container
-        const innerContainer = screen.getByTestId('main-logo').closest('div.flex.flex-row');
-        expect(innerContainer).toBeInTheDocument();
-        expect(innerContainer).toHaveClass('w-full');
-        expect(innerContainer).toHaveClass('max-w-[80%]');
-    });
-}); 
+    it('passes through showLogo', () => {
+        render(<TopBar showLogo />)
+        const AppHeaderMock = require('components/header').default as jest.Mock
+        expect(AppHeaderMock.mock.calls[0]?.[0]).toEqual(expect.objectContaining({ showLogo: true }))
+    })
+})

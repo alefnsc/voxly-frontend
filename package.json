@@ -4,8 +4,6 @@
   "private": true,
   "dependencies": {
     "@apollo/client": "^3.12.0",
-    "@clerk/clerk-js": "^5.30.2",
-    "@clerk/clerk-react": "^5.16.0",
     "@formspree/react": "^3.0.0",
     "@mantine/core": "^7.14.1",
     "@mantine/hooks": "^7.14.1",
@@ -54,6 +52,7 @@
     "i18next-browser-languagedetector": "^7.2.2",
     "jspdf": "^3.0.4",
     "lamejs": "github:zhuker/lamejs",
+    "libphonenumber-js": "^1.12.33",
     "lucide-react": "^0.469.0",
     "meshoptimizer": "^0.22.0",
     "react": "^18.3.1",
@@ -80,7 +79,6 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@clerk/types": "^4.33.1",
     "@tailwindcss/typography": "^0.5.16",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
@@ -99,8 +97,7 @@
   },
   "scripts": {
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d build",
-    "start": "react-scripts start",
+    "dev": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"

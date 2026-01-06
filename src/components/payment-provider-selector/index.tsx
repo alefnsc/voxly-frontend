@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from 'contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { Globe, CreditCard, Check, Loader2, MapPin, RefreshCw } from 'lucide-react';
 import apiService from '../../services/APIService';
@@ -81,7 +81,7 @@ export const PaymentProviderSelector: React.FC<PaymentProviderSelectorProps> = (
         
         // Try to get region info
         try {
-          const prefs = await apiService.getUserPreferences(user.id);
+          const prefs = await apiService.getUserPreferences();
           if (prefs.status === 'success' && prefs.data) {
             setDetectedRegion(prefs.data.region || 'Global');
           }

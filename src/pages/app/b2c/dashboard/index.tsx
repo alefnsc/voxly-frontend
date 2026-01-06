@@ -11,20 +11,18 @@
  * - Weekly activity tracking
  */
 
-import React, { useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
-import { useUser } from '@clerk/clerk-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useUser } from 'contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import {
   FileText,
   TrendingUp,
   TrendingDown,
-  CreditCard,
   History,
   ChevronRight,
-  Zap,
-  Award,
+  ChevronLeft,
   Target,
   Loader2,
   Clock,
@@ -32,22 +30,15 @@ import {
   Minus,
   Upload,
   Calendar,
-  Filter,
   RefreshCw,
-  X,
 } from 'lucide-react';
 import {
   MobileStartInterviewButton,
   DesktopStartInterviewButton,
   StartInterviewButton,
 } from '../../../../components/start-interview-button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../../../../components/ui/select';
+import { PhoneVerificationCard } from './PhoneVerificationCard';
+// SetPasswordModal removed - password is now set during onboarding for OAuth users
 import {
   LineChart,
   Line,
@@ -59,10 +50,65 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-
 import { useResumesQuery } from '../../../../hooks/queries/useResumeQueries';
 import { useGraphQLQuery } from '../../../../hooks/queries/useGraphQLQuery';
-import { useAuthCheck } from '../../../../hooks/use-auth-check';
+import apiService, { PhoneVerificationStatus } from '../../../../services/APIService';
+import { BUY_CREDITS_LINK } from 'utils/routing';
+
+// Period filter options for performance trend chart
+export type PeriodFilter = '1W' | '1M' | '6M' | 'ALL';
+
+const PERIOD_OPTIONS: { value: PeriodFilter; labelKey: string; days: number | null }[] = [
+  { value: '1W', labelKey: 'dashboard.periods.1w', days: 7 },
+  { value: '1M', labelKey: 'dashboard.periods.1m', days: 30 },
+  { value: '6M', labelKey: 'dashboard.periods.6m', days: 180 },
+  { value: 'ALL', labelKey: 'dashboard.periods.all', days: null },
+];
+
+/**
+ * Get start date for a period filter
+ */
+function getStartDateForPeriod(period: PeriodFilter): Date | null {
+  if (period === 'ALL') return null;
+  const now = new Date();
+  const days = PERIOD_OPTIONS.find(p => p.value === period)?.days ?? 30;
+  return new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+}
+
+/**
+ * Get the Monday 00:00:00.000 of the week containing the given date (local time)
+ */
+function getWeekStart(date: Date): Date {
+  const d = new Date(date);
+  const day = d.getDay();
+  // JavaScript: Sunday = 0, Monday = 1, etc.
+  // We want Monday as start of week, so subtract (day === 0 ? 6 : day - 1) days
+  const diff = day === 0 ? 6 : day - 1;
+  d.setDate(d.getDate() - diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+/**
+ * Get the Sunday 23:59:59.999 of the week containing the given date (local time)
+ */
+function getWeekEnd(date: Date): Date {
+  const weekStart = getWeekStart(date);
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 6);
+  weekEnd.setHours(23, 59, 59, 999);
+  return weekEnd;
+}
+
+/**
+ * Format week range for display (e.g., "Dec 16 - Dec 22")
+ */
+function formatWeekRange(weekStart: Date, i18nLang: string): string {
+  const weekEnd = getWeekEnd(weekStart);
+  const startStr = weekStart.toLocaleDateString(i18nLang, { month: 'short', day: 'numeric' });
+  const endStr = weekEnd.toLocaleDateString(i18nLang, { month: 'short', day: 'numeric' });
+  return `${startStr} - ${endStr}`;
+}
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -77,43 +123,79 @@ const itemVariants = {
   visible: { opacity: 1, y: 0 },
 };
 
-// Seniority level keys for translation
-const SENIORITY_KEYS = ['all', 'intern', 'junior', 'mid', 'senior', 'staff', 'principal', 'executive'] as const;
-
 export default function B2CDashboard() {
   const { user } = useUser();
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const firstName = user?.firstName || t('common.there');
 
-  // Filter state
-  const [roleFilter, setRoleFilter] = useState<string>('all');
-  const [seniorityFilter, setSeniorityFilter] = useState<string>('all');
+  const [phoneStatus, setPhoneStatus] = useState<PhoneVerificationStatus | null>(null);
+  const [trialStatus, setTrialStatus] = useState<{
+    status: string;
+    message?: string;
+    data?: {
+      trialCreditsClaimed: boolean;
+      trialCreditsAmount: number;
+      trialCreditsClaimedAt: string | null;
+      currentBalance: number;
+      canClaim: boolean;
+      blockedReason: string | null;
+    };
+  } | null>(null);
+  const [isLoadingTrialStatus, setIsLoadingTrialStatus] = useState(true);
 
-  // Build filters object for API
-  const apiFilters = React.useMemo(() => {
-    const filters: { roleTitle?: string; seniority?: string } = {};
-    if (roleFilter !== 'all') filters.roleTitle = roleFilter;
-    if (seniorityFilter !== 'all') filters.seniority = seniorityFilter;
-    return filters;
-  }, [roleFilter, seniorityFilter]);
+  // Password requirement check removed - password is now set during onboarding for OAuth users
 
-  // Check if any filters are active
-  const hasActiveFilters = roleFilter !== 'all' || seniorityFilter !== 'all';
+  // Period filter state for performance chart only
+  const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('1M');
 
-  // Clear all filters
-  const clearFilters = useCallback(() => {
-    setRoleFilter('all');
-    setSeniorityFilter('all');
-  }, []);
+  // Role filter state for Skill Breakdown card only
+  // 'all' = all roles, 'practice' = interviews with no role, otherwise exact roleTitle match
+  const [skillRoleFilter, setSkillRoleFilter] = useState<string>('all');
 
-  // Fetch real data from APIs
-  const { userCredits, isLoading: isLoadingCredits } = useAuthCheck();
+  // Week navigation state for Weekly Activity widget
+  // Default to current week (Monday 00:00:00.000 local time)
+  const [weekStartDate, setWeekStartDate] = useState<Date>(() => getWeekStart(new Date()));
+
+
+  // Week navigation handlers
+  const goToPreviousWeek = () => {
+    setWeekStartDate((prev) => {
+      const newDate = new Date(prev);
+      newDate.setDate(newDate.getDate() - 7);
+      return newDate;
+    });
+  };
+
+  const goToNextWeek = () => {
+    setWeekStartDate((prev) => {
+      const newDate = new Date(prev);
+      newDate.setDate(newDate.getDate() + 7);
+      return newDate;
+    });
+  };
+
+  // Check if we're on the current week (disable "next" button if so)
+  const isCurrentWeek = useMemo(() => {
+    const currentWeekStart = getWeekStart(new Date());
+    return weekStartDate.getTime() === currentWeekStart.getTime();
+  }, [weekStartDate]);
+
+  // Fetch real data from APIs with week filter for Weekly Activity
   const { data: resumes, isLoading: isLoadingResumes } = useResumesQuery();
-  const { data: dashboardData, isLoading: isLoadingDashboard, refetch } = useGraphQLQuery({
-    filters: apiFilters,
+  
+  // Main dashboard query (for performance chart and other data)
+  const { data: dashboardData, isLoading: isLoadingDashboard, refetch } = useGraphQLQuery();
+  
+  // Separate query for weekly activity with date filtering
+  const weekEndDate = useMemo(() => getWeekEnd(weekStartDate), [weekStartDate]);
+  const { data: weeklyDashboardData, isLoading: isLoadingWeeklyData } = useGraphQLQuery({
+    filters: {
+      startDate: weekStartDate.toISOString(),
+      endDate: weekEndDate.toISOString(),
+    },
   });
 
-  const credits = userCredits ?? 0;
   const resumeCount = resumes?.length ?? 0;
   const recentInterviews = React.useMemo(
     () => dashboardData?.recentInterviews ?? [],
@@ -122,7 +204,6 @@ export default function B2CDashboard() {
   // Use kpis.totalInterviews for accurate count (source of truth from backend)
   const totalInterviewCount = dashboardData?.kpis?.totalInterviews ?? 0;
   const averageScore = dashboardData?.kpis?.averageScore ?? 0;
-  const totalDuration = dashboardData?.kpis?.averageDurationMinutes ?? 0;
   // Score change is derived from scoreEvolution if available
   const scoreChange = React.useMemo(() => {
     const scoreEvolution = dashboardData?.scoreEvolution ?? [];
@@ -132,55 +213,161 @@ export default function B2CDashboard() {
     return Math.round(recent - previous);
   }, [dashboardData?.scoreEvolution]);
 
-  // Extract filter options from API response
-  const filterOptions = dashboardData?.filterOptions;
-  const availableRoles = filterOptions?.roleTitles ?? [];
-  const availableSeniorities = filterOptions?.seniorities ?? [];
+  useEffect(() => {
+    const loadPhoneStatus = async () => {
+      if (!user?.id) return;
+      try {
+        const status = await apiService.getPhoneStatus();
+        setPhoneStatus(status);
+      } catch {
+        // Non-blocking; phone CTA will stay hidden if status can't be loaded
+      }
+    };
+    loadPhoneStatus();
+  }, [user?.id]);
 
-  // Build performance trend from score evolution data
-  const performanceData = React.useMemo(() => {
-    const scoreEvolution = dashboardData?.scoreEvolution ?? [];
+  useEffect(() => {
+    const loadTrialStatus = async () => {
+      if (!user?.id) return;
+      setIsLoadingTrialStatus(true);
+      try {
+        const status = await apiService.getTrialStatus();
+        setTrialStatus(status);
+      } catch {
+        // Non-blocking; keep CTA hidden until we can confirm eligibility/claim state
+        setTrialStatus(null);
+      } finally {
+        setIsLoadingTrialStatus(false);
+      }
+    };
+
+    loadTrialStatus();
+  }, [user?.id]);
+
+  const refreshPhoneAndTrialStatus = async () => {
+    if (!user?.id) return;
+    try {
+      const [newPhoneStatus, newTrialStatus] = await Promise.all([
+        apiService.getPhoneStatus(),
+        apiService.getTrialStatus(),
+      ]);
+      setPhoneStatus(newPhoneStatus);
+      setTrialStatus(newTrialStatus);
+      // Also refresh dashboard stats (credits shown here come from dashboard query)
+      refetch();
+    } catch {
+      // Non-blocking
+    }
+  };
+
+  // Keep the phone CTA visible until backend confirms trial credits are claimed.
+  // If trial status can't be loaded, keep it hidden to avoid incorrect prompting.
+  const shouldShowPhoneCreditsCTA =
+    !isLoadingTrialStatus && trialStatus?.data?.trialCreditsClaimed === false;
+
+  // Build performance trend from score evolution data with period filtering
+  const performanceData = useMemo(() => {
+    let scoreEvolution = dashboardData?.scoreEvolution ?? [];
     if (!scoreEvolution || scoreEvolution.length === 0) {
       return [];
     }
-    // Take last 5 data points for the trend chart
+    
+    // Filter by selected period
+    if (periodFilter !== 'ALL') {
+      const periodStartDate = getStartDateForPeriod(periodFilter);
+      if (periodStartDate) {
+        scoreEvolution = scoreEvolution.filter(
+          (point) => new Date(point.date) >= periodStartDate
+        );
+      }
+    }
+    
+    // Format data for chart
     return scoreEvolution
-      .slice(-5)
       .map((point) => ({
         date: new Date(point.date).toLocaleDateString(i18n.language, { month: 'short', day: 'numeric' }),
         score: point.score,
       }));
-  }, [dashboardData?.scoreEvolution, i18n.language]);
+  }, [dashboardData?.scoreEvolution, i18n.language, periodFilter]);
 
-  // Calculate skill breakdown from interview data (simulated for now)
+  // Role options for Skill Breakdown filter dropdown
+  const skillRoleOptions = React.useMemo(() => {
+    const roleTitles = dashboardData?.filterOptions?.roleTitles ?? [];
+    return [
+      { value: 'all', label: t('dashboard.filters.allRoles', 'All roles') },
+      ...roleTitles.map((role) => ({ value: role, label: role })),
+    ];
+  }, [dashboardData?.filterOptions?.roleTitles, t]);
+
+  // Filter interviews for Skill Breakdown based on selected role
+  const skillFilteredInterviews = React.useMemo(() => {
+    if (skillRoleFilter === 'all') {
+      return recentInterviews;
+    }
+    // Exact match for specific role
+    return recentInterviews.filter(
+      (interview) => interview.roleTitle === skillRoleFilter
+    );
+  }, [recentInterviews, skillRoleFilter]);
+
+  // Calculate skill breakdown from filtered interview data (simulated for now)
   const skillBreakdown = React.useMemo((): Array<{ skill: string; score: number; trend: 'up' | 'down' | 'stable' }> => {
-    if (recentInterviews.length === 0) return [];
-    const avgScore = averageScore ?? 0;
+    if (skillFilteredInterviews.length === 0) return [];
+    // Calculate average score from filtered interviews
+    const scores = skillFilteredInterviews
+      .map((i) => i.score)
+      .filter((s): s is number => s !== null && s !== undefined);
+    const avgScore = scores.length > 0
+      ? Math.round(scores.reduce((sum, s) => sum + s, 0) / scores.length)
+      : 0;
     // In production, this would come from the API
     return [
       { skill: t('dashboard.skills.technical', 'Technical'), score: Math.min(100, avgScore + 5), trend: 'up' },
       { skill: t('dashboard.skills.communication', 'Communication'), score: Math.max(0, avgScore - 5), trend: 'stable' },
       { skill: t('dashboard.skills.problemSolving', 'Problem Solving'), score: avgScore, trend: 'up' },
     ];
-  }, [recentInterviews.length, averageScore, t]);
+  }, [skillFilteredInterviews, t]);
 
-  // Weekly activity data (derived from recent interviews)
+  // Weekly activity data from backend (filtered by selected week)
   const weeklyActivity = React.useMemo(() => {
-    // Day keys for translation (Sunday=0 through Saturday=6)
-    const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
-    const activity = DAY_KEYS.map(key => ({ day: t(`days.${key}`), interviews: 0 }));
+    // Use the filtered dashboard data for the selected week
+    const backendActivity = weeklyDashboardData?.weeklyActivity;
+    if (backendActivity && backendActivity.length > 0) {
+      // Transform backend data to chart format
+      return backendActivity.map((bucket) => ({
+        day: t(`days.${bucket.day.toLowerCase()}`, bucket.day),
+        interviews: bucket.count,
+      }));
+    }
+    // Fallback: empty data for all days
+    const DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
+    return DAY_KEYS.map((key) => ({ day: t(`days.${key}`), interviews: 0 }));
+  }, [weeklyDashboardData?.weeklyActivity, t]);
 
-    recentInterviews.forEach(interview => {
-      const dayIndex = new Date(interview.date).getDay();
-      activity[dayIndex].interviews++;
-    });
-
-    // Rotate to start from Monday
-    return [...activity.slice(1), activity[0]];
-  }, [recentInterviews, t]);
+  // Weekly total duration from backend (in milliseconds, convert to minutes for display)
+  // Uses kpis.totalDurationMs which is calculated for the filtered date range,
+  // or falls back to summing weeklyActivity buckets
+  const weeklyTotalDurationMinutes = React.useMemo(() => {
+    // First try kpis.totalDurationMs (more accurate, from filtered interviews)
+    const totalMs = weeklyDashboardData?.kpis?.totalDurationMs;
+    if (totalMs && totalMs > 0) {
+      return Math.round(totalMs / 60000);
+    }
+    // Fallback: sum from weeklyActivity buckets
+    const backendActivity = weeklyDashboardData?.weeklyActivity;
+    if (backendActivity && backendActivity.length > 0) {
+      const sumMs = backendActivity.reduce((sum, bucket) => sum + (bucket.durationMs || 0), 0);
+      if (sumMs > 0) {
+        return Math.round(sumMs / 60000);
+      }
+    }
+    return 0;
+  }, [weeklyDashboardData?.kpis?.totalDurationMs, weeklyDashboardData?.weeklyActivity]);
 
   return (
     <div className="min-h-screen bg-zinc-50">
+      {/* Password modal removed - password is now set during onboarding for OAuth users */}
+
       <div className="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         <motion.div
           variants={containerVariants}
@@ -201,49 +388,7 @@ export default function B2CDashboard() {
                   {t('dashboard.readyToPractice')}
                 </p>
               </div>
-              {/* Mobile: CTA first for priority */}
-              <MobileStartInterviewButton breakpoint="sm" />
-              {/* Desktop: CTA in header */}
-              <DesktopStartInterviewButton breakpoint="sm" />
-            </div>
-          </motion.div>
-
-          {/* Filters Row */}
-          {(availableRoles.length > 0 || availableSeniorities.length > 0 || totalInterviewCount > 0) && (
-            <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-2 sm:gap-3">
               <div className="flex items-center gap-2">
-                <Filter className="w-4 h-4 text-gray-400" />
-                <span className="text-sm text-gray-500">{t('common.filters', 'Filters')}:</span>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                {/* Role Filter */}
-                <Select value={roleFilter} onValueChange={setRoleFilter}>
-                  <SelectTrigger className="w-full sm:w-[180px] bg-white text-sm border-gray-200 min-h-[44px]">
-                    <SelectValue placeholder={t('dashboard.filters.allRoles', 'All Roles')} />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white">
-                    <SelectItem value="all">{t('dashboard.filters.allRoles', 'All Roles')}</SelectItem>
-                    {availableRoles.map((role) => (
-                      <SelectItem key={role} value={role}>{role}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                {/* Seniority Filter */}
-                <Select value={seniorityFilter} onValueChange={setSeniorityFilter}>
-                  <SelectTrigger className="w-full sm:w-[180px] bg-white text-sm border-gray-200 min-h-[44px]">
-                    <SelectValue placeholder={t('dashboard.filters.allSeniorities', 'All Levels')} />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white">
-                    {SENIORITY_KEYS.map((key) => (
-                      <SelectItem key={key} value={key}>
-                        {t(`seniority.${key}`)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
                 {/* Refresh Button */}
                 <button
                   onClick={() => refetch()}
@@ -253,47 +398,16 @@ export default function B2CDashboard() {
                 >
                   <RefreshCw className={`w-4 h-4 text-gray-500 ${isLoadingDashboard ? 'animate-spin' : ''}`} />
                 </button>
-
-                {/* Clear Filters Button */}
-                {hasActiveFilters && (
-                  <button
-                    onClick={clearFilters}
-                    className="inline-flex items-center gap-1 px-3 py-2.5 text-sm text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors min-h-[44px]"
-                  >
-                    <X className="w-3 h-3" />
-                    {t('common.clearFilters', 'Clear')}
-                  </button>
-                )}
+                {/* Mobile: CTA first for priority */}
+                <MobileStartInterviewButton breakpoint="sm" />
+                {/* Desktop: CTA in header */}
+                <DesktopStartInterviewButton breakpoint="sm" />
               </div>
-            </motion.div>
-          )}
-
-          {/* Stats Grid - 2 columns on small mobile, 4 on desktop */}
-          <motion.div variants={itemVariants} className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            {/* Credits Balance */}
-            <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="p-1.5 sm:p-2 bg-purple-100 rounded-lg flex-shrink-0">
-                  <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs sm:text-sm text-gray-500 truncate">{t('dashboard.stats.credits')}</p>
-                  {isLoadingCredits ? (
-                    <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600 animate-spin" />
-                  ) : (
-                    <p className="text-xl sm:text-2xl font-bold text-gray-900">{credits}</p>
-                  )}
-                </div>
-              </div>
-              <Link
-                to="/app/b2c/billing"
-                className="mt-2 sm:mt-3 text-xs sm:text-sm text-purple-600 hover:text-purple-700 font-medium flex items-center gap-1"
-              >
-                <span className="truncate">{t('dashboard.lowCredits.buyMore')}</span>
-                <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-              </Link>
             </div>
+          </motion.div>
 
+          {/* Stats Grid - 2 columns on small mobile, 3 on desktop */}
+          <motion.div variants={itemVariants} className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {/* Total Interviews */}
             <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm">
               <div className="flex items-center gap-2 sm:gap-3">
@@ -357,7 +471,7 @@ export default function B2CDashboard() {
                 </div>
               </div>
               <Link
-                to="/app/b2c/resumes"
+                to="/app/b2c/resume-library"
                 className="mt-2 sm:mt-3 text-xs sm:text-sm text-purple-600 hover:text-purple-700 font-medium flex items-center gap-1"
               >
                 <span className="truncate">{t('common.edit')}</span>
@@ -369,60 +483,55 @@ export default function B2CDashboard() {
           {/* On mobile: Quick Actions first (most important), then charts */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
             {/* Quick Actions - Shows first on mobile */}
-            <motion.div variants={itemVariants} className="order-1 lg:order-2 bg-white rounded-xl p-4 sm:p-6 border border-gray-200 shadow-sm">
+            <motion.div variants={itemVariants} className="order-1 lg:order-2 bg-white rounded-xl p-4 sm:p-6 border border-gray-200 shadow-sm overflow-visible">
               <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">{t('dashboard.quickActions.title')}</h2>
-              <div className="space-y-2 sm:space-y-3">
-                <Link
-                  to="/app/b2c/interview/new"
-                  className="flex items-center gap-3 p-3 rounded-lg bg-purple-50 hover:bg-purple-100 transition-colors min-h-[60px]"
-                >
-                  <div className="p-2 bg-purple-100 rounded-lg flex-shrink-0">
-                    <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-medium text-purple-900 text-sm sm:text-base">{t('dashboard.quickActions.practiceInterview')}</p>
-                    <p className="text-xs sm:text-sm text-purple-700 truncate">{t('dashboard.quickActions.practiceDesc')}</p>
-                  </div>
-                </Link>
 
-                <Link
-                  to="/app/b2c/resumes"
-                  className="flex items-center gap-3 p-3 rounded-lg bg-purple-50 hover:bg-purple-100 transition-colors min-h-[60px]"
+              <div className="space-y-2 sm:space-y-3">
+                {shouldShowPhoneCreditsCTA && (
+                  <PhoneVerificationCard onVerified={refreshPhoneAndTrialStatus} />
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => navigate(BUY_CREDITS_LINK)}
+                  className="flex w-full items-center gap-3 p-3 rounded-lg bg-purple-50 hover:bg-purple-100 transition-colors min-h-[60px]"
                 >
                   <div className="p-2 bg-purple-100 rounded-lg flex-shrink-0">
                     <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
                   </div>
-                  <div className="min-w-0">
-                    <p className="font-medium text-purple-900 text-sm sm:text-base">{t('dashboard.quickActions.uploadResume')}</p>
-                    <p className="text-xs sm:text-sm text-purple-700 truncate">{t('dashboard.quickActions.uploadDesc')}</p>
+                  <div className="min-w-0 text-left">
+                    <p className="font-medium text-purple-900 text-sm sm:text-base">
+                      {t('dashboard.quickActions.buyCredits', 'Buy Credits')}
+                    </p>
+                    <p className="text-xs sm:text-sm text-purple-700 truncate">
+                      {t('dashboard.quickActions.buyCreditsDesc', 'Top up your interview credits')}
+                    </p>
                   </div>
-                </Link>
-
-                <Link
-                  to="/app/b2c/interviews"
-                  className="flex items-center gap-3 p-3 rounded-lg bg-purple-50 hover:bg-purple-100 transition-colors min-h-[60px]"
-                >
-                  <div className="p-2 bg-purple-100 rounded-lg flex-shrink-0">
-                    <Award className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-medium text-purple-900 text-sm sm:text-base">{t('dashboard.quickActions.viewHistory', 'View History')}</p>
-                    <p className="text-xs sm:text-sm text-purple-700 truncate">{t('dashboard.quickActions.historyDesc', 'Review your past interviews')}</p>
-                  </div>
-                </Link>
+                </button>
               </div>
             </motion.div>
 
             {/* Performance Trend - Below Quick Actions on mobile */}
             <motion.div variants={itemVariants} className="order-2 lg:order-1 lg:col-span-2 bg-white rounded-xl p-4 sm:p-6 border border-gray-200 shadow-sm">
-              <div className="flex items-center justify-between mb-4 sm:mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-6">
                 <h2 className="text-base sm:text-lg font-semibold text-gray-900">{t('dashboard.charts.performanceTrend')}</h2>
-                <Link
-                  to="/app/b2c/interviews"
-                  className="text-xs sm:text-sm text-purple-600 hover:text-purple-700 font-medium flex items-center gap-1"
-                >
-                  {t('dashboard.viewAll')} <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
-                </Link>
+                
+                {/* Period Filter Tabs - Investment Chart Style */}
+                <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+                  {PERIOD_OPTIONS.map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => setPeriodFilter(option.value)}
+                      className={`px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-all ${
+                        periodFilter === option.value
+                          ? 'bg-white text-purple-700 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      {t(option.labelKey, option.value)}
+                    </button>
+                  ))}
+                </div>
               </div>
               <div className="h-48 sm:h-64">
                 {isLoadingDashboard ? (
@@ -471,6 +580,23 @@ export default function B2CDashboard() {
                 <h2 className="text-base sm:text-lg font-semibold text-gray-900">{t('dashboard.widgets.skillBreakdown', 'Skill Breakdown')}</h2>
                 <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
               </div>
+              
+              {/* Role Filter Dropdown - Same styling container as Performance Trend */}
+              <div className="flex items-center bg-gray-100 rounded-lg p-1 mb-4">
+                <select
+                  value={skillRoleFilter}
+                  onChange={(e) => setSkillRoleFilter(e.target.value)}
+                  className="w-full px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md bg-white text-purple-700 shadow-sm border-0 focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer"
+                  aria-label={t('dashboard.filters.selectRole', 'Select role')}
+                >
+                  {skillRoleOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
               {isLoadingDashboard ? (
                 <div className="h-32 sm:h-40 flex items-center justify-center">
                   <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600 animate-spin" />
@@ -507,11 +633,32 @@ export default function B2CDashboard() {
 
             {/* Weekly Activity */}
             <motion.div variants={itemVariants} className="bg-white rounded-xl p-4 sm:p-6 border border-gray-200 shadow-sm">
-              <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <div className="flex items-center justify-between mb-2">
                 <h2 className="text-base sm:text-lg font-semibold text-gray-900">{t('dashboard.widgets.weeklyActivity', 'Weekly Activity')}</h2>
                 <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
               </div>
-              {isLoadingDashboard ? (
+              {/* Week Navigation */}
+              <div className="flex items-center justify-between mb-3">
+                <button
+                  onClick={goToPreviousWeek}
+                  className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+                  aria-label={t('dashboard.widgets.previousWeek', 'Previous week')}
+                >
+                  <ChevronLeft className="h-4 w-4 text-gray-600" />
+                </button>
+                <span className="text-xs sm:text-sm text-gray-600 font-medium">
+                  {formatWeekRange(weekStartDate, i18n.language)}
+                </span>
+                <button
+                  onClick={goToNextWeek}
+                  disabled={isCurrentWeek}
+                  className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  aria-label={t('dashboard.widgets.nextWeek', 'Next week')}
+                >
+                  <ChevronRight className="h-4 w-4 text-gray-600" />
+                </button>
+              </div>
+              {isLoadingWeeklyData ? (
                 <div className="h-32 sm:h-40 flex items-center justify-center">
                   <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600 animate-spin" />
                 </div>
@@ -543,7 +690,7 @@ export default function B2CDashboard() {
                 <span className="text-gray-500">{t('dashboard.widgets.totalTime', 'Total time')}</span>
                 <span className="font-medium text-gray-900 flex items-center gap-1">
                   <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-purple-600" />
-                  {totalDuration > 0 ? `${totalDuration} min` : '0 min'}
+                  {weeklyTotalDurationMinutes > 0 ? `${weeklyTotalDurationMinutes} min` : '0 min'}
                 </span>
               </div>
             </motion.div>
@@ -553,7 +700,7 @@ export default function B2CDashboard() {
               <div className="flex items-center justify-between mb-3 sm:mb-4">
                 <h2 className="text-base sm:text-lg font-semibold text-gray-900">{t('dashboard.widgets.uploadedResumes', 'Your Resumes')}</h2>
                 <Link
-                  to="/app/b2c/resumes"
+                  to="/app/b2c/resume-library"
                   className="text-xs sm:text-sm text-purple-600 hover:text-purple-700 font-medium flex items-center gap-1"
                 >
                   {t('dashboard.viewAll')} <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -600,7 +747,7 @@ export default function B2CDashboard() {
                     {t('dashboard.widgets.noResumes', 'No resumes uploaded yet')}
                   </p>
                   <Link
-                    to="/app/b2c/resumes"
+                    to="/app/b2c/resume-library"
                     className="text-sm text-purple-600 hover:text-purple-700 font-medium"
                   >
                     {t('dashboard.widgets.uploadFirst', 'Upload your first resume')}
@@ -721,31 +868,9 @@ export default function B2CDashboard() {
             )}
           </motion.div>
 
-          {/* Credits CTA */}
-          {credits <= 3 && (
-            <motion.div
-              variants={itemVariants}
-              className="bg-gradient-to-r from-purple-600 to-purple-700 rounded-xl p-6 text-white"
-            >
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                  <h3 className="text-lg font-semibold">{t('dashboard.lowCredits.title')}</h3>
-                  <p className="text-purple-200 mt-1">
-                    {t('dashboard.readyToPractice')}
-                  </p>
-                </div>
-                <Link
-                  to="/app/b2c/billing"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-purple-600 rounded-lg font-medium hover:bg-gray-100 transition-colors shadow-sm"
-                >
-                  <CreditCard className="h-5 w-5" />
-                  {t('dashboard.lowCredits.buyMore')}
-                </Link>
-              </div>
-            </motion.div>
-          )}
         </motion.div>
       </div>
+
     </div>
   );
 }

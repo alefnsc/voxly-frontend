@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import Clock from '../index';
 
 describe('Clock Component', () => {
@@ -7,8 +8,8 @@ describe('Clock Component', () => {
         render(<Clock />);
 
         // Check if minutes and seconds are displayed with default values
-        expect(screen.getByText('15')).toBeInTheDocument();
-        expect(screen.getByText('0')).toBeInTheDocument();
+        expect(screen.getByLabelText('minutes')).toHaveTextContent('15');
+        expect(screen.getByLabelText('seconds')).toHaveTextContent('00');
 
         // Check if labels are present
         expect(screen.getByText('Minutes')).toBeInTheDocument();
@@ -25,32 +26,32 @@ describe('Clock Component', () => {
         render(<Clock timerMinutes={customMinutes} timerSeconds={customSeconds} />);
 
         // Check if custom values are displayed
-        expect(screen.getByText(customMinutes.toString())).toBeInTheDocument();
-        expect(screen.getByText(customSeconds.toString())).toBeInTheDocument();
+        expect(screen.getByLabelText('minutes')).toHaveTextContent('05');
+        expect(screen.getByLabelText('seconds')).toHaveTextContent('30');
     });
 
     it('renders with single digit values', () => {
         render(<Clock timerMinutes={1} timerSeconds={9} />);
 
         // Check if single digit values are displayed correctly
-        expect(screen.getByText('1')).toBeInTheDocument();
-        expect(screen.getByText('9')).toBeInTheDocument();
+        expect(screen.getByLabelText('minutes')).toHaveTextContent('01');
+        expect(screen.getByLabelText('seconds')).toHaveTextContent('09');
     });
 
     it('renders with zero values', () => {
         render(<Clock timerMinutes={0} timerSeconds={0} />);
 
         // Check if zero values are displayed correctly
-        const zeroElements = screen.getAllByText('0');
-        expect(zeroElements).toHaveLength(2);
+        expect(screen.getByLabelText('minutes')).toHaveTextContent('00');
+        expect(screen.getByLabelText('seconds')).toHaveTextContent('00');
     });
 
     it('renders with double digit values', () => {
         render(<Clock timerMinutes={45} timerSeconds={59} />);
 
         // Check if double digit values are displayed correctly
-        expect(screen.getByText('45')).toBeInTheDocument();
-        expect(screen.getByText('59')).toBeInTheDocument();
+        expect(screen.getByLabelText('minutes')).toHaveTextContent('45');
+        expect(screen.getByLabelText('seconds')).toHaveTextContent('59');
     });
 
     it('maintains proper structure with all elements', () => {

@@ -15,7 +15,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from 'contexts/AuthContext';
 import { BrandLockup, CopyrightNotice } from './Brand';
 
 // ============================================

@@ -14,11 +14,12 @@
 export const B2C_ROUTES = {
   // Main app routes
   DASHBOARD: '/app/b2c/dashboard',
+  PERFORMANCE: '/app/b2c/performance',
   INTERVIEWS: '/app/b2c/interviews',
   INTERVIEW_NEW: '/app/b2c/interview/new',
   INTERVIEW_DETAIL: '/app/b2c/interview/:id',
-  RESUMES: '/app/b2c/resumes',
-  BILLING: '/app/b2c/billing',
+  RESUMES: '/app/b2c/resume-library',
+  BILLING: '/account?section=creditsPurchase',
   
   // Shared routes
   ACCOUNT: '/account',
@@ -42,6 +43,9 @@ export const B2C_ROUTES = {
 
 /** Get the B2C dashboard route */
 export const b2cDashboard = (): string => B2C_ROUTES.DASHBOARD;
+
+/** Get the B2C performance route */
+export const b2cPerformance = (): string => B2C_ROUTES.PERFORMANCE;
 
 /** Get the B2C interviews list route */
 export const b2cInterviewsList = (): string => B2C_ROUTES.INTERVIEWS;

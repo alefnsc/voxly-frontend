@@ -1,7 +1,7 @@
 /**
  * Account Menu Component
  * 
- * Custom account dropdown replacing Clerk's UserButton.
+ * Custom account dropdown.
  * Typography-first design with no icons.
  * Shows user info, workspace, role, and actions.
  * 
@@ -12,7 +12,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useClerk, useUser } from '@clerk/clerk-react';
+import { useUser, useAuth } from 'contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from 'lib/utils';
@@ -68,7 +68,7 @@ export const AccountMenu: React.FC<AccountMenuProps> = ({
   variant = 'desktop',
   className,
 }) => {
-  const { signOut } = useClerk();
+  const { signOut } = useAuth();
   const { user, isLoaded } = useUser();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -120,8 +120,12 @@ export const AccountMenu: React.FC<AccountMenuProps> = ({
   // Handle sign out - redirect to landing page
   const handleSignOut = async () => {
     setIsOpen(false);
-    await signOut();
-    navigate('/');
+    try {
+      await signOut();
+    } finally {
+      // Use a hard redirect to fully reset app state and avoid route-guard races.
+      window.location.assign('/');
+    }
   };
 
   // Handle navigation
@@ -137,7 +141,7 @@ export const AccountMenu: React.FC<AccountMenuProps> = ({
   // Get display info
   const displayName = user.firstName 
     ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ''}`
-    : user.primaryEmailAddress?.emailAddress || 'User';
+    : user.email || user.primaryEmailAddress?.emailAddress || 'User';
   
   // When user has no workspace, show "Personal" as both role and mode
   // When in an organization, show the org name and actual role
@@ -213,7 +217,7 @@ export const AccountMenu: React.FC<AccountMenuProps> = ({
                 {displayName}
               </p>
               <p className="text-xs text-zinc-500 mt-0.5">
-                {user.primaryEmailAddress?.emailAddress}
+                {user.email || user.primaryEmailAddress?.emailAddress}
               </p>
               <div className="mt-2 flex items-center gap-2">
                 <span className="text-xs font-medium text-purple-600 bg-purple-50 px-2 py-0.5 rounded">

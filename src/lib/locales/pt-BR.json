@@ -26,7 +26,8 @@
     "submitting": "Enviando...",
     "gotIt": "Entendi",
     "soon": "Em breve",
-    "refreshData": "Atualizar dados"
+    "refreshData": "Atualizar dados",
+    "na": "N/A"
   },
   "features": {
     "underConstruction": {
@@ -100,6 +101,7 @@
   "nav": {
     "home": "Início",
     "dashboard": "Painel",
+    "performance": "Desempenho",
     "about": "Sobre",
     "credits": "Créditos",
     "contact": "Contato",
@@ -119,6 +121,23 @@
     "main": "Principal",
     "settings": "Configurações",
     "accountSettings": "Configurações da Conta"
+  },
+  "performance": {
+    "title": "Desempenho",
+    "subtitle": "Acompanhe seu progresso em entrevistas e obtenha insights com IA",
+    "kpis": {
+      "totalInterviews": "Total de Entrevistas",
+      "avgScore": "Pontuação Média",
+      "totalTime": "Tempo Total",
+      "resumeQuality": "Qualidade do Currículo"
+    },
+    "viewResumes": "Ver currículos",
+    "quickLinks": "Atalhos",
+    "links": {
+      "interviewsDesc": "Ver todas as suas sessões de prática",
+      "resumesDesc": "Gerenciar e pontuar seus currículos",
+      "dashboardDesc": "Visão geral e início rápido"
+    }
   },
   "platform": {
     "b2c": {
@@ -216,33 +235,33 @@
     }
   },
   "about": {
-    "title": "Sobre",
-    "subtitle": "Plataforma de preparação para entrevistas com IA",
+    "title": "<black>Sobre a</black> <purple>Vocaid</purple>",
+    "subtitle": "Seu assistente de chat com IA para dominar entrevistas",
     "mission": {
       "title": "Arrase em Todas as Entrevistas",
-      "description": "Pratique com nosso entrevistador de IA, receba feedback instantâneo e construa confiança. Envie seu currículo, insira os detalhes da vaga e comece a melhorar hoje."
+      "description": "Converse com seu assistente de IA para analisar transcrições de entrevistas, otimizar seu currículo com pontuação ATS e receber PDFs de feedback personalizados. Envie seu currículo, insira os detalhes da vaga e deixe seu coach de performance guiá-lo ao sucesso."
     },
     "whyVocaid": "Por que a Vocaid?",
     "features": {
       "realistic": {
-        "title": "Realista",
-        "desc": "Fluxo de conversa natural"
+        "title": "Assistente IA",
+        "desc": "Coaching interativo de performance"
       },
       "analytics": {
-        "title": "Análises",
-        "desc": "Acompanhe seu progresso"
+        "title": "Análises Inteligentes",
+        "desc": "Transcrições e acompanhamento"
       },
       "practice247": {
         "title": "Pratique 24/7",
         "desc": "Sem agendamento"
       },
       "feedback": {
-        "title": "Feedback",
-        "desc": "Insights acionáveis"
+        "title": "PDFs de Feedback",
+        "desc": "Insights para baixar"
       },
       "roleSpecific": {
-        "title": "Específico",
-        "desc": "Perguntas personalizadas"
+        "title": "Pontuação ATS",
+        "desc": "Otimização de currículo"
       },
       "payPerUse": {
         "title": "Pague por Uso",
@@ -453,6 +472,10 @@
     }
   },
   "interview": {
+    "newInterview": {
+      "title": "<black>Configure Sua</black> <purple>Entrevista</purple>",
+      "subtitle": "Configure os detalhes da sua entrevista prática"
+    },
     "setup": {
       "title": "Configuração da Entrevista",
       "subtitle": "Vamos preparar sua entrevista simulada",
@@ -744,8 +767,7 @@
     "score": "Pontuação",
     "new": "Novo",
     "repository": {
-      "title": "Repositório de",
-      "titleHighlight": "Entrevistas",
+      "title": "<black>Repositório de</black> <purple>Entrevistas</purple>",
       "subtitle": "Navegue, filtre e analise todas as suas sessões de entrevista em um só lugar.",
       "description": "Seu histórico completo de entrevistas com filtragem avançada e análises.",
       "filters": {
@@ -844,7 +866,14 @@
       "noScoreData": "Sem dados de pontuação disponíveis",
       "noScoreDataDesc": "Complete entrevistas para acompanhar seu progresso",
       "noSpendingData": "Sem dados de gastos disponíveis",
-      "noSpendingDataDesc": "Compre créditos para ver seu histórico"
+      "noSpendingDataDesc": "Compre créditos para ver seu histórico",
+      "noData": "Complete entrevistas para ver sua tendência de desempenho"
+    },
+    "periods": {
+      "1w": "1S",
+      "1m": "1M",
+      "6m": "6M",
+      "all": "Tudo"
     },
     "quickActions": {
       "title": "Ações Rápidas",
@@ -1016,13 +1045,17 @@
     "sections": {
       "profile": "Perfil",
       "security": "Segurança",
+      "creditsPurchase": "Comprar Créditos",
+      "billingHistory": "Histórico de Transações",
       "danger": "Zona de Perigo"
     },
     "profile": {
       "title": "Informações do Perfil",
       "avatar": "Foto de Perfil",
       "avatarHint": "Gerenciado através do seu provedor OAuth",
-      "save": "Salvar Alterações"
+      "save": "Salvar Alterações",
+      "phone": "Número de Telefone",
+      "phoneDescription": "Verifique seu número de telefone para receber créditos de entrevista gratuitos."
     },
     "security": {
       "title": "Redefinir Senha",
@@ -1071,7 +1104,8 @@
     "selectButton": "Selecionar Espaço de Trabalho"
   },
   "feedback": {
-    "title": "Feedback da Entrevista",
+    "title": "<black>Feedback da</black> <purple>Entrevista</purple>",
+    "subtitle": "Análise de performance gerada por IA e insights de coaching personalizados",
     "loading": {
       "title": "Gerando Feedback",
       "analyzing": "Analisando seu desempenho na entrevista...",
@@ -1356,8 +1390,7 @@
     "askAiInstead": "Pergunte à IA em vez disso"
   },
   "interviewDetails": {
-    "title": "Detalhes da",
-    "titleHighlight": "Entrevista",
+    "title": "<black>Detalhes da</black> <purple>Entrevista</purple>",
     "subtitle": "Revise seu desempenho e feedback da entrevista",
     "notFound": "Entrevista não encontrada",
     "notFoundDesc": "Não conseguimos encontrar a entrevista que você está procurando.",
@@ -1409,7 +1442,16 @@
     "completeToProceed": "Complete sua sessão de entrevista para receber feedback gerado por IA.",
     "interviewIssue": "Esta entrevista pode ter terminado cedo ou encontrado um problema.",
     "loadingAnalytics": "Carregando análises...",
-    "loadingAdvancedAnalytics": "Carregando análises avançadas..."
+    "loadingAdvancedAnalytics": "Carregando análises avançadas...",
+    "transcript": {
+      "title": "Transcrição da Entrevista",
+      "notAvailable": "Transcrição ainda não disponível",
+      "refreshHint": "A transcrição pode ainda estar sendo processada. Tente atualizar para recuperá-la.",
+      "refreshButton": "Recuperar Transcrição",
+      "refreshing": "Recuperando...",
+      "refreshError": "Falha ao recuperar transcrição"
+    },
+    "transcriptRefreshError": "Não foi possível recuperar a transcrição. Tente novamente mais tarde."
   },
   "footer": {
     "copyright": "© 2024 Vocaid. Todos os direitos reservados."
@@ -2046,6 +2088,22 @@
       "updateFailed": "Falha ao atualizar currículo",
       "uploadFailed": "Falha ao enviar currículo",
       "readFailed": "Falha ao ler arquivo"
+    },
+    "roleOptions": {
+      "softwareEngineer": "Engenheiro de Software",
+      "productManager": "Gerente de Produto",
+      "dataAnalyst": "Analista de Dados",
+      "dataScientist": "Cientista de Dados",
+      "uxDesigner": "Designer UX",
+      "marketingManager": "Gerente de Marketing",
+      "projectManager": "Gerente de Projetos",
+      "devopsEngineer": "Engenheiro DevOps",
+      "frontendDeveloper": "Desenvolvedor Frontend",
+      "backendDeveloper": "Desenvolvedor Backend",
+      "fullStackDeveloper": "Desenvolvedor Full Stack"
+    },
+    "linkedIn": {
+      "placeholder": "Engenheiro de Software Sênior na Empresa Tech"
     }
   },
   "scoreDisplay": {
@@ -2166,5 +2224,41 @@
   "accessDenied": {
     "title": "Acesso Negado",
     "description": "Você não tem permissão para acessar esta página. Esta área é restrita a papéis de usuário específicos."
+  },
+  "phoneVerification": {
+    "verified": "Telefone Verificado",
+    "cta": {
+      "title": "Resgate Créditos Grátis",
+      "description": "Verifique seu telefone para ganhar 5 créditos de entrevista grátis",
+      "button": "Verificar Telefone"
+    },
+    "phone": {
+      "title": "Digite o Número de Telefone",
+      "placeholder": "(11) 99999-0000",
+      "hint": "Enviaremos um código de 6 dígitos por SMS",
+      "send": "Enviar Código",
+      "searchCountry": "Buscar país...",
+      "noCountries": "Nenhum país encontrado"
+    },
+    "code": {
+      "title": "Digite o Código de Verificação",
+      "sent": "Código enviado para {{phone}}",
+      "resend": "Reenviar Código",
+      "resendIn": "Reenviar em {{seconds}}s",
+      "verify": "Verificar"
+    },
+    "success": {
+      "title": "Telefone Verificado!",
+      "description": "Seus créditos grátis foram adicionados"
+    },
+    "errors": {
+      "alreadyVerified": "Você já verificou um número de telefone.",
+      "sendFailed": "Falha ao enviar código de verificação",
+      "incompleteCode": "Por favor, digite o código completo de 6 dígitos",
+      "invalidCode": "Código de verificação inválido",
+      "verifyFailed": "Falha na verificação",
+      "resendFailed": "Falha ao reenviar código",
+      "invalidPhone": "Por favor, digite um número de telefone válido"
+    }
   }
 }

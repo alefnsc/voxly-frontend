@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useUser, useClerk } from '@clerk/clerk-react';
+import { useUser, useAuth } from 'contexts/AuthContext';
 import { useMediaQuery } from '@mantine/hooks';
 import { Sparkles, Crown, Star, Loader2, CreditCard, Shield, Globe } from 'lucide-react';
 import { CREDIT_PACKAGES, CreditPackage } from '../../services/MercadoPagoService';
@@ -144,7 +144,7 @@ const PackageCard: React.FC<PackageCardProps> = ({
 const CreditPackages: React.FC<CreditPackagesProps> = ({ onPurchaseComplete }) => {
   const { t } = useTranslation();
   const { user, isSignedIn } = useUser();
-  const { openSignIn } = useClerk();
+  const { openSignIn } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [loadingPackageId, setLoadingPackageId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -285,7 +285,7 @@ const CreditPackages: React.FC<CreditPackagesProps> = ({ onPurchaseComplete }) =
             // Get current credits from backend PostgreSQL (source of truth)
             let currentCredits = 0;
             try {
-              const userResult = await apiService.getCurrentUser(user.id);
+              const userResult = await apiService.getCurrentUser(true);
               currentCredits = userResult.user?.credits || 0;
             } catch (e) {
               console.warn('Could not fetch current credits, using 0');
@@ -337,7 +337,7 @@ const CreditPackages: React.FC<CreditPackagesProps> = ({ onPurchaseComplete }) =
           return;
         }
 
-        const result = await apiService.getCurrentUser(user.id, true); // skipCache = true for payment polling
+        const result = await apiService.getCurrentUser(true); // skipCache = true for payment polling
         const currentCredits = result.user?.credits || 0;
 
         console.log(`Checking credits from backend: initial=${initialCredits}, current=${currentCredits}, expected=${expectedCredits}`);
@@ -436,7 +436,7 @@ const CreditPackages: React.FC<CreditPackagesProps> = ({ onPurchaseComplete }) =
       // Get current credits from backend PostgreSQL (source of truth)
       let currentCredits = 0;
       try {
-        const userResult = await apiService.getCurrentUser(user.id);
+        const userResult = await apiService.getCurrentUser(true);
         currentCredits = userResult.user?.credits || 0;
       } catch (e) {
         console.warn('Could not fetch current credits, using 0');
@@ -461,12 +461,8 @@ const CreditPackages: React.FC<CreditPackagesProps> = ({ onPurchaseComplete }) =
       console.log('🔐 User not authenticated, saving package and prompting sign-in...');
       savePendingPackage(pkg);
       setError(null);
-      // Always redirect to /credits page after sign-in to ensure CreditPackages component is mounted
-      const creditsPageUrl = `${window.location.origin}/credits`;
-      openSignIn({
-        afterSignInUrl: creditsPageUrl,
-        afterSignUpUrl: creditsPageUrl,
-      });
+      // Redirect to sign-in page - openSignIn navigates to /sign-in
+      openSignIn();
       return;
     }
 

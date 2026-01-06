@@ -9,23 +9,13 @@
 
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Link, useLocation } from 'react-router-dom';
 import '@testing-library/jest-dom';
+import { useUser } from 'contexts/AuthContext';
 
 // Mock dependencies
-jest.mock('@clerk/clerk-react', () => ({
-  useUser: jest.fn(() => ({
-    user: {
-      id: 'test-user-id',
-      firstName: 'John',
-      lastName: 'Doe',
-      imageUrl: null,
-      primaryEmailAddress: { emailAddress: 'john@test.com' },
-      publicMetadata: { role: 'Candidate' },
-    },
-    isSignedIn: true,
-    isLoaded: true,
-  })),
+jest.mock('contexts/AuthContext', () => ({
+  useUser: jest.fn(),
 }));
 
 jest.mock('hooks/use-auth-check', () => ({
@@ -39,10 +29,40 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) => key,
   }),
+  initReactI18next: { type: '3rdParty', init: () => {} },
+}));
+
+jest.mock('components/language-selector', () => ({
+  LanguageSelector: () => <div data-testid="language-selector" />,
+}));
+
+jest.mock('components/header', () => () => <div data-testid="app-header" />);
+
+jest.mock('components/beta-feedback', () => ({
+  BetaFeedbackFab: () => null,
 }));
 
 // Import after mocks
 import { LoggedLayout, useLoggedLayout } from '../index';
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  (useUser as unknown as jest.Mock).mockReturnValue({
+    user: {
+      id: 'test-user-id',
+      firstName: 'John',
+      lastName: 'Doe',
+      imageUrl: null,
+      email: 'john@test.com',
+      publicMetadata: { role: 'Candidate' },
+    },
+    isSignedIn: true,
+    isLoaded: true,
+  });
+
+  // JSDOM doesn't implement scrollTo; LoggedLayout calls it in an effect.
+  (window as any).scrollTo = jest.fn();
+});
 
 // Helper to render with router
 const renderWithRouter = (ui: React.ReactElement, { route = '/' } = {}) => {
@@ -53,11 +73,17 @@ const renderWithRouter = (ui: React.ReactElement, { route = '/' } = {}) => {
   );
 };
 
-describe('LoggedLayout Component', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
+const LocationDisplay = () => {
+  const location = useLocation();
+  return (
+    <div>
+      <div data-testid="pathname">{location.pathname}</div>
+      <div data-testid="hash">{location.hash}</div>
+    </div>
+  );
+};
 
+describe('LoggedLayout Component', () => {
   describe('Layout Structure', () => {
     it('renders skip-to-content link for accessibility', () => {
       renderWithRouter(
@@ -93,10 +119,53 @@ describe('LoggedLayout Component', () => {
     });
   });
 
+    it('scrolls to top on sidebar navigation (no hash)', async () => {
+      const scrollSpy = jest.spyOn(window, 'scrollTo').mockImplementation(() => {});
+
+      renderWithRouter(
+        <LoggedLayout>
+          <LocationDisplay />
+        </LoggedLayout>,
+        { route: '/app/b2c/performance' }
+      );
+
+      scrollSpy.mockClear();
+      fireEvent.click(screen.getByText('nav.dashboard'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('pathname')).toHaveTextContent('/app/b2c/dashboard');
+      });
+
+      expect(scrollSpy).toHaveBeenCalled();
+      scrollSpy.mockRestore();
+    });
+
+    it('does not scroll to top when navigating to a hash URL', async () => {
+      const scrollSpy = jest.spyOn(window, 'scrollTo').mockImplementation(() => {});
+
+      renderWithRouter(
+        <LoggedLayout>
+          <Link to="/app/b2c/dashboard#section">Go hash</Link>
+          <LocationDisplay />
+        </LoggedLayout>,
+        { route: '/app/b2c/performance' }
+      );
+
+      scrollSpy.mockClear();
+      fireEvent.click(screen.getByText('Go hash'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('hash')).toHaveTextContent('#section');
+      });
+
+      expect(scrollSpy).not.toHaveBeenCalled();
+      scrollSpy.mockRestore();
+    });
+
+
   describe('Authentication States', () => {
     it('shows loading skeleton when auth is not loaded', () => {
-      const { useUser } = require('@clerk/clerk-react');
-      useUser.mockReturnValue({
+      (useUser as unknown as jest.Mock).mockReturnValue({
         user: null,
         isSignedIn: false,
         isLoaded: false,
@@ -113,8 +182,7 @@ describe('LoggedLayout Component', () => {
     });
 
     it('renders children directly when not signed in', () => {
-      const { useUser } = require('@clerk/clerk-react');
-      useUser.mockReturnValue({
+      (useUser as unknown as jest.Mock).mockReturnValue({
         user: null,
         isSignedIn: false,
         isLoaded: true,

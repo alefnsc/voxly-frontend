@@ -1,10 +1,10 @@
 import React, { Suspense, lazy } from 'react';
-import { ClerkProvider } from '@clerk/clerk-react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 import { ApolloProvider } from '@apollo/client';
 import Layout from './components/layout';
 import { LoggedLayout } from './components/logged-layout';
+import LoggedHeaderLayout from './components/logged-header-layout';
 import { QueryProvider } from './lib/queryClient';
 import { apolloClient } from './lib/apolloClient';
 
@@ -17,12 +17,13 @@ import { InterviewFlowProvider } from './hooks/use-interview-flow';
 import { UserProvider } from './contexts/UserContext';
 import { WorkspaceProvider } from './contexts/WorkspaceContext';
 import { LanguageProvider } from './hooks/use-language';
+import { AuthProvider } from './contexts/AuthContext';
+import { RequireAuth } from './components/auth/RequireRole';
 
 // Eager loaded - Critical path components
 import Home from './pages/Home';
 import SignUp from './pages/SignUp';
 import SignIn from './pages/SignIn';
-import SSOCallback from './pages/SSOCallback';
 
 // ============================================
 // LAZY LOADED - Deferred until needed
@@ -40,13 +41,16 @@ const Account = lazy(() => import('./pages/Account'));
 const AuthPasswordConfirm = lazy(() => import('./pages/AuthPasswordConfirm'));
 const UnderConstruction = lazy(() => import('./pages/UnderConstruction'));
 const AccessDenied = lazy(() => import('./pages/AccessDenied'));
+const AuthError = lazy(() => import('./pages/AuthError'));
 
 // New 3-in-1 Platform Pages (lazy loaded)
-const B2CDashboard = lazy(() => import('./pages/App/b2c/dashboard'));
-const B2CInterviewNew = lazy(() => import('./pages/App/b2c/interview/new'));
-const B2CInterviews = lazy(() => import('./pages/App/b2c/interviews'));
-const B2CBilling = lazy(() => import('./pages/App/b2c/billing'));
+const B2CDashboard = lazy(() => import('./pages/app/b2c/dashboard'));
+const B2CPerformance = lazy(() => import('pages/app/b2c/performance/index'));
+const B2CInterviewNew = lazy(() => import('./pages/app/b2c/interview/new'));
+const B2CInterviews = lazy(() => import('./pages/app/b2c/interviews'));
 const ConsentPage = lazy(() => import('./pages/Onboarding/ConsentPage'));
+const PasswordPage = lazy(() => import('./pages/Onboarding/PasswordPage'));
+const PostLogin = lazy(() => import('./pages/PostLogin'));
 
 // ============================================
 // SUSPENSE FALLBACK
@@ -57,32 +61,16 @@ const PageLoader = () => (
   </div>
 );
 
-const CLERK_PUBLISHABLE_KEY = process.env.REACT_APP_CLERK_PUBLISHABLE_KEY || '';
 const RECAPTCHA_SITE_KEY = process.env.REACT_APP_RECAPTCHA_SITE_KEY || '';
-
-// Validate required environment variables in development (only log errors)
-if (process.env.NODE_ENV === 'development' && !CLERK_PUBLISHABLE_KEY) {
-  console.error('❌ Missing REACT_APP_CLERK_PUBLISHABLE_KEY in .env file');
-  console.error('📝 Create a .env file in the project root with:');
-  console.error('   REACT_APP_CLERK_PUBLISHABLE_KEY=your_key_here');
-  console.error('🔗 Get your key at: https://dashboard.clerk.com/last-active?path=api-keys');
-}
 
 const App: React.FC = () => {
   return (
     <ErrorBoundary>
       <ApolloProvider client={apolloClient}>
         <QueryProvider>
-          <ClerkProvider 
-          publishableKey={CLERK_PUBLISHABLE_KEY} 
-          afterSignOutUrl="/"
-          signInUrl="/sign-in"
-          signUpUrl="/sign-up"
-          signInForceRedirectUrl="/app/b2c/dashboard"
-          signUpForceRedirectUrl="/app/b2c/dashboard"
-        >
-          <UserProvider>
-            <WorkspaceProvider>
+          <AuthProvider>
+            <UserProvider>
+              <WorkspaceProvider>
               <LanguageProvider>
                 <GoogleReCaptchaProvider reCaptchaKey={RECAPTCHA_SITE_KEY}>
                   <InterviewFlowProvider>
@@ -94,56 +82,73 @@ const App: React.FC = () => {
                           {/* ============================================ */}
                           <Route path="sign-up" element={<SignUp />} />
                           <Route path="sign-in" element={<SignIn />} />
-                          <Route path="sso-callback" element={<SSOCallback />} />
+                          <Route path="auth/error" element={<AuthError />} />
+                          <Route path="auth/post-login" element={<PostLogin />} />
                           <Route path="under-construction" element={<UnderConstruction />} />
                           
-                          {/* Onboarding consent (outside main layout) */}
+                          {/* Onboarding pages (outside main layout) */}
+                          <Route path="onboarding/password" element={<PasswordPage />} />
                           <Route path="onboarding/consent" element={<ConsentPage />} />
+
+                          {/* ============================================ */}
+                          {/* LOGGED HEADER-ONLY ROUTES (no sidebar) */}
+                          {/* Used for active interview + payment redirects */}
+                          {/* ============================================ */}
+                          <Route element={<RequireAuth><LoggedHeaderLayout /></RequireAuth>}>
+                            <Route
+                              path="interview"
+                              element={
+                                <ConsentGuard>
+                                  <ProtectedInterviewRoute>
+                                    <Interview />
+                                  </ProtectedInterviewRoute>
+                                </ConsentGuard>
+                              }
+                            />
+
+                            {/* Payment result routes (no consent check - transactional) */}
+                            <Route path="payment/success" element={<PaymentResult />} />
+                            <Route path="payment/failure" element={<PaymentResult />} />
+                            <Route path="payment/pending" element={<PaymentResult />} />
+                          </Route>
 
                           {/* ============================================ */}
                           {/* LOGGED AREA ROUTES - Wrapped in LoggedLayout */}
                           {/* All /app/* routes use LoggedLayout for consistent */}
                           {/* TopBar, Sidebar, Footer, and mobile navigation */}
                           {/* ============================================ */}
-                          <Route element={<ConsentGuard><LoggedLayout /></ConsentGuard>}>
+                          <Route element={<RequireAuth><ConsentGuard><LoggedLayout /></ConsentGuard></RequireAuth>}>
                             {/* B2C: Interview Practice & Performance */}
                             <Route path="app/b2c/dashboard" element={<B2CDashboard />} />
+                            <Route path="app/b2c/performance" element={<B2CPerformance />} />
                             <Route path="app/b2c/interview/new" element={<B2CInterviewNew />} />
                             <Route path="app/b2c/interview/:id" element={<InterviewDetails />} />
                             <Route path="app/b2c/interviews" element={<B2CInterviews />} />
-                            <Route path="app/b2c/resumes" element={<ResumeLibrary />} />
-                            
-                            {/* Billing - B2C context */}
-                            <Route path="app/b2c/billing" element={<B2CBilling />} />
+                            <Route path="app/b2c/resume-library" element={<ResumeLibrary />} />
+                            <Route path="app/b2c/resumes" element={<Navigate to="/app/b2c/resume-library" replace />} />
                             
                             {/* Legacy billing redirect */}
-                            <Route path="app/billing" element={<Navigate to="/app/b2c/billing" replace />} />
+                            <Route path="app/billing" element={<Navigate to="/account?section=creditsPurchase" replace />} />
                             
                             {/* Account Settings */}
                             <Route path="account" element={<Account />} />
                             
-                            {/* About page with logged layout for authenticated users */}
-                            <Route path="about" element={<About />} />
-                          
                           {/* Legacy Interview Details - redirect to new canonical route */}
                           <Route path="interview/:id" element={<InterviewDetails />} />
                           
                           {/* Feedback page */}
                           <Route path="feedback" element={<Feedback />} />
                         </Route>
-                        
-                        {/* ============================================ */}
-                        {/* LEGAL PAGES - Public, no auth required */}
-                        {/* These have their own TopBar + Footer */}
-                        {/* ============================================ */}
-                        <Route path="privacy-policy" element={<PrivacyPolicy />} />
-                        <Route path="terms-of-use" element={<TermsOfUse />} />
 
                         {/* ============================================ */}
                         {/* PUBLIC ROUTES - Use basic Layout (with Footer) */}
                         {/* ============================================ */}
                         <Route path="/" element={<Layout />}>
                           <Route index element={<Home />} />
+
+                          {/* Legal pages (public, use Layout header/footer) */}
+                          <Route path="privacy-policy" element={<PrivacyPolicy />} />
+                          <Route path="terms-of-use" element={<TermsOfUse />} />
                           
                           {/* Access Denied page */}
                           <Route path="access-denied" element={<AccessDenied />} />
@@ -162,7 +167,7 @@ const App: React.FC = () => {
                           
                           {/* Legacy Routes (redirect to new paths) */}
                           <Route path="interviews" element={<Navigate to="/app/b2c/interviews" replace />} />
-                          <Route path="resumes" element={<Navigate to="/app/b2c/resumes" replace />} />
+                          <Route path="resumes" element={<Navigate to="/app/b2c/resume-library" replace />} />
                           <Route path="credits" element={<Navigate to="/app/b2c/billing" replace />} />
                           <Route 
                             path="dashboard" 
@@ -183,13 +188,6 @@ const App: React.FC = () => {
                               <B2CInterviewNew />
                             </ConsentGuard>
                           } />
-                          <Route path="interview" element={
-                            <ConsentGuard>
-                              <ProtectedInterviewRoute>
-                                <Interview />
-                              </ProtectedInterviewRoute>
-                            </ConsentGuard>
-                          } />
 
                           {/* Password reset confirmation */}
                           <Route path="auth/password-confirm" element={<AuthPasswordConfirm />} />
@@ -197,10 +195,6 @@ const App: React.FC = () => {
                           {/* About page for unauthenticated users */}
                           <Route path="about" element={<About />} />
                           
-                          {/* Payment result routes (no consent check - transactional) */}
-                          <Route path="payment/success" element={<PaymentResult />} />
-                          <Route path="payment/failure" element={<PaymentResult />} />
-                          <Route path="payment/pending" element={<PaymentResult />} />
                         </Route>
                       </Routes>
                       </Suspense>
@@ -210,7 +204,7 @@ const App: React.FC = () => {
               </LanguageProvider>
             </WorkspaceProvider>
           </UserProvider>
-        </ClerkProvider>
+          </AuthProvider>
       </QueryProvider>
       </ApolloProvider>
     </ErrorBoundary>

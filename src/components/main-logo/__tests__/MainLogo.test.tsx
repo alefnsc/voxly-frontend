@@ -23,7 +23,7 @@ describe('MainLogo', () => {
         render(<MainLogo />);
         const logo = screen.getByAltText('Logo');
         expect(logo).toBeInTheDocument();
-        expect(logo).toHaveAttribute('src', '/main.png');
+        expect(logo).toHaveAttribute('src', '/app-logo.png');
     });
 
     it('has correct image dimensions', () => {

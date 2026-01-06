@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from 'contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import APIService from 'services/APIService';
 import { config } from 'lib/config';
@@ -51,7 +51,7 @@ export const useCallManager = (body, navigate) => {
                 // Consume credit when call is registered successfully
                 if (user?.id) {
                     try {
-                        await APIService.consumeCredit(user.id, registerCallResponse.call_id);
+                        await APIService.consumeCredit(registerCallResponse.call_id);
                         console.log('✅ Credit consumed for interview');
                     } catch (creditError) {
                         console.error('❌ Failed to consume credit:', creditError);
@@ -117,7 +117,7 @@ export const useCallManager = (body, navigate) => {
             // Restore credit
             if (user?.id) {
                 try {
-                    await APIService.restoreCredit(user.id, 'incompatibility', callIdRef.current);
+                    await APIService.restoreCredit('incompatibility', callIdRef.current);
                     console.log('✅ Credit restored successfully');
                 } catch (error) {
                     console.error('❌ Failed to restore credit:', error);
@@ -144,7 +144,7 @@ export const useCallManager = (body, navigate) => {
             // Only restore credit if within grace period (15s)
             if (shouldRestoreCredit && user?.id) {
                 try {
-                    await APIService.restoreCredit(user.id, 'early_interruption', callIdRef.current);
+                    await APIService.restoreCredit('early_interruption', callIdRef.current);
                     console.log('✅ Credit restored for early interruption');
                 } catch (error) {
                     console.error('❌ Failed to restore credit:', error);

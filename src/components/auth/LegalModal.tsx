@@ -142,7 +142,7 @@ const PrivacyPolicyContent: React.FC = () => {
         <h3 className="text-base font-medium text-zinc-800 mt-3 mb-2">Account Information</h3>
         <ul className="list-disc list-inside text-zinc-600 space-y-1 ml-2 mb-3 text-sm">
           <li>Email address, name, and profile details provided during registration</li>
-          <li>Authentication credentials managed through our provider (Clerk)</li>
+          <li>Authentication credentials for account access</li>
           <li>Phone number (if provided for verification)</li>
         </ul>
 

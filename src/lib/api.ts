@@ -11,9 +11,9 @@
 // CONFIGURATION
 // ========================================
 
-const BACKEND_URL = process.env.REACT_APP_ENV === 'development'
-  ? process.env.REACT_APP_BACKEND_URL_DEV || process.env.REACT_APP_BACKEND_URL
-  : process.env.REACT_APP_BACKEND_URL;
+import { config } from './config';
+
+const BACKEND_URL = config.backendUrl;
 
 // ========================================
 // TYPES
@@ -45,8 +45,7 @@ export interface APIError extends Error {
  */
 export async function safeFetch<T>(
   endpoint: string,
-  options: RequestInit = {},
-  userId?: string
+  options: RequestInit = {}
 ): Promise<APIResponse<T>> {
   const url = endpoint.startsWith('http') ? endpoint : `${BACKEND_URL}${endpoint}`;
   
@@ -57,14 +56,11 @@ export async function safeFetch<T>(
     ...(options.headers as Record<string, string> || {}),
   };
   
-  if (userId) {
-    headers['x-user-id'] = userId;
-  }
-  
   try {
     const response = await fetch(url, {
       ...options,
       headers,
+      credentials: options.credentials ?? 'include',
     });
     
     // Validate Content-Type before parsing
@@ -119,17 +115,17 @@ export async function safeFetch<T>(
 // ========================================
 
 export const api = {
-  get: <T>(endpoint: string, userId?: string) => 
-    safeFetch<T>(endpoint, { method: 'GET' }, userId),
+  get: <T>(endpoint: string, _userId?: string) => 
+    safeFetch<T>(endpoint, { method: 'GET' }),
     
-  post: <T>(endpoint: string, body: unknown, userId?: string) =>
-    safeFetch<T>(endpoint, { method: 'POST', body: JSON.stringify(body) }, userId),
+  post: <T>(endpoint: string, body: unknown, _userId?: string) =>
+    safeFetch<T>(endpoint, { method: 'POST', body: JSON.stringify(body) }),
     
-  put: <T>(endpoint: string, body: unknown, userId?: string) =>
-    safeFetch<T>(endpoint, { method: 'PUT', body: JSON.stringify(body) }, userId),
+  put: <T>(endpoint: string, body: unknown, _userId?: string) =>
+    safeFetch<T>(endpoint, { method: 'PUT', body: JSON.stringify(body) }),
     
-  delete: <T>(endpoint: string, userId?: string) =>
-    safeFetch<T>(endpoint, { method: 'DELETE' }, userId),
+  delete: <T>(endpoint: string, _userId?: string) =>
+    safeFetch<T>(endpoint, { method: 'DELETE' }),
 };
 
 export default api;

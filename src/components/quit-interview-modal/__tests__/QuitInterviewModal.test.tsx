@@ -6,7 +6,7 @@ import QuitInterviewModal from '../index';
 describe('QuitInterviewModal Component', () => {
     const mockOnClose = jest.fn();
     const mockOnQuit = jest.fn();
-    const defaultMessage = "This action can't be undone and your interview credits will be consumed.";
+    const defaultMessage = "Your interview will end and you'll be redirected.";
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -29,8 +29,13 @@ describe('QuitInterviewModal Component', () => {
 
         // Check warning section
         expect(screen.getByText('What happens if you quit')).toBeInTheDocument();
-        expect(screen.getByText('Your interview credit will be marked as used')).toBeInTheDocument();
+        expect(screen.getByText(/credit will be restored/i)).toBeInTheDocument();
+        expect(screen.getByText(/credit will be consumed/i)).toBeInTheDocument();
+        expect(screen.getByText(/no feedback will be generated/i)).toBeInTheDocument();
         expect(screen.getByText('Your current progress will not be saved')).toBeInTheDocument();
+
+        // Confirmation text
+        expect(screen.getByText('Are you sure you want to proceed?')).toBeInTheDocument();
 
         // Check buttons
         expect(screen.getByText('Return to Interview')).toBeInTheDocument();

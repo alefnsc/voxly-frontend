@@ -2,8 +2,7 @@ import { RetellWebClient } from "retell-client-js-sdk";
 import { config } from "../lib/config";
 import { getDeviceFingerprint } from "./deviceFingerprint";
 
-// Note: This service uses Clerk for authentication
-// Backend API validates x-user-id header with Clerk user IDs
+// Note: This service uses first-party cookie sessions for authentication
 // Backend IS needed for: Interview calls (Retell API proxy), Feedback generation, Payments
 
 // Backend URL from environment config
@@ -147,18 +146,13 @@ async function safeJsonParse<T>(response: Response, endpointName: string): Promi
     }
 }
 
-// Get headers with Clerk x-user-id
-const getHeaders = (userId?: string): Record<string, string> => {
+// Standard headers (cookie session auth is handled via credentials: 'include')
+const getHeaders = (_userId?: string): Record<string, string> => {
     const headers: Record<string, string> = {
         'Content-Type': 'application/json',
         'ngrok-skip-browser-warning': 'true', // Required for ngrok free tier
     };
-    
-    // Use Clerk user ID via x-user-id header
-    if (userId) {
-        headers['x-user-id'] = userId;
-    }
-    
+
     return headers;
 };
 
@@ -183,7 +177,6 @@ interface Metadata {
 
 interface MainInterface {
     metadata: Metadata;
-    userId?: string; // User ID for authentication
 }
 
 interface UserInfo {
@@ -251,10 +244,10 @@ export interface InterviewDetail extends InterviewSummary {
     endedAt?: string | null;
     feedback: {
         overallScore: number;
-        contentScore: number;
-        communicationScore: number;
-        confidenceScore: number;
-        technicalScore: number;
+        contentScore: number | null;
+        communicationScore: number | null;
+        confidenceScore: number | null;
+        technicalScore: number | null;
         summary: string;
         strengths: string[];
         improvements: string[];
@@ -283,6 +276,58 @@ export interface ScoreDataPoint {
     interviewId: string;
 }
 
+export type PerformanceRange = '1W' | '1M' | '6M' | 'ALL';
+
+export interface PerformanceSummary {
+    range: PerformanceRange;
+    startDate: string | null;
+    endDate: string;
+    totals: {
+        completedInterviews: number;
+        totalMinutes: number;
+        thisWeekInterviews: number;
+        thisWeekMinutes: number;
+        activeWeeks: number;
+        currentWeekStreak: number;
+    };
+    scores: {
+        averageScore: number | null;
+        bestScore: number | null;
+        latestScore: number | null;
+    };
+    recentScores: Array<{ date: string; score: number }>;
+    velocity: {
+        pointsPerWeek: number;
+        label: 'up' | 'down' | 'flat';
+    };
+    consistencyScore: number | null;
+    communication: {
+        sentimentScore: number | null;
+        paceWpm: number | null;
+        score: number | null;
+    };
+    composite: {
+        score: number | null;
+        components: {
+            score: number | null;
+            velocity: number | null;
+            consistency: number | null;
+            communication: number | null;
+        };
+    };
+    breakdown: {
+        technical: number | null;
+        communication: number | null;
+        confidence: number | null;
+    };
+}
+
+export interface PerformanceGoal {
+    weeklyInterviewGoal: number;
+    weeklyMinutesGoal: number;
+    updatedAt: string;
+}
+
 export interface SpendingDataPoint {
     month: string;
     amount: number;
@@ -294,6 +339,7 @@ export interface CreateInterviewData {
     companyName: string;
     jobDescription: string;
     language?: string; // Interview language code
+    country?: string; // Job location country code (e.g., 'US', 'BR')
     resumeId: string; // Required: UUID reference to ResumeDocument
     resumeFileName?: string; // Optional: for display purposes
 }
@@ -318,6 +364,7 @@ class APIService {
     ): Promise<T> {
         const response = await fetch(`${BACKEND_URL}/graphql`, {
             method: 'POST',
+            credentials: 'include',
             headers: {
                 ...getHeaders(userId),
                 'Content-Type': 'application/json',
@@ -370,6 +417,7 @@ class APIService {
                 ...data,
                 userId,  // Include userId in body as backend expects
             }),
+            credentials: 'include',
         });
         
         if (!response.ok) {
@@ -390,17 +438,18 @@ class APIService {
     /**
      * Link Retell call ID to existing interview
      */
-    async linkRetellCallToInterview(interviewId: string, retellCallId: string, userId: string): Promise<void> {
+    async linkRetellCallToInterview(interviewId: string, retellCallId: string): Promise<void> {
         console.log('🔗 Linking Retell call to interview:', { interviewId, retellCallId });
         
         const response = await fetch(`${BACKEND_URL}/api/interviews/${interviewId}`, {
             method: "PATCH",
-            headers: getHeaders(userId),
+            headers: getHeaders(),
             body: JSON.stringify({
                 retellCallId,
                 status: 'IN_PROGRESS',
                 startedAt: new Date().toISOString()
             }),
+            credentials: 'include',
         });
         
         if (!response.ok) {
@@ -430,6 +479,7 @@ class APIService {
                 endedAt: new Date().toISOString(),
                 ...results
             }),
+            credentials: 'include',
         });
         
         if (!response.ok) {
@@ -599,6 +649,7 @@ class APIService {
                 endedAt: new Date().toISOString(),
                 callDuration
             }),
+            credentials: 'include',
         });
         
         if (!response.ok) {
@@ -651,13 +702,93 @@ class APIService {
         return result;
     }
 
+    /**
+     * Set password for OAuth user (first-time password setup)
+     * Uses cookie-based session authentication
+     */
+    async setPassword(_userId: string, password: string): Promise<{ status: string; message: string }> {
+        const response = await fetch(`${BACKEND_URL}/api/auth/set-password`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include', // Use session cookie
+            body: JSON.stringify({ password }),
+        });
+
+        const result = await response.json().catch(() => ({
+            status: 'error',
+            message: 'Unexpected response from server',
+        }));
+
+        if (!response.ok) {
+            throw new Error(result.message || `Error: ${response.status}`);
+        }
+
+        return result;
+    }
+
+    /**
+     * Check if user has a password set
+     * Uses cookie-based session authentication
+     */
+    async hasPassword(_userId: string): Promise<boolean> {
+        const response = await fetch(`${BACKEND_URL}/api/auth/has-password`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include', // Use session cookie
+        });
+
+        const result = await response.json().catch(() => ({
+            status: 'error',
+            hasPassword: null,
+            message: 'Unexpected response from server',
+        }));
+
+        if (!response.ok) {
+            throw new Error(result.message || `Error: ${response.status}`);
+        }
+
+        return result.hasPassword === true;
+    }
+
+    /**
+     * Get password policy for UI display
+     */
+    async getPasswordPolicy(): Promise<{
+        minLength: number;
+        requiredClasses: number;
+        maxConsecutiveIdentical: number;
+        classes: string[];
+        description: string;
+    }> {
+        const response = await fetch(`${BACKEND_URL}/api/auth/password-policy`, {
+            method: 'GET',
+            headers: getHeaders(),
+        });
+
+        const result = await response.json().catch(() => ({
+            status: 'error',
+            policy: null,
+        }));
+
+        return result.policy || {
+            minLength: 8,
+            requiredClasses: 3,
+            maxConsecutiveIdentical: 2,
+            classes: ['lowercase', 'uppercase', 'numbers', 'special'],
+            description: 'Password must be at least 8 characters with lowercase, uppercase, numbers, and special characters.',
+        };
+    }
+
     async registerCall(body: MainInterface): Promise<RegisterCallResponse & { interviewId?: string }> {
         // Backend endpoint required for Retell API integration
         console.log('📞 Registering call with backend:', {
             candidate: body.metadata.first_name,
             position: body.metadata.job_title,
             backend_url: BACKEND_URL,
-            userId: body.userId ? '✅ Present' : '❌ Missing',
             preferredLanguage: body.metadata.preferred_language || 'not_provided'
         });
         
@@ -673,8 +804,9 @@ class APIService {
         // Register Retell call (resume fetched server-side)
         const response = await fetch(`${BACKEND_URL}/register-call`, {
             method: "POST",
-            headers: getHeaders(body.userId),
+            headers: getHeaders(),
             body: JSON.stringify(body),
+            credentials: 'include',
         });
         
         if (!response.ok) {
@@ -689,9 +821,9 @@ class APIService {
         });
         
         // Step 3: Link Retell call ID to interview record
-        if (interviewId && result.call_id && body.userId) {
+        if (interviewId && result.call_id) {
             try {
-                await this.linkRetellCallToInterview(interviewId, result.call_id, body.userId);
+                await this.linkRetellCallToInterview(interviewId, result.call_id);
             } catch (err) {
                 console.error('⚠️ Failed to link Retell call to interview:', err);
                 // Don't fail - interview can still proceed
@@ -702,14 +834,14 @@ class APIService {
     }
 
     /**
-     * @deprecated Use Clerk user data instead - this endpoint no longer exists
+     * @deprecated Use AuthContext user data instead - this endpoint no longer exists
      * User information should be retrieved from:
-     * - useUser() hook from @clerk/clerk-react
+     * - useAuth() hook from contexts/AuthContext
      * - getCurrentUser() method below for backend-synced data
      */
     async getUserInfo(_userId: string): Promise<UserInfoResponse> {
-        console.warn('⚠️ getUserInfo is deprecated. Use Clerk user data or getCurrentUser() instead.');
-        throw new Error('getUserInfo is deprecated. Use Clerk user data or getCurrentUser() instead.');
+        console.warn('⚠️ getUserInfo is deprecated. Use AuthContext user data or getCurrentUser() instead.');
+        throw new Error('getUserInfo is deprecated. Use AuthContext user data or getCurrentUser() instead.');
     }
 
     async getCall(call_id: string): Promise<Response> {
@@ -757,14 +889,15 @@ class APIService {
         });
     }
 
-    async restoreCredit(userId: string, reason: string, callId?: string): Promise<{ status: string; newCredits?: number; message?: string }> {
+    async restoreCredit(reason: string, callId?: string): Promise<{ status: string; newCredits?: number; message?: string }> {
         // Restore credit when interview is cancelled due to incompatibility
-        console.log('💳 Requesting credit restoration:', { userId, reason, callId });
+        console.log('💳 Requesting credit restoration:', { reason, callId });
         
         const response = await fetch(`${BACKEND_URL}/restore-credit`, {
             method: 'POST',
-            headers: getHeaders(userId),
-            body: JSON.stringify({ userId, reason, callId })
+            headers: getHeaders(),
+            credentials: 'include',
+            body: JSON.stringify({ reason, callId })
         });
         
         if (!response.ok) {
@@ -777,14 +910,15 @@ class APIService {
         return result;
     }
 
-    async consumeCredit(userId: string, callId?: string): Promise<{ status: string; newCredits?: number; message?: string }> {
+    async consumeCredit(callId?: string): Promise<{ status: string; newCredits?: number; message?: string }> {
         // Consume credit when interview starts
-        console.log('💳 Consuming credit:', { userId, callId });
+        console.log('💳 Consuming credit:', { callId });
         
         const response = await fetch(`${BACKEND_URL}/consume-credit`, {
             method: 'POST',
-            headers: getHeaders(userId),
-            body: JSON.stringify({ userId, callId })
+            headers: getHeaders(),
+            credentials: 'include',
+            body: JSON.stringify({ callId })
         });
         
         if (!response.ok) {
@@ -945,6 +1079,7 @@ class APIService {
                 const response = await fetch(`${BACKEND_URL}/api/interviews/${interviewId}`, {
                     method: 'GET',
                     headers: getHeaders(userId),
+                    credentials: 'include',
                 });
                 
                 if (!response.ok) {
@@ -957,6 +1092,34 @@ class APIService {
             CACHE_TTL.INTERVIEW_DETAILS,
             forceRefresh
         );
+    }
+
+    /**
+     * Get post-call processing status for progressive UI loading
+     * Used by Feedback page to poll for data availability
+     */
+    async getPostCallStatus(interviewId: string, userId: string): Promise<{
+        processingStatus: 'pending' | 'processing' | 'partial' | 'completed';
+        hasTranscript: boolean;
+        hasMetrics: boolean;
+        hasStudyPlan: boolean;
+        hasFeedback: boolean;
+        overallScore: number | null;
+        interviewStatus: string;
+    }> {
+        const response = await fetch(`${BACKEND_URL}/api/interviews/${interviewId}/postcall-status`, {
+            method: 'GET',
+            headers: getHeaders(userId),
+            credentials: 'include',
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || `Error fetching postcall status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        return result.data;
     }
 
     /**
@@ -1057,6 +1220,7 @@ class APIService {
         invalidateCache(`Vocaid_stats_${userId}`);
         invalidateCache(`Vocaid_payments_${userId}`);
         invalidateCache(`Vocaid_spending_${userId}`);
+        invalidateCache('Vocaid_current_user');
     }
 
     /**
@@ -1074,12 +1238,16 @@ class APIService {
      * Sync user data to backend database on login
      * This ensures user exists in local database even if webhook wasn't received
      */
-    async syncUser(userId: string): Promise<{ status: string; user: any; message: string }> {
-        console.log('🔄 Syncing user to backend:', userId);
+    async syncUser(): Promise<{ status: string; user: any; message: string }> {
+        console.log('🔄 Syncing user to backend');
         
         const response = await fetch(`${BACKEND_URL}/api/users/sync`, {
             method: 'POST',
-            headers: getHeaders(userId),
+            headers: {
+                'Content-Type': 'application/json',
+                'ngrok-skip-browser-warning': 'true',
+            },
+            credentials: 'include',
         });
         
         if (!response.ok) {
@@ -1101,8 +1269,8 @@ class APIService {
      * Called on interview page load and critical actions
      * Includes device fingerprint for signup abuse detection
      */
-    async validateUser(userId: string): Promise<{ status: string; user: any; message: string; freeTrialGranted?: boolean; freeCreditBlocked?: boolean }> {
-        console.log('🔐 Validating user session:', userId);
+    async validateUser(): Promise<{ status: string; user: any; message: string; freeTrialGranted?: boolean; freeCreditBlocked?: boolean }> {
+        console.log('🔐 Validating user session');
         
         // Get device fingerprint for abuse detection
         let deviceFingerprint: string | undefined;
@@ -1115,9 +1283,10 @@ class APIService {
         const response = await fetch(`${BACKEND_URL}/api/users/validate`, {
             method: 'POST',
             headers: {
-                ...getHeaders(userId),
                 'Content-Type': 'application/json',
+                'ngrok-skip-browser-warning': 'true',
             },
+            credentials: 'include',
             body: JSON.stringify({ deviceFingerprint }),
         });
         
@@ -1147,8 +1316,8 @@ class APIService {
      * Get current user data from backend
      * Uses sessionStorage cache to prevent excessive API calls
      */
-    async getCurrentUser(userId: string, skipCache: boolean = false): Promise<{ status: string; user: any }> {
-        const cacheKey = `Vocaid_current_user_${userId}`;
+    async getCurrentUser(skipCache: boolean = false): Promise<{ status: string; user: any }> {
+        const cacheKey = `Vocaid_current_user`;
         const cacheTTL = 60 * 1000; // 1 minute cache
         
         // Check cache first (unless skipCache is true)
@@ -1167,11 +1336,13 @@ class APIService {
             }
         }
         
-        console.log('👤 Getting current user from backend:', userId);
+        console.log('👤 Getting current user from backend');
         
         const response = await fetch(`${BACKEND_URL}/api/users/me`, {
             method: 'GET',
-            headers: getHeaders(userId),
+            headers: getHeaders(),
+            credentials: 'include',
+            cache: 'no-store',
         });
         
         if (!response.ok) {
@@ -1222,7 +1393,8 @@ class APIService {
         
         const response = await fetch(`${BACKEND_URL}/api/credits/balance`, {
             method: 'GET',
-            headers: getHeaders(userId),
+            headers: getHeaders(),
+            credentials: 'include',
         });
         
         if (!response.ok) {
@@ -1270,7 +1442,8 @@ class APIService {
         
         const response = await fetch(url, {
             method: 'GET',
-            headers: getHeaders(userId),
+            headers: getHeaders(),
+            credentials: 'include',
         });
         
         if (!response.ok) {
@@ -1295,7 +1468,8 @@ class APIService {
         
         const response = await fetch(`${BACKEND_URL}/api/credits/check?amount=${amount}`, {
             method: 'GET',
-            headers: getHeaders(userId),
+            headers: getHeaders(),
+            credentials: 'include',
         });
         
         if (!response.ok) {
@@ -1308,25 +1482,24 @@ class APIService {
     /**
      * Get user's trial status including promo info
      */
-    async getTrialStatus(userId: string): Promise<{
+    async getTrialStatus(): Promise<{
         status: string;
         message?: string;
         data?: {
-            trialCreditsGranted: boolean;
+            trialCreditsClaimed: boolean;
             trialCreditsAmount: number;
-            trialCreditsGrantedAt: string | null;
-            isPromoActive: boolean;
-            promoEndsAt: string;
-            promoRemainingDays: number;
+            trialCreditsClaimedAt: string | null;
             currentBalance: number;
-            riskLevel: 'low' | 'medium' | 'high';
+            canClaim: boolean;
+            blockedReason: string | null;
         };
     }> {
-        console.log('🎁 Getting trial status:', userId);
+        console.log('🎁 Getting trial status');
         
         const response = await fetch(`${BACKEND_URL}/api/credits/trial-status`, {
             method: 'GET',
-            headers: getHeaders(userId),
+            headers: getHeaders(),
+            credentials: 'include',
         });
         
         if (!response.ok) {
@@ -1341,31 +1514,31 @@ class APIService {
     }
 
     /**
-     * Get current promo information (public endpoint)
+     * Claim trial credits (fixed amount) after verification requirements are met
      */
-    async getPromoInfo(): Promise<{
+    async claimTrialCredits(): Promise<{
         status: string;
+        message?: string;
         data?: {
-            isPromoActive: boolean;
-            promoEndsAt: string;
-            promoRemainingDays: number;
-            promoCredits: number;
-            standardCredits: number;
+            creditsGranted: number;
+            newBalance: number | null;
+            ledgerEntryId: string | null;
+            eligibility: {
+                canClaim: boolean;
+                blockedReason?: string;
+            };
+        };
+        eligibility?: {
+            canClaim: boolean;
+            blockedReason?: string;
         };
     }> {
-        console.log('🎉 Getting promo info');
-        
-        const response = await fetch(`${BACKEND_URL}/api/credits/promo-info`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+        const response = await fetch(`${BACKEND_URL}/api/credits/claim-trial`, {
+            method: 'POST',
+            headers: getHeaders(),
+            credentials: 'include',
         });
-        
-        if (!response.ok) {
-            throw new Error(`Error getting promo info: ${response.status}`);
-        }
-        
+
         return response.json();
     }
 
@@ -1439,7 +1612,7 @@ class APIService {
     /**
      * Get user's language and region preferences
      */
-    async getUserPreferences(userId: string): Promise<{
+    async getUserPreferences(): Promise<{
         status: string;
         data: {
             language: string;
@@ -1455,11 +1628,12 @@ class APIService {
             timezone?: string;
         };
     }> {
-        console.log('🌐 Getting user preferences:', userId);
+        console.log('🌐 Getting user preferences');
         
         const response = await fetch(`${BACKEND_URL}/api/multilingual/preferences`, {
             method: 'GET',
-            headers: getHeaders(userId),
+            headers: getHeaders(),
+            credentials: 'include',
         });
         
         if (!response.ok) {
@@ -1477,39 +1651,44 @@ class APIService {
         country?: string;
         timezone?: string;
         languageSetByUser?: boolean;
+        preferredPhoneCountry?: string;
     }): Promise<any> {
-        // This is a placeholder - in production, this would call the backend
-        // For now, we're storing in Clerk metadata via the backend
         console.log('🌐 Updating user preferences:', params);
         
-        // The actual implementation would be:
-        // const response = await fetch(`${BACKEND_URL}/api/multilingual/preferences`, {
-        //     method: 'PUT',
-        //     headers: getHeaders(userId),
-        //     body: JSON.stringify({
-        //         language: params.preferredLanguage,
-        //         country: params.country,
-        //         timezone: params.timezone,
-        //     }),
-        // });
+        const response = await fetch(`${BACKEND_URL}/api/multilingual/preferences`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify({
+                language: params.preferredLanguage,
+                country: params.country,
+                timezone: params.timezone,
+                preferredPhoneCountry: params.preferredPhoneCountry,
+            }),
+            credentials: 'include',
+        });
         
-        // For now, just store locally
+        if (!response.ok) {
+            throw new Error(`Error updating preferences: ${response.status}`);
+        }
+        
+        // Also update local storage for immediate use
         if (params.preferredLanguage) {
             localStorage.setItem('Vocaid_language', params.preferredLanguage);
         }
         
-        return { status: 'success' };
+        return response.json();
     }
 
     /**
      * Initialize preferences for new user with auto-detection
      */
-    async initializeUserPreferences(userId: string): Promise<any> {
-        console.log('🌐 Initializing user preferences:', userId);
+    async initializeUserPreferences(): Promise<any> {
+        console.log('🌐 Initializing user preferences');
         
         const response = await fetch(`${BACKEND_URL}/api/multilingual/preferences/initialize`, {
             method: 'POST',
-            headers: getHeaders(userId),
+            headers: getHeaders(),
+            credentials: 'include',
         });
         
         if (!response.ok) {
@@ -1613,6 +1792,7 @@ class APIService {
         const response = await fetch(`${BACKEND_URL}/api/multilingual/payment/provider`, {
             method: 'GET',
             headers: getHeaders(userId),
+            credentials: 'include',
         });
         
         if (!response.ok) {
@@ -1647,6 +1827,7 @@ class APIService {
         const response = await fetch(`${BACKEND_URL}/api/multilingual/payment/packages`, {
             method: 'GET',
             headers: getHeaders(userId),
+            credentials: 'include',
         });
         
         if (!response.ok) {
@@ -1680,6 +1861,7 @@ class APIService {
         const response = await fetch(`${BACKEND_URL}/api/multilingual/payment/create`, {
             method: 'POST',
             headers: getHeaders(userId),
+            credentials: 'include',
             body: JSON.stringify(params),
         });
         
@@ -1714,6 +1896,7 @@ class APIService {
             {
                 method: 'GET',
                 headers: getHeaders(userId),
+                credentials: 'include',
             }
         );
         
@@ -1721,6 +1904,61 @@ class APIService {
             throw new Error(`Error checking payment status: ${response.status}`);
         }
         
+        return response.json();
+    }
+
+    /**
+     * Confirm MercadoPago payment (fallback when webhook/redirect timing is unreliable)
+     */
+    async confirmMercadoPagoPayment(
+        userId: string,
+        paymentId: string
+    ): Promise<{
+        status: string;
+        data: {
+            confirmed: boolean;
+            paymentId: string;
+            paymentStatus?: string;
+            statusDetail?: string;
+            creditsAdded?: number;
+            newBalance?: number;
+        };
+    }> {
+        const response = await fetch(`${BACKEND_URL}/api/multilingual/payment/confirm/mercadopago`, {
+            method: 'POST',
+            headers: getHeaders(userId),
+            credentials: 'include',
+            body: JSON.stringify({ paymentId }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error confirming MercadoPago payment: ${response.status}`);
+        }
+
+        return response.json();
+    }
+
+    /**
+     * Capture PayPal order after approval (required to complete purchase and add credits)
+     */
+    async capturePayPalOrder(
+        userId: string,
+        orderId: string
+    ): Promise<{
+        status: string;
+        orderId: string;
+        paymentStatus: string;
+    }> {
+        const response = await fetch(`${BACKEND_URL}/api/payments/paypal/capture/${orderId}`, {
+            method: 'POST',
+            headers: getHeaders(userId),
+            credentials: 'include',
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error capturing PayPal order: ${response.status}`);
+        }
+
         return response.json();
     }
 
@@ -1738,6 +1976,7 @@ class APIService {
         const response = await fetch(`${BACKEND_URL}/api/resumes`, {
             method: 'GET',
             headers: getHeaders(userId),
+            credentials: 'include',
         });
         
         if (!response.ok) {
@@ -1759,6 +1998,7 @@ class APIService {
             {
                 method: 'GET',
                 headers: getHeaders(userId),
+                credentials: 'include',
             }
         );
         
@@ -1788,6 +2028,7 @@ class APIService {
             {
                 method: 'GET',
                 headers: getHeaders(userId),
+                credentials: 'include',
             }
         );
         
@@ -1825,6 +2066,7 @@ class APIService {
         const response = await fetch(`${BACKEND_URL}/api/resumes/upload`, {
             method: 'POST',
             headers: getHeaders(userId),
+            credentials: 'include',
             body: JSON.stringify(data),
         });
         
@@ -1854,6 +2096,7 @@ class APIService {
         const response = await fetch(`${BACKEND_URL}/api/resumes/${resumeId}`, {
             method: 'PATCH',
             headers: getHeaders(userId),
+            credentials: 'include',
             body: JSON.stringify(data),
         });
         
@@ -1874,6 +2117,7 @@ class APIService {
         const response = await fetch(`${BACKEND_URL}/api/resumes/${resumeId}`, {
             method: 'DELETE',
             headers: getHeaders(userId),
+            credentials: 'include',
         });
         
         if (!response.ok) {
@@ -1893,6 +2137,7 @@ class APIService {
         const response = await fetch(`${BACKEND_URL}/api/resumes/${resumeId}/primary`, {
             method: 'POST',
             headers: getHeaders(userId),
+            credentials: 'include',
         });
         
         if (!response.ok) {
@@ -1912,6 +2157,7 @@ class APIService {
         const response = await fetch(`${BACKEND_URL}/api/resumes/${resumeId}/versions`, {
             method: 'GET',
             headers: getHeaders(userId),
+            credentials: 'include',
         });
         
         if (!response.ok) {
@@ -1944,69 +2190,12 @@ class APIService {
         const response = await fetch(`${BACKEND_URL}/api/resumes/${resumeId}/versions`, {
             method: 'POST',
             headers: getHeaders(userId),
+            credentials: 'include',
             body: JSON.stringify(data),
         });
         
         if (!response.ok) {
             throw new Error(`Error creating resume version: ${response.status}`);
-        }
-        
-        return response.json();
-    }
-
-    /**
-     * Score a resume against a specific role
-     */
-    async scoreResume(
-        userId: string,
-        resumeId: string,
-        roleTitle: string
-    ): Promise<{
-        status: string;
-        data: {
-            resumeId: string;
-            roleTitle: string;
-            score: number;
-            provider: string;
-            breakdown: Record<string, unknown> | null;
-            cachedAt: string | null;
-        };
-    }> {
-        const response = await fetch(`${BACKEND_URL}/api/resumes/${resumeId}/score`, {
-            method: 'POST',
-            headers: getHeaders(userId),
-            body: JSON.stringify({ roleTitle }),
-        });
-        
-        if (!response.ok) {
-            throw new Error(`Error scoring resume: ${response.status}`);
-        }
-        
-        return response.json();
-    }
-
-    /**
-     * Get all scores for a resume
-     */
-    async getResumeScores(
-        userId: string,
-        resumeId: string
-    ): Promise<{
-        status: string;
-        data: Array<{
-            roleTitle: string;
-            score: number;
-            provider: string;
-            cachedAt: string | null;
-        }>;
-    }> {
-        const response = await fetch(`${BACKEND_URL}/api/resumes/scores?resumeId=${resumeId}`, {
-            method: 'GET',
-            headers: getHeaders(userId),
-        });
-        
-        if (!response.ok) {
-            throw new Error(`Error getting resume scores: ${response.status}`);
         }
         
         return response.json();
@@ -2036,11 +2225,159 @@ class APIService {
         const response = await fetch(`${BACKEND_URL}/api/resumes/linkedin`, {
             method: 'POST',
             headers: getHeaders(userId),
+            credentials: 'include',
             body: JSON.stringify(data),
         });
         
         if (!response.ok) {
             throw new Error(`Error creating LinkedIn resume: ${response.status}`);
+        }
+        
+        return response.json();
+    }
+
+    // ==========================================
+    // LINKEDIN PROFILE
+    // ==========================================
+
+    /**
+     * Get user's LinkedIn profile and consent state
+     */
+    async getLinkedInProfile(userId: string): Promise<{
+        status: string;
+        data: {
+            profile: LinkedInProfile | null;
+            consent: LinkedInConsent | null;
+        };
+    }> {
+        const response = await fetch(`${BACKEND_URL}/api/linkedin-profile`, {
+            method: 'GET',
+            headers: getHeaders(userId)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Error fetching LinkedIn profile: ${response.status}`);
+        }
+        
+        return response.json();
+    }
+
+    /**
+     * Create or update LinkedIn profile
+     * Requires confirmOverwrite=true for updates
+     */
+    async saveLinkedInProfile(
+        userId: string,
+        data: {
+            rawSections: LinkedInRawSections;
+            profileUrl?: string;
+            consentVersion: string;
+            sectionsConsented: string[];
+        },
+        confirmOverwrite = false
+    ): Promise<{
+        status: string;
+        data: {
+            profile: LinkedInProfile;
+            created: boolean;
+        };
+    }> {
+        const url = confirmOverwrite 
+            ? `${BACKEND_URL}/api/linkedin-profile?confirmOverwrite=true`
+            : `${BACKEND_URL}/api/linkedin-profile`;
+            
+        const response = await fetch(url, {
+            method: 'PUT',
+            headers: getHeaders(userId),
+            body: JSON.stringify(data)
+        });
+        
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error.message || `Error saving LinkedIn profile: ${response.status}`);
+        }
+        
+        return response.json();
+    }
+
+    /**
+     * Initiate LinkedIn OAuth connect
+     */
+    async initiateLinkedInConnect(userId: string): Promise<{
+        status: string;
+        data: {
+            authorizationUrl: string;
+            state: string;
+        };
+    }> {
+        const response = await fetch(`${BACKEND_URL}/api/linkedin-profile/connect`, {
+            method: 'POST',
+            headers: getHeaders(userId)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Error initiating LinkedIn connect: ${response.status}`);
+        }
+        
+        return response.json();
+    }
+
+    /**
+     * Complete LinkedIn OAuth connect (exchange code for profile data)
+     */
+    async completeLinkedInConnect(
+        userId: string,
+        code: string,
+        state: string
+    ): Promise<{
+        status: string;
+        data: {
+            name?: string;
+            email?: string;
+            pictureUrl?: string;
+            linkedinMemberId: string;
+            message: string;
+        };
+    }> {
+        const response = await fetch(`${BACKEND_URL}/api/linkedin-profile/connect/callback`, {
+            method: 'POST',
+            headers: getHeaders(userId),
+            body: JSON.stringify({ code, state })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Error completing LinkedIn connect: ${response.status}`);
+        }
+        
+        return response.json();
+    }
+
+    /**
+     * Score LinkedIn profile for a role
+     */
+    async scoreLinkedInProfile(
+        userId: string,
+        roleKey: string,
+        forceRefresh = false
+    ): Promise<{
+        status: string;
+        data: {
+            roleKey: string;
+            score: number;
+            provider: string;
+            breakdown: Record<string, unknown>;
+            computedAt: string;
+            cached: boolean;
+        };
+    }> {
+        const response = await fetch(`${BACKEND_URL}/api/linkedin-profile/score`, {
+            method: 'POST',
+            headers: getHeaders(userId),
+            body: JSON.stringify({ roleKey, forceRefresh })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Error scoring LinkedIn profile: ${response.status}`);
         }
         
         return response.json();
@@ -2075,6 +2412,7 @@ class APIService {
             method: 'POST',
             headers: getHeaders(userId),
             body: JSON.stringify(options || {}),
+            credentials: 'include',
         });
         
         if (!response.ok) {
@@ -2103,6 +2441,7 @@ class APIService {
             {
                 method: 'GET',
                 headers: getHeaders(userId),
+                credentials: 'include',
             }
         );
         
@@ -2141,6 +2480,7 @@ class APIService {
                 resumeId,
                 ...jobDetails,
             }),
+            credentials: 'include',
         });
         
         if (!response.ok) {
@@ -2180,6 +2520,7 @@ class APIService {
             {
                 method: 'GET',
                 headers: getHeaders(userId),
+                credentials: 'include',
             }
         );
         
@@ -2438,6 +2779,82 @@ class APIService {
     }
 
     // ==========================================
+    // PERFORMANCE (DEEP DIVE)
+    // ==========================================
+
+    async getPerformanceSummary(
+        userId: string,
+        params: { range?: PerformanceRange; role?: string; company?: string } = {}
+    ): Promise<PerformanceSummary> {
+        const query = new URLSearchParams();
+        if (params.range) query.set('range', params.range);
+        if (params.role) query.set('role', params.role);
+        if (params.company) query.set('company', params.company);
+
+        const response = await fetch(
+            `${BACKEND_URL}/api/analytics/performance/summary?${query.toString()}`,
+            {
+                method: 'GET',
+                headers: getHeaders(userId),
+                credentials: 'include',
+            }
+        );
+
+        const result = await safeJsonParse<{ status: string; data: PerformanceSummary }>(
+            response,
+            'getPerformanceSummary'
+        );
+
+        if (!response.ok || result.status !== 'success') {
+            throw new Error('Failed to load performance summary');
+        }
+
+        return result.data;
+    }
+
+    async getPerformanceGoal(userId: string): Promise<PerformanceGoal> {
+        const response = await fetch(`${BACKEND_URL}/api/analytics/performance/goal`, {
+            method: 'GET',
+            headers: getHeaders(userId),
+            credentials: 'include',
+        });
+
+        const result = await safeJsonParse<{ status: string; data: PerformanceGoal }>(
+            response,
+            'getPerformanceGoal'
+        );
+
+        if (!response.ok || result.status !== 'success') {
+            throw new Error('Failed to load performance goal');
+        }
+
+        return result.data;
+    }
+
+    async updatePerformanceGoal(
+        userId: string,
+        input: { weeklyInterviewGoal: number; weeklyMinutesGoal?: number }
+    ): Promise<PerformanceGoal> {
+        const response = await fetch(`${BACKEND_URL}/api/analytics/performance/goal`, {
+            method: 'PUT',
+            headers: getHeaders(userId),
+            credentials: 'include',
+            body: JSON.stringify(input),
+        });
+
+        const result = await safeJsonParse<{ status: string; data: PerformanceGoal }>(
+            response,
+            'updatePerformanceGoal'
+        );
+
+        if (!response.ok || result.status !== 'success') {
+            throw new Error('Failed to update performance goal');
+        }
+
+        return result.data;
+    }
+
+    // ==========================================
     // CONSENT MANAGEMENT
     // ==========================================
 
@@ -2469,10 +2886,14 @@ class APIService {
      * Get user's consent status (auth required)
      * Returns whether user has required consents and their preferences
      */
-    async getConsentStatus(userId: string): Promise<ConsentStatus> {
+    async getConsentStatus(): Promise<ConsentStatus> {
         const response = await fetch(`${BACKEND_URL}/api/consent/status`, {
             method: 'GET',
-            headers: getHeaders(userId),
+            headers: {
+                'Content-Type': 'application/json',
+                'ngrok-skip-browser-warning': 'true',
+            },
+            credentials: 'include',
         });
 
         const result = await safeJsonParse<{ ok: boolean; data: ConsentStatus }>(
@@ -2490,17 +2911,18 @@ class APIService {
     /**
      * Submit user consent (auth required)
      * Creates or updates consent record with audit metadata
+     * Uses session-based authentication via cookies
      */
     async submitConsent(
-        userId: string,
         params: SubmitConsentParams
     ): Promise<ConsentSubmitResult> {
         const response = await fetch(`${BACKEND_URL}/api/consent/submit`, {
             method: 'POST',
             headers: {
-                ...getHeaders(userId),
                 'Content-Type': 'application/json',
+                'ngrok-skip-browser-warning': 'true',
             },
+            credentials: 'include',
             body: JSON.stringify(params),
         });
 
@@ -2518,17 +2940,18 @@ class APIService {
 
     /**
      * Update marketing preference only (auth required)
+     * Uses session-based authentication via cookies
      */
     async updateMarketingPreference(
-        userId: string,
         marketingOptIn: boolean
     ): Promise<{ success: boolean; marketingOptIn: boolean }> {
         const response = await fetch(`${BACKEND_URL}/api/consent/marketing`, {
             method: 'PATCH',
             headers: {
-                ...getHeaders(userId),
                 'Content-Type': 'application/json',
+                'ngrok-skip-browser-warning': 'true',
             },
+            credentials: 'include',
             body: JSON.stringify({ marketingOptIn }),
         });
 
@@ -2571,6 +2994,7 @@ class APIService {
                         averageScore
                         scoreChange
                         averageDurationMinutes
+                        totalDurationMs
                         totalSpent
                         creditsRemaining
                         interviewsThisMonth
@@ -2591,8 +3015,16 @@ class APIService {
                         resumeTitle
                         resumeId
                         durationMinutes
+                        callDuration
                         score
                         status
+                        language
+                        country
+                      }
+                      weeklyActivity {
+                        day
+                        count
+                        durationMs
                       }
                       resumes {
                         id
@@ -2750,6 +3182,153 @@ class APIService {
     }
 
     // ==========================================
+    // PHONE VERIFICATION API
+    // ==========================================
+
+    /**
+     * Get phone verification status for current user
+     * Uses session-based authentication via cookies
+     */
+    async getPhoneStatus(): Promise<PhoneVerificationStatus> {
+        const response = await fetch(`${BACKEND_URL}/api/phone/status`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'ngrok-skip-browser-warning': 'true',
+            },
+            credentials: 'include',
+        });
+
+        const result = await safeJsonParse<{
+            status: string;
+            data: PhoneVerificationStatus;
+        }>(response, 'getPhoneStatus');
+
+        if (!response.ok || result.status !== 'success') {
+            throw new Error('Failed to fetch phone status');
+        }
+
+        return result.data;
+    }
+
+    /**
+     * Send OTP verification code to phone number
+     * Uses session-based authentication via cookies
+     */
+    async sendPhoneOTP(
+        phoneNumber: string,
+        language?: string
+    ): Promise<{ success: boolean; remainingAttempts?: number; error?: string; code?: string }> {
+        const response = await fetch(`${BACKEND_URL}/api/phone/send-otp`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'ngrok-skip-browser-warning': 'true',
+            },
+            credentials: 'include',
+            body: JSON.stringify({ phoneNumber, language }),
+        });
+
+        const result = await safeJsonParse<{
+            status: string;
+            message: string;
+            remainingAttempts?: number;
+            rateLimited?: boolean;
+            code?: string;
+        }>(response, 'sendPhoneOTP');
+
+        if (!response.ok || result.status !== 'success') {
+            return {
+                success: false,
+                error: result.message || 'Failed to send verification code',
+                code: result.code,
+            };
+        }
+
+        return {
+            success: true,
+            remainingAttempts: result.remainingAttempts,
+        };
+    }
+
+    /**
+     * Verify OTP code
+     * Uses session-based authentication via cookies
+     */
+    async verifyPhoneOTP(
+        phoneNumber: string,
+        code: string
+    ): Promise<{ success: boolean; verified: boolean; attemptsRemaining?: number; error?: string }> {
+        const response = await fetch(`${BACKEND_URL}/api/phone/verify-otp`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'ngrok-skip-browser-warning': 'true',
+            },
+            credentials: 'include',
+            body: JSON.stringify({ phoneNumber, code }),
+        });
+
+        const result = await safeJsonParse<{
+            status: string;
+            message: string;
+            verified?: boolean;
+            attemptsRemaining?: number;
+        }>(response, 'verifyPhoneOTP');
+
+        if (!response.ok || result.status !== 'success') {
+            return {
+                success: false,
+                verified: false,
+                attemptsRemaining: result.attemptsRemaining,
+                error: result.message || 'Failed to verify code',
+            };
+        }
+
+        return {
+            success: true,
+            verified: result.verified ?? true,
+            attemptsRemaining: result.attemptsRemaining,
+        };
+    }
+
+    /**
+     * Skip phone verification for credits (records skip in DB for dashboard CTA targeting)
+     * Uses session-based authentication via cookies
+     */
+    async skipPhoneForCredits(): Promise<{ success: boolean; error?: string }> {
+        const response = await fetch(`${BACKEND_URL}/api/phone/skip-for-credits`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'ngrok-skip-browser-warning': 'true',
+            },
+            credentials: 'include',
+        });
+
+        const result = await safeJsonParse<{
+            ok?: boolean;
+            success?: boolean;
+            status?: string;
+            message?: string;
+            error?: string;
+        }>(response, 'skipPhoneForCredits');
+
+        const isSuccess =
+            response.ok &&
+            (result.ok === true || result.success === true || result.status === 'success');
+
+        if (!isSuccess) {
+            return {
+                success: false,
+                error: result.error || result.message || 'Failed to record skip preference',
+            };
+        }
+
+        return { success: true };
+    }
+
+    // ==========================================
     // IDENTITY VERIFICATION API
     // ==========================================
 
@@ -2873,7 +3452,6 @@ export type UserType = 'PERSONAL' | 'CANDIDATE' | 'EMPLOYEE';
 
 export interface B2CUserProfile {
     id: string;
-    clerkId: string;
     email: string;
     firstName: string | null;
     lastName: string | null;
@@ -2903,6 +3481,15 @@ export interface B2CAccessStatus {
         canPurchaseCredits: boolean;
         canAccessDashboard: boolean;
     };
+}
+
+export interface PhoneVerificationStatus {
+    hasPhone: boolean;
+    isVerified: boolean;
+    phoneCreditsGranted: boolean;
+    phoneVerificationSkippedForCredits: boolean;
+    phoneNumber?: string;
+    verifiedAt?: string;
 }
 
 export interface IdentityVerificationStatus {
@@ -2993,6 +3580,8 @@ export interface ResumeListItem {
     createdAt: string;
     updatedAt: string;
     usageCount: number;
+    alignedRole?: string | null;
+    alignedRoleLabel?: string | null;
 }
 
 export interface ResumeDocument extends ResumeListItem {
@@ -3129,6 +3718,7 @@ export interface DashboardKPIs {
     averageScore: number | null;
     scoreChange: number | null;
     averageDurationMinutes: number | null;
+    totalDurationMs: number | null; // Sum of all callDuration values in milliseconds
     totalSpent: number;
     creditsRemaining: number;
     interviewsThisMonth: number;
@@ -3151,8 +3741,11 @@ export interface RecentInterview {
     resumeTitle: string | null;
     resumeId: string | null;
     durationMinutes: number | null;
+    callDuration: number | null; // Raw duration in milliseconds
     score: number | null;
     status: string;
+    language: string | null;
+    country: string | null;
 }
 
 export interface ResumeUtilization {
@@ -3184,10 +3777,67 @@ export interface SkillBreakdown {
 
 export interface WeeklyActivityDay {
     day: string;
-    date: string;
-    interviews: number;
-    averageScore: number | null;
-    totalDurationMinutes: number;
+    count: number;
+    durationMs: number;
+}
+
+// ==========================================
+// LINKEDIN PROFILE TYPES
+// ==========================================
+
+export interface LinkedInRawSections {
+    about?: string;
+    experience?: Array<{
+        title: string;
+        company: string;
+        location?: string;
+        startDate?: string;
+        endDate?: string;
+        current?: boolean;
+        description?: string;
+    }>;
+    education?: Array<{
+        school: string;
+        degree?: string;
+        field?: string;
+        startDate?: string;
+        endDate?: string;
+    }>;
+    certifications?: Array<{
+        name: string;
+        issuer?: string;
+        issueDate?: string;
+    }>;
+    skills?: string[];
+}
+
+export interface LinkedInProfile {
+    id: string;
+    linkedinMemberId?: string | null;
+    profileUrl?: string | null;
+    name?: string | null;
+    email?: string | null;
+    pictureUrl?: string | null;
+    headline?: string | null;
+    rawSections?: LinkedInRawSections | null;
+    source: string;
+    scores: Array<{
+        roleKey: string;
+        score: number;
+        provider: string;
+        breakdown: Record<string, unknown>;
+        computedAt: string;
+    }>;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface LinkedInConsent {
+    consentedAt?: string | null;
+    consentVersion?: string | null;
+    sectionsConsented?: string[] | null;
+    connectedAt?: string | null;
+    memberId?: string | null;
 }
 
 export interface CandidateDashboardResponse {

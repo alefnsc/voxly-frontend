@@ -11,7 +11,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from 'contexts/AuthContext';
 import { useUserContext } from '../../contexts/UserContext';
 import { queryKeys, invalidateInterviews, invalidateWallet } from '../../lib/queryClient';
 import apiService from '../../services/APIService';

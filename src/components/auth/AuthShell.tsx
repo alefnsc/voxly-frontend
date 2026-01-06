@@ -74,7 +74,7 @@ export const AuthShell: React.FC<AuthShellProps> = ({
               'border border-zinc-200',
               'rounded-2xl',
               'shadow-sm',
-              'overflow-hidden'
+              'overflow-visible'
             )}
           >
             {/* Purple Accent Bar */}

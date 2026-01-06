@@ -4,11 +4,15 @@
  * Manages organization/workspace selection for B2B multi-tenant model.
  * Handles workspace resolution, switching, and context persistence.
  * 
+ * NOTE: With first-party auth migration, third-party organizations are no longer used.
+ * This context now provides a simplified workspace abstraction for future B2B features.
+ * Personal users (B2C) operate without a workspace.
+ * 
  * @module contexts/WorkspaceContext
  */
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { useUser, useOrganization, useOrganizationList } from '@clerk/clerk-react';
+import { useUser } from 'contexts/AuthContext';
 import { UserRole, ViewContext } from '../config/navigation';
 
 // ========================================
@@ -52,32 +56,6 @@ const VIEW_CONTEXT_STORAGE_KEY = 'Vocaid_view_context';
 // ========================================
 // UTILITY FUNCTIONS
 // ========================================
-
-/**
- * Map Clerk organization role to app UserRole
- */
-function mapClerkRoleToUserRole(clerkRole?: string): UserRole {
-  switch (clerkRole?.toLowerCase()) {
-    case 'admin':
-    case 'org:admin':
-      return 'admin';
-    case 'recruiter':
-    case 'org:recruiter':
-      return 'recruiter';
-    case 'manager':
-    case 'org:manager':
-      return 'manager';
-    case 'employee':
-    case 'org:employee':
-      return 'employee';
-    case 'candidate':
-    case 'org:candidate':
-      return 'candidate';
-    default:
-      // Default to candidate for individual users without org
-      return 'candidate';
-  }
-}
 
 /**
  * Get persisted workspace ID from storage
@@ -142,16 +120,10 @@ interface WorkspaceProviderProps {
 
 export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
   const { user, isLoaded: isUserLoaded, isSignedIn } = useUser();
-  const { organization: activeOrg, isLoaded: isOrgLoaded } = useOrganization();
-  const { 
-    userMemberships, 
-    isLoaded: isMembershipsLoaded,
-    setActive 
-  } = useOrganizationList({
-    userMemberships: {
-      infinite: true,
-    },
-  });
+  
+    // With first-party auth, we no longer use organizations
+  // For now, all users operate in personal mode (B2C)
+  // B2B organization features will be implemented separately
 
   // State
   const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(null);
@@ -160,30 +132,33 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
   const [isResolved, setIsResolved] = useState(false);
   const [viewContext, setViewContextState] = useState<ViewContext>(getPersistedViewContext);
 
-  // Compute user role from workspace or user metadata
+  // Compute user role from user metadata (organizations not used with first-party auth)
   const userRole: UserRole = React.useMemo(() => {
-    // If in an organization, use the org role
-    if (currentWorkspace) {
-      return currentWorkspace.role;
-    }
-    
-    // Otherwise, check user's public metadata
+    // Check user's public metadata for role
     const metadataRole = user?.publicMetadata?.role as string | undefined;
     if (metadataRole) {
-      return mapClerkRoleToUserRole(metadataRole);
+      // Map metadata role to UserRole
+      switch (metadataRole.toLowerCase()) {
+        case 'admin':
+          return 'admin';
+        case 'recruiter':
+          return 'recruiter';
+        case 'manager':
+          return 'manager';
+        case 'employee':
+          return 'employee';
+        case 'candidate':
+        default:
+          return 'candidate';
+      }
     }
     
-    // Default to candidate
+    // Default to candidate for personal users
     return 'candidate';
-  }, [currentWorkspace, user?.publicMetadata?.role]);
+  }, [user?.publicMetadata?.role]);
 
-  // Check if user needs to select a workspace
-  const needsWorkspaceSelection = React.useMemo(() => {
-    if (!isSignedIn) return false;
-    if (!isResolved) return false;
-    // User has multiple orgs but none selected
-    return workspaces.length > 1 && !currentWorkspace;
-  }, [isSignedIn, isResolved, workspaces.length, currentWorkspace]);
+  // Check if user needs to select a workspace (not applicable in personal mode)
+  const needsWorkspaceSelection = false;
 
   // Handle view context changes
   const setViewContext = useCallback((context: ViewContext) => {
@@ -191,52 +166,24 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
     persistViewContext(context);
   }, []);
 
-  // Build workspaces list from Clerk memberships
+  // Placeholder for future B2B workspace list
   const refreshWorkspaces = useCallback(async () => {
-    if (!isMembershipsLoaded || !isSignedIn) {
-      setWorkspaces([]);
-      return;
-    }
+    // With first-party auth, organizations are not yet implemented
+    // Personal users have no workspaces
+    setWorkspaces([]);
+  }, []);
 
-    const memberships = userMemberships?.data || [];
-    
-    const workspaceList: Workspace[] = memberships.map((membership) => ({
-      id: membership.organization.id,
-      name: membership.organization.name,
-      slug: membership.organization.slug || undefined,
-      imageUrl: membership.organization.imageUrl,
-      role: mapClerkRoleToUserRole(membership.role),
-    }));
-
-    setWorkspaces(workspaceList);
-  }, [isMembershipsLoaded, isSignedIn, userMemberships?.data]);
-
-  // Select a workspace
+  // Placeholder for future workspace selection
   const selectWorkspace = useCallback(async (workspaceId: string) => {
-    const workspace = workspaces.find((w) => w.id === workspaceId);
-    if (!workspace) {
-      console.error('Workspace not found:', workspaceId);
-      return;
-    }
+    // B2B workspace selection not yet implemented with first-party auth
+    console.warn('Workspace selection not available in current auth mode');
+  }, []);
 
-    try {
-      // Set active organization in Clerk
-      if (setActive) {
-        await setActive({ organization: workspaceId });
-      }
-      
-      setCurrentWorkspace(workspace);
-      persistWorkspaceId(workspaceId);
-    } catch (error) {
-      console.error('Failed to select workspace:', error);
-    }
-  }, [workspaces, setActive]);
-
-  // Resolve workspace on load
+  // Resolve workspace on load - simplified for personal users
   useEffect(() => {
     const resolveWorkspace = async () => {
-      // Wait for all data to load
-      if (!isUserLoaded || !isOrgLoaded || !isMembershipsLoaded) {
+      // Wait for user data to load
+      if (!isUserLoaded) {
         return;
       }
 
@@ -248,107 +195,16 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
         return;
       }
 
-      // Build workspace list
-      await refreshWorkspaces();
-
-      const memberships = userMemberships?.data || [];
-
-      // Case 1: User has no org memberships - work as individual
-      if (memberships.length === 0) {
-        setCurrentWorkspace(null);
-        setIsResolved(true);
-        setIsLoading(false);
-        return;
-      }
-
-      // Case 2: User has exactly one org - auto-select it
-      if (memberships.length === 1) {
-        const singleOrg = memberships[0];
-        const workspace: Workspace = {
-          id: singleOrg.organization.id,
-          name: singleOrg.organization.name,
-          slug: singleOrg.organization.slug || undefined,
-          imageUrl: singleOrg.organization.imageUrl,
-          role: mapClerkRoleToUserRole(singleOrg.role),
-        };
-        
-        if (setActive) {
-          await setActive({ organization: singleOrg.organization.id });
-        }
-        
-        setCurrentWorkspace(workspace);
-        persistWorkspaceId(workspace.id);
-        setIsResolved(true);
-        setIsLoading(false);
-        return;
-      }
-
-      // Case 3: User has multiple orgs - check for persisted selection or active org
-      const persistedId = getPersistedWorkspaceId();
-      const matchingPersistedMembership = memberships.find(
-        (m) => m.organization.id === persistedId
-      );
-
-      if (matchingPersistedMembership) {
-        // Use persisted workspace
-        const workspace: Workspace = {
-          id: matchingPersistedMembership.organization.id,
-          name: matchingPersistedMembership.organization.name,
-          slug: matchingPersistedMembership.organization.slug || undefined,
-          imageUrl: matchingPersistedMembership.organization.imageUrl,
-          role: mapClerkRoleToUserRole(matchingPersistedMembership.role),
-        };
-        
-        if (setActive) {
-          await setActive({ organization: workspace.id });
-        }
-        
-        setCurrentWorkspace(workspace);
-        setIsResolved(true);
-        setIsLoading(false);
-        return;
-      }
-
-      // Check if there's already an active org
-      if (activeOrg) {
-        const activeMembership = memberships.find(
-          (m) => m.organization.id === activeOrg.id
-        );
-        
-        if (activeMembership) {
-          const workspace: Workspace = {
-            id: activeOrg.id,
-            name: activeOrg.name,
-            slug: activeOrg.slug || undefined,
-            imageUrl: activeOrg.imageUrl,
-            role: mapClerkRoleToUserRole(activeMembership.role),
-          };
-          
-          setCurrentWorkspace(workspace);
-          persistWorkspaceId(workspace.id);
-          setIsResolved(true);
-          setIsLoading(false);
-          return;
-        }
-      }
-
-      // No workspace auto-selected - user needs to choose
+      // With first-party auth, all users operate in personal mode
+      // No organization/workspace to resolve
       setCurrentWorkspace(null);
+      setWorkspaces([]);
       setIsResolved(true);
       setIsLoading(false);
     };
 
     resolveWorkspace();
-  }, [
-    isUserLoaded,
-    isOrgLoaded,
-    isMembershipsLoaded,
-    isSignedIn,
-    userMemberships?.data,
-    activeOrg,
-    setActive,
-    refreshWorkspaces,
-  ]);
+  }, [isUserLoaded, isSignedIn]);
 
   const value: WorkspaceContextType = {
     currentWorkspace,

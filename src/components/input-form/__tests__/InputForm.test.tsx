@@ -5,6 +5,21 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthCheck } from 'hooks/use-auth-check';
 import InputForm from '../index';
 
+jest.mock('hooks/use-language', () => ({
+    __esModule: true,
+    useLanguage: () => ({ currentLanguage: 'en-US' }),
+}));
+
+jest.mock('components/credits-modal', () => ({
+    __esModule: true,
+    default: () => null,
+}));
+
+jest.mock('components/credit-packages', () => ({
+    __esModule: true,
+    default: () => <div data-testid="credit-packages" />,
+}));
+
 // Mock the hooks and dependencies
 jest.mock('react-router-dom', () => ({
     useNavigate: jest.fn(),
@@ -14,17 +29,18 @@ jest.mock('hooks/use-auth-check', () => ({
     useAuthCheck: jest.fn(),
 }));
 
-// Mock pdfToText function
-const mockPdfToText = jest.fn();
-jest.mock('react-pdftotext', () => ({
-    __esModule: true,
-    default: (file: File) => mockPdfToText(file),
-}));
-
 describe('InputForm Component', () => {
     const mockNavigate = jest.fn();
     const mockUpdateCredits = jest.fn();
     const mockSetShowCreditsModal = jest.fn();
+
+    const mockUser = {
+        id: '123',
+        firstName: 'John',
+        lastName: 'Doe',
+        fullName: 'John Doe',
+        email: 'john@example.com',
+    };
 
     beforeEach(() => {
         // Reset all mocks before each test
@@ -33,43 +49,39 @@ describe('InputForm Component', () => {
         // Setup default mock implementations
         (useNavigate as jest.Mock).mockReturnValue(mockNavigate);
         (useAuthCheck as jest.Mock).mockReturnValue({
-            user: { id: '123' },
+            user: mockUser,
             isLoading: false,
             userCredits: 5,
             showCreditsModal: false,
             setShowCreditsModal: mockSetShowCreditsModal,
             updateCredits: mockUpdateCredits,
+            refreshCredits: jest.fn(),
         });
 
-        // Setup default PDF mock
-        mockPdfToText.mockImplementation((file) => {
-            if (file.name === 'error.pdf') {
-                return Promise.reject(new Error('Failed to extract text'));
+        // Mock FileReader for base64 resume upload
+        class FileReaderMock {
+            result: string | ArrayBuffer | null = null;
+            onloadend: null | (() => void) = null;
+            onerror: null | (() => void) = null;
+            readAsDataURL(_file: File) {
+                this.result = 'data:application/pdf;base64,ZmFrZV9iYXNlNjQ=';
+                this.onloadend?.();
             }
-            return Promise.resolve('Sample resume text');
-        });
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (global as any).FileReader = FileReaderMock;
 
-        // Mock localStorage and sessionStorage
-        const mockStorage = {
-            getItem: jest.fn(),
-            setItem: jest.fn(),
-            removeItem: jest.fn(),
-            clear: jest.fn(),
-        };
-
-        Object.defineProperty(window, 'localStorage', { value: mockStorage });
-        Object.defineProperty(window, 'sessionStorage', { value: mockStorage });
+        localStorage.clear();
+        sessionStorage.clear();
     });
 
     it('renders all form fields correctly', () => {
         render(<InputForm isMobile={false} />);
 
-        expect(screen.getByPlaceholderText(/First Name/i)).toBeInTheDocument();
-        expect(screen.getByPlaceholderText(/Last Name/i)).toBeInTheDocument();
-        expect(screen.getByPlaceholderText(/Company Name/i)).toBeInTheDocument();
-        expect(screen.getByPlaceholderText(/Job Title/i)).toBeInTheDocument();
-        expect(screen.getByPlaceholderText(/Job Description/i)).toBeInTheDocument();
-        expect(screen.getByText(/Upload your resume/i)).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('Company Name')).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('Job Title')).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('Job Description (minimum 200 characters)')).toBeInTheDocument();
+        expect(screen.getByText('Upload your resume')).toBeInTheDocument();
         expect(screen.getByRole('checkbox')).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /Start Interview/i })).toBeInTheDocument();
     });
@@ -82,95 +94,63 @@ describe('InputForm Component', () => {
         const fileInput = screen.getByTestId('resume-upload');
 
         fireEvent.change(fileInput, { target: { files: [file] } });
-
-        await waitFor(() => {
-            expect(mockPdfToText).toHaveBeenCalledWith(file);
-        });
-
         await waitFor(() => {
             expect(screen.getByText('test.pdf')).toBeInTheDocument();
         });
     });
 
-
-    it('shows credits modal when user has no credits', async () => {
+    it('renders payment options when user has no credits', () => {
         (useAuthCheck as jest.Mock).mockReturnValue({
-            user: { id: '123' },
+            user: mockUser,
             isLoading: false,
             userCredits: 0,
             showCreditsModal: false,
             setShowCreditsModal: mockSetShowCreditsModal,
             updateCredits: mockUpdateCredits,
+            refreshCredits: jest.fn(),
         });
 
         render(<InputForm isMobile={false} />);
-
-        // Fill in required fields
-        fireEvent.change(screen.getByPlaceholderText(/First Name/i), { target: { name: 'firstName', value: 'John' } });
-        fireEvent.change(screen.getByPlaceholderText(/Last Name/i), { target: { name: 'lastName', value: 'Doe' } });
-        fireEvent.change(screen.getByPlaceholderText(/Company Name/i), { target: { name: 'companyName', value: 'Test Corp' } });
-        fireEvent.change(screen.getByPlaceholderText(/Job Title/i), { target: { name: 'jobTitle', value: 'Developer' } });
-        fireEvent.change(screen.getByPlaceholderText(/Job Description/i), { target: { name: 'jobDescription', value: 'a'.repeat(200) } });
-        fireEvent.click(screen.getByRole('checkbox'));
-
-        // Upload a file
-        const file = new File(['test'], 'test.pdf', { type: 'application/pdf' });
-        const fileInput = screen.getByTestId('resume-upload');
-        fireEvent.change(fileInput, { target: { files: [file] } });
-
-        // Wait for file processing
-        await waitFor(() => {
-            expect(screen.getByText('test.pdf')).toBeInTheDocument();
-        });
-
-        // Submit form
-        const submitButton = screen.getByRole('button', { name: /Start Interview/i });
-        fireEvent.click(submitButton);
-
+        expect(screen.getByTestId('credit-packages')).toBeInTheDocument();
     });
 
-    it('handles form submission with valid data', async () => {
-        // Mock storage to return the same values we set
-        const mockStorage = {
-            getItem: jest.fn().mockImplementation((key) => {
-                if (key === 'interviewValidationToken') return '1234567890';
-                if (key === 'tokenExpiration') return (Date.now() + 30 * 60 * 1000).toString();
-                return null;
-            }),
-            setItem: jest.fn(),
-            removeItem: jest.fn(),
-            clear: jest.fn(),
-        };
+    it('submits and navigates to /interview with valid data', async () => {
+        jest.spyOn(Date, 'now').mockReturnValue(1700000000000);
+        jest.spyOn(Math, 'random').mockReturnValue(0.123456);
 
-        Object.defineProperty(window, 'localStorage', { value: mockStorage });
-        Object.defineProperty(window, 'sessionStorage', { value: mockStorage });
-
-        // Mock updateCredits to return a positive number
-        mockUpdateCredits.mockResolvedValue(4);
-
+        mockUpdateCredits.mockResolvedValue(undefined);
         render(<InputForm isMobile={false} />);
 
-        // Fill in required fields
-        fireEvent.change(screen.getByPlaceholderText(/First Name/i), { target: { name: 'firstName', value: 'John' } });
-        fireEvent.change(screen.getByPlaceholderText(/Last Name/i), { target: { name: 'lastName', value: 'Doe' } });
-        fireEvent.change(screen.getByPlaceholderText(/Company Name/i), { target: { name: 'companyName', value: 'Test Corp' } });
-        fireEvent.change(screen.getByPlaceholderText(/Job Title/i), { target: { name: 'jobTitle', value: 'Developer' } });
-        fireEvent.change(screen.getByPlaceholderText(/Job Description/i), { target: { name: 'jobDescription', value: 'a'.repeat(200) } });
-        fireEvent.click(screen.getByRole('checkbox'));
+        fireEvent.change(screen.getByPlaceholderText('Company Name'), { target: { name: 'companyName', value: 'Test Corp' } });
+        fireEvent.change(screen.getByPlaceholderText('Job Title'), { target: { name: 'jobTitle', value: 'Developer' } });
+        fireEvent.change(screen.getByPlaceholderText('Job Description (minimum 200 characters)'), { target: { name: 'jobDescription', value: 'a'.repeat(200) } });
 
         // Upload a file
         const file = new File(['test'], 'test.pdf', { type: 'application/pdf' });
         const fileInput = screen.getByTestId('resume-upload');
         fireEvent.change(fileInput, { target: { files: [file] } });
 
-        // Wait for file processing
-        await waitFor(() => {
-            expect(screen.getByText('test.pdf')).toBeInTheDocument();
-        });
+        await waitFor(() => expect(screen.getByText('test.pdf')).toBeInTheDocument());
+
+        fireEvent.click(screen.getByRole('checkbox'));
 
         // Submit form
         const submitButton = screen.getByRole('button', { name: /Start Interview/i });
         fireEvent.click(submitButton);
+
+        await waitFor(() => expect(mockUpdateCredits).toHaveBeenCalledWith('use'));
+        await waitFor(() => expect(mockNavigate).toHaveBeenCalled());
+
+        const [path, navOptions] = mockNavigate.mock.calls[0];
+        expect(path).toBe('/interview');
+        expect(navOptions.state.body.metadata.company_name).toBe('Test Corp');
+        expect(navOptions.state.body.metadata.job_title).toBe('Developer');
+        expect(navOptions.state.body.metadata.job_description).toBe('a'.repeat(200));
+        expect(navOptions.state.body.metadata.first_name).toBe('John');
+        expect(navOptions.state.body.metadata.last_name).toBe('Doe');
+        expect(navOptions.state.body.metadata.interviewee_cv).toBe('ZmFrZV9iYXNlNjQ=');
+        expect(navOptions.state.body.metadata.preferred_language).toBe('en-US');
+        expect(navOptions.state.body.metadata.interview_id).toMatch(/^interview_1700000000000_/);
 
     });
 });

@@ -4,12 +4,11 @@ import { Button } from 'components/ui/button'
 import { Textarea } from 'components/ui/textarea'
 import { Input } from 'components/ui/input'
 import { Coins, LogIn, Gift } from 'lucide-react'
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Checkbox } from 'components/ui/checkbox';
 import { useAuthCheck } from 'hooks/use-auth-check';
 import { useLanguage } from 'hooks/use-language';
 import CreditsModal from 'components/credits-modal';
-import { SignInButton } from '@clerk/clerk-react';
 import CreditPackages from 'components/credit-packages';
 
 type InputFormProps = {
@@ -34,7 +33,7 @@ const InputForm: React.FC<InputFormProps> = ({ isMobile, credits }) => {
     const navigate = useNavigate();
     const { currentLanguage } = useLanguage();
 
-    // Form state - firstName and lastName come from Clerk
+    // Form state
     const [formValues, setFormValues] = useState<FormValues>({
         companyName: '',
         jobTitle: '',
@@ -63,9 +62,10 @@ const InputForm: React.FC<InputFormProps> = ({ isMobile, credits }) => {
         refreshCredits
     } = useAuthCheck();
 
-    // Get user's name from Clerk
+    // User display name (from first-party auth user)
     const firstName = user?.firstName || '';
     const lastName = user?.lastName || '';
+    const displayName = (user?.fullName || `${firstName} ${lastName}`.trim() || user?.email || 'User').trim();
 
     // Use the credits prop if provided, otherwise use userCredits from the hook
     const availableCredits = credits !== undefined ? credits : userCredits;
@@ -139,12 +139,9 @@ const InputForm: React.FC<InputFormProps> = ({ isMobile, credits }) => {
             policy: ''
         };
 
-        // Validate Clerk user has name set
-        if (!firstName.trim()) {
-            newErrors.policy = 'Please set your first name in your Clerk profile';
-        }
-        if (!lastName.trim()) {
-            newErrors.policy = 'Please set your last name in your Clerk profile';
+        // Validate user has name set (recommended)
+        if (!firstName.trim() || !lastName.trim()) {
+            newErrors.policy = 'Please add your first and last name in your account settings';
         }
         if (!formValues.companyName.trim()) {
             newErrors.companyName = 'Company name is required';
@@ -202,12 +199,10 @@ const InputForm: React.FC<InputFormProps> = ({ isMobile, credits }) => {
             localStorage.setItem('interviewValidationToken', interviewId);
             localStorage.setItem('tokenExpiration', tokenExpiration.toString());
 
-            // Navigate to interview page with form data including interview_id and userId
-            // Use firstName and lastName from Clerk session
+            // Navigate to interview page with form data including interview_id
             navigate('/interview', {
                 state: {
                     body: {
-                        userId: user?.id, // Pass user ID for backend authentication
                         metadata: {
                             first_name: firstName,
                             last_name: lastName,
@@ -252,7 +247,7 @@ const InputForm: React.FC<InputFormProps> = ({ isMobile, credits }) => {
                          Free Trial Available!
                         </span>
                         <span className="text-xs font-medium">
-                            Get 5 free interview credits when you sign up
+                            Claim 5 free interview credits after phone verification
                         </span>
                     </div>
                 </div>
@@ -268,10 +263,7 @@ const InputForm: React.FC<InputFormProps> = ({ isMobile, credits }) => {
                         </p>
                     </div>
                     
-                    <SignInButton 
-                        mode="modal"
-                        forceRedirectUrl='/app/b2c/dashboard'
-                    >
+                    <Link to="/sign-in">
                         <Button
                             variant="default"
                             className="flex items-center justify-center gap-2 px-8 py-6 w-full sm:w-auto mt-4 text-lg font-semibold shadow-md hover:shadow-lg transition-all"
@@ -281,10 +273,10 @@ const InputForm: React.FC<InputFormProps> = ({ isMobile, credits }) => {
                             <LogIn className="h-5 w-5" aria-hidden="true" />
                             <span>Sign In to Continue</span>
                         </Button>
-                    </SignInButton>
+                    </Link>
                     
                     <p className="text-xs text-gray-500 mt-2">
-                        Powered by Clerk - Secure authentication
+                        Secure authentication
                     </p>
                 </div>
             </div>
@@ -319,10 +311,10 @@ const InputForm: React.FC<InputFormProps> = ({ isMobile, credits }) => {
                     <span className="font-bold text-white text-lg">{availableCredits} {availableCredits === 1 ? 'Credit' : 'Credits'} Available</span>
                 </div>
 
-                {/* Welcome message with user name from Clerk */}
+                {/* Welcome message */}
                 <div className="flex flex-col items-center justify-center bg-gray-50 px-6 py-4 rounded-lg border border-gray-200 w-full">
                     <p className="text-gray-600 text-sm">Interviewing as</p>
-                    <p className="text-gray-900 font-semibold text-lg">{firstName} {lastName}</p>
+                    <p className="text-gray-900 font-semibold text-lg">{displayName}</p>
                 </div>
 
                 <div className="flex flex-col gap-2 w-full">

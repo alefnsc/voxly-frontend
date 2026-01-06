@@ -14,7 +14,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from 'contexts/AuthContext';
 import { useUserContext } from '../../contexts/UserContext';
 import { queryKeys } from '../../lib/queryClient';
 import apiService, {
@@ -29,6 +29,12 @@ import apiService, {
 interface UseGraphQLQueryOptions {
   filters?: CandidateDashboardFilters;
   enabled?: boolean;
+  /**
+   * Whether to require user sync to be complete before fetching.
+   * Set to false for read-only dashboard queries that should work even if sync fails.
+   * Default: false (dashboard data is read-only and should be resilient)
+   */
+  requireSynced?: boolean;
 }
 
 /**
@@ -44,7 +50,11 @@ interface UseGraphQLQueryOptions {
 export function useGraphQLQuery(options: UseGraphQLQueryOptions = {}) {
   const { user, isSignedIn, isLoaded } = useUser();
   const { isSynced } = useUserContext();
-  const { filters = {}, enabled = true } = options;
+  const { filters = {}, enabled = true, requireSynced = false } = options;
+
+  // Determine if query should be enabled
+  // For read-only dashboard data, we don't need to wait for user sync
+  const shouldFetch = enabled && isLoaded && isSignedIn && !!user?.id && (requireSynced ? isSynced : true);
 
   // Debug logging for development
   if (process.env.NODE_ENV === 'development') {
@@ -53,7 +63,8 @@ export function useGraphQLQuery(options: UseGraphQLQueryOptions = {}) {
       isSignedIn,
       isLoaded,
       isSynced,
-      queryEnabled: enabled && isLoaded && isSignedIn && (isSynced && !!user?.id),
+      requireSynced,
+      shouldFetch,
     });
   }
 
@@ -74,9 +85,17 @@ export function useGraphQLQuery(options: UseGraphQLQueryOptions = {}) {
       
       return result;
     },
-    enabled: enabled && isLoaded && isSignedIn && (isSynced && !!user?.id),
+    enabled: shouldFetch,
     staleTime: 60 * 1000, // 1 minute
     gcTime: 5 * 60 * 1000, // 5 minutes
+    retry: (failureCount, error) => {
+      const message = (error as Error | undefined)?.message || '';
+      // Auth/session failures won't resolve via retry and cause long-loading UIs.
+      if (/unauthenticated|authentication required|missing authentication|session/i.test(message)) {
+        return false;
+      }
+      return failureCount < 2;
+    },
   });
 }
 

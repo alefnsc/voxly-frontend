@@ -27,7 +27,7 @@ export const MIN_INTERVIEW_DURATION_MS = parseInt(
  * Grace period (ms) for credit restoration if user quits early
  */
 export const CREDIT_RESTORATION_THRESHOLD_MS = parseInt(
-  process.env.REACT_APP_CREDIT_RESTORATION_THRESHOLD_MS || '15000',
+  process.env.REACT_APP_CREDIT_RESTORATION_THRESHOLD_MS || '30000',
   10
 );
 

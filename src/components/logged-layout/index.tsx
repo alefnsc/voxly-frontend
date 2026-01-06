@@ -19,19 +19,21 @@
 
 import React, { useState, useEffect, useCallback, useRef, memo } from 'react';
 import { Outlet, useLocation, Link } from 'react-router-dom';
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from 'contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthCheck } from 'hooks/use-auth-check';
+import { useOverlayMenuLifecycle } from 'hooks/header';
+import { BUY_CREDITS_LINK, isPathActive } from 'utils/routing';
 import { cn } from 'lib/utils';
 import { BrandMark } from 'components/shared/Brand';
 import { LanguageSelector } from 'components/language-selector';
-import { AccountMenu } from 'components/account-menu';
 import { CustomAvatar } from 'components/auth/CustomAvatar';
 import { AppFooter } from 'components/shared/AppFooter';
 import { LayoutProvider } from 'components/default-layout';
 import { BetaFeedbackFab } from 'components/beta-feedback';
 import { isClosedBetaFeedbackEnabled } from 'config/featureFlags';
+import AppHeader from 'components/header';
 
 // ========================================
 // TYPES
@@ -77,28 +79,16 @@ export const useLoggedLayout = () => {
 // ========================================
 
 const SIDEBAR_WIDTH = 260;
-const TOPBAR_HEIGHT = 80;
-const BOTTOM_NAV_HEIGHT = 64;
-
 // Main navigation items - B2C focused
 const mainNavItems: NavItem[] = [
   { id: 'dashboard', labelKey: 'nav.dashboard', path: '/app/b2c/dashboard' },
+  { id: 'performance', labelKey: 'nav.performance', path: '/app/b2c/performance' },
   { id: 'interviews', labelKey: 'nav.interviews', path: '/app/b2c/interviews' },
-  { id: 'resumes', labelKey: 'nav.resumes', path: '/app/b2c/resumes' },
-  { id: 'credits', labelKey: 'nav.credits', path: '/app/b2c/billing' },
+  { id: 'resumes', labelKey: 'nav.resumes', path: '/app/b2c/resume-library' },
 ];
 
 // Secondary navigation items
 const secondaryNavItems: NavItem[] = [
-  { id: 'about', labelKey: 'nav.about', path: '/about' },
-  { id: 'settings', labelKey: 'nav.settings', path: '/account' },
-];
-
-// Bottom nav items (mobile)
-const bottomNavItems: NavItem[] = [
-  { id: 'home', labelKey: 'nav.home', path: '/' },
-  { id: 'interviews', labelKey: 'nav.interviews', path: '/app/b2c/interviews' },
-  { id: 'credits', labelKey: 'nav.credits', path: '/app/b2c/billing' },
   { id: 'settings', labelKey: 'nav.settings', path: '/account' },
 ];
 
@@ -129,15 +119,11 @@ interface SidebarProps {
 
 const Sidebar = memo<SidebarProps>(({ hasRecentInterview }) => {
   const { user } = useUser();
-  const { userCredits } = useAuthCheck();
   const location = useLocation();
   const { t } = useTranslation();
 
-  const isActivePath = useCallback((path: string) => {
-    if (path === '/') {
-      return location.pathname === '/';
-    }
-    return location.pathname.startsWith(path);
+  const checkIsActivePath = useCallback((path: string) => {
+    return isPathActive(location.pathname, path);
   }, [location.pathname]);
 
   return (
@@ -163,7 +149,7 @@ const Sidebar = memo<SidebarProps>(({ hasRecentInterview }) => {
           </p>
           <ul className="space-y-1">
             {mainNavItems.map((item) => {
-              const isActive = isActivePath(item.path);
+              const isActive = checkIsActivePath(item.path);
               const showPulse = item.id === 'interviews' && hasRecentInterview;
 
               return (
@@ -202,7 +188,7 @@ const Sidebar = memo<SidebarProps>(({ hasRecentInterview }) => {
           </p>
           <ul className="space-y-1">
             {secondaryNavItems.map((item) => {
-              const isActive = isActivePath(item.path);
+              const isActive = checkIsActivePath(item.path);
 
               return (
                 <li key={item.id}>
@@ -235,17 +221,6 @@ const Sidebar = memo<SidebarProps>(({ hasRecentInterview }) => {
 
       {/* User Section - Bottom */}
       <div className="border-t border-zinc-200 p-4">
-        {/* Credits Display */}
-        <div className="mb-4 px-3 py-3 bg-zinc-50 rounded-lg">
-          <p className="text-xs font-bold uppercase tracking-widest text-zinc-400 mb-1">
-            {t('nav.credits')}
-          </p>
-          <p className="text-2xl font-bold text-zinc-900 tracking-tight">
-            {userCredits ?? 0}
-          </p>
-          <p className="text-xs text-zinc-500 mt-0.5">{t('dashboard.stats.creditsRemaining', 'available')}</p>
-        </div>
-
         {/* User Profile */}
         <Link
           to="/account"
@@ -294,41 +269,21 @@ const MobileDrawer = memo<MobileDrawerProps>(({ isOpen, onClose, hasRecentInterv
   const drawerRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
-  const isActivePath = useCallback((path: string) => {
-    if (path === '/') {
-      return location.pathname === '/';
-    }
-    return location.pathname.startsWith(path);
+  const checkIsActivePath = useCallback((path: string) => {
+    return isPathActive(location.pathname, path);
   }, [location.pathname]);
 
-  // Close on route change
-  useEffect(() => {
-    onClose();
-  }, [location.pathname, onClose]);
+  // Shared overlay lifecycle (route close, ESC, body scroll lock)
+  useOverlayMenuLifecycle({
+    isOpen,
+    onClose,
+  });
 
-  // Close on ESC key
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    };
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [isOpen, onClose]);
-
-  // Focus trap and body scroll lock
+  // Focus the close button when drawer opens
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
-      // Focus the close button when drawer opens
       setTimeout(() => closeButtonRef.current?.focus(), 100);
-    } else {
-      document.body.style.overflow = '';
     }
-    return () => {
-      document.body.style.overflow = '';
-    };
   }, [isOpen]);
 
   return (
@@ -392,11 +347,18 @@ const MobileDrawer = memo<MobileDrawerProps>(({ isOpen, onClose, hasRecentInterv
                     </p>
                   </div>
                 </div>
-                {/* Credits Display */}
-                <div className="flex items-center justify-between px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl">
+                {/* Credits Display - clickable */}
+                <Link
+                  to={BUY_CREDITS_LINK}
+                  onClick={onClose}
+                  className="flex items-center justify-between px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl hover:border-purple-300 transition-colors"
+                >
                   <span className="text-sm text-zinc-500">{t('dashboard.stats.creditsRemaining')}</span>
-                  <span className="text-base font-semibold text-zinc-900">{userCredits ?? 0}</span>
-                </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-base font-semibold text-zinc-900">{userCredits ?? 0}</span>
+                    <span className="text-xs text-purple-600 font-medium">{t('account.sections.creditsPurchase', 'Buy Credits')}</span>
+                  </div>
+                </Link>
               </div>
             )}
 
@@ -408,7 +370,7 @@ const MobileDrawer = memo<MobileDrawerProps>(({ isOpen, onClose, hasRecentInterv
               </p>
               <ul>
                 {mainNavItems.map((item) => {
-                  const isActive = isActivePath(item.path);
+                  const isActive = checkIsActivePath(item.path);
                   const showPulse = item.id === 'interviews' && hasRecentInterview;
 
                   return (
@@ -438,7 +400,7 @@ const MobileDrawer = memo<MobileDrawerProps>(({ isOpen, onClose, hasRecentInterv
                 </p>
                 <ul>
                   {secondaryNavItems.map((item) => {
-                    const isActive = isActivePath(item.path);
+                    const isActive = checkIsActivePath(item.path);
 
                     return (
                       <li key={item.id}>
@@ -478,132 +440,6 @@ const MobileDrawer = memo<MobileDrawerProps>(({ isOpen, onClose, hasRecentInterv
 MobileDrawer.displayName = 'MobileDrawer';
 
 // ========================================
-// BOTTOM NAV COMPONENT (Mobile)
-// ========================================
-
-interface BottomNavProps {
-  hasRecentInterview: boolean;
-}
-
-const BottomNav = memo<BottomNavProps>(({ hasRecentInterview }) => {
-  const location = useLocation();
-  const { t } = useTranslation();
-
-  const isActivePath = useCallback((path: string) => {
-    if (path === '/') {
-      return location.pathname === '/';
-    }
-    return location.pathname.startsWith(path);
-  }, [location.pathname]);
-
-  return (
-    <nav
-      className="fixed bottom-0 left-0 right-0 bg-white border-t border-zinc-200 lg:hidden z-40"
-      style={{ height: BOTTOM_NAV_HEIGHT }}
-      role="navigation"
-      aria-label="Bottom navigation"
-    >
-      <ul className="flex items-center justify-around h-full px-2">
-        {bottomNavItems.map((item) => {
-          const isActive = isActivePath(item.path);
-          const showPulse = item.id === 'interviews' && hasRecentInterview;
-
-          return (
-            <li key={item.id} className="flex-1">
-              <Link
-                to={item.path}
-                className={cn(
-                  'relative flex flex-col items-center justify-center h-full px-2 text-center transition-colors',
-                  isActive
-                    ? 'text-purple-600'
-                    : 'text-zinc-500 hover:text-zinc-900'
-                )}
-              >
-                {isActive && (
-                  <motion.div
-                    layoutId="bottomNavIndicator"
-                    className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-purple-600 rounded-full"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.2 }}
-                  />
-                )}
-                <span className="relative text-xs font-semibold tracking-tight">
-                  {t(item.labelKey)}
-                  <PulseIndicator isActive={showPulse} />
-                </span>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
-  );
-});
-
-BottomNav.displayName = 'BottomNav';
-
-// ========================================
-// LOGGED LAYOUT TOPBAR
-// ========================================
-
-const LoggedTopBar = memo(() => {
-  const { userCredits } = useAuthCheck();
-  const { t } = useTranslation();
-  const { isMobileDrawerOpen, toggleMobileDrawer } = useLoggedLayout();
-
-  return (
-    <header
-      className="fixed top-0 right-0 bg-white border-b border-zinc-200 z-30"
-      style={{
-        height: TOPBAR_HEIGHT,
-        left: 0, // Full width on mobile
-      }}
-    >
-      <div className="h-full flex items-center justify-between px-4 lg:px-8 lg:ml-[260px]">
-        {/* Mobile: Hamburger + Logo */}
-        <div className="flex items-center gap-3 lg:hidden">
-          <button
-            onClick={toggleMobileDrawer}
-            className="p-2 rounded-lg text-zinc-600 hover:bg-zinc-100 transition-colors"
-            aria-label={isMobileDrawerOpen ? 'Close menu' : 'Open menu'}
-            aria-expanded={isMobileDrawerOpen}
-          >
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              {isMobileDrawerOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              )}
-            </svg>
-          </button>
-          <Link to="/" className="lg:hidden">
-            <BrandMark size="md" linkToHome={false} />
-          </Link>
-        </div>
-
-        {/* Desktop: Empty space (logo is in sidebar) */}
-        <div className="hidden lg:block" />
-
-        {/* Right side: Account menu */}
-        <div className="flex items-center gap-4">
-          {/* Credits badge - desktop only */}
-          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-zinc-50 border border-zinc-200 rounded-lg">
-            <span className="text-xs text-zinc-500">{t('nav.credits')}</span>
-            <span className="text-sm font-semibold text-zinc-900">{userCredits ?? 0}</span>
-          </div>
-
-          {/* Account Menu */}
-          <AccountMenu variant="desktop" />
-        </div>
-      </div>
-    </header>
-  );
-});
-
-LoggedTopBar.displayName = 'LoggedTopBar';
-
-// ========================================
 // MAIN LOGGED LAYOUT COMPONENT
 // ========================================
 
@@ -616,6 +452,8 @@ export const LoggedLayout: React.FC<LoggedLayoutProps> = ({ children }) => {
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [hasRecentInterview, setHasRecentInterview] = useState(false);
 
+  const location = useLocation();
+
   const toggleMobileDrawer = useCallback(() => {
     setIsMobileDrawerOpen(prev => !prev);
   }, []);
@@ -623,6 +461,12 @@ export const LoggedLayout: React.FC<LoggedLayoutProps> = ({ children }) => {
   const closeMobileDrawer = useCallback(() => {
     setIsMobileDrawerOpen(false);
   }, []);
+
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn) return;
+    if (location.hash) return;
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [isLoaded, isSignedIn, location.pathname, location.search, location.hash]);
 
   // Context value - memoized to prevent unnecessary re-renders
   const contextValue = React.useMemo(
@@ -676,7 +520,11 @@ export const LoggedLayout: React.FC<LoggedLayoutProps> = ({ children }) => {
           />
 
           {/* Top Bar */}
-          <LoggedTopBar />
+          <AppHeader
+            mode="app"
+            onMobileMenuToggle={toggleMobileDrawer}
+            isMobileMenuOpen={isMobileDrawerOpen}
+          />
 
           {/* Main Content Area */}
           <main
@@ -686,9 +534,7 @@ export const LoggedLayout: React.FC<LoggedLayoutProps> = ({ children }) => {
               // Offset for sidebar on desktop
               'lg:ml-[260px]',
               // Offset for topbar
-              'pt-[80px]',
-              // Offset for bottom nav on mobile
-              'pb-[64px] lg:pb-0'
+              'pt-20 md:pt-24'
             )}
             role="main"
           >
@@ -700,9 +546,6 @@ export const LoggedLayout: React.FC<LoggedLayoutProps> = ({ children }) => {
             {/* Footer - inside main for proper scroll */}
             <AppFooter variant="app" />
           </main>
-
-          {/* Bottom Navigation (mobile) */}
-          <BottomNav hasRecentInterview={hasRecentInterview} />
 
           {/* Feedback FAB (global) */}
           {isClosedBetaFeedbackEnabled() && <BetaFeedbackFab />}

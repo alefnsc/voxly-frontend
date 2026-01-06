@@ -26,7 +26,8 @@
     "soon": "Bientôt",
     "goBack": "Go Back",
     "filters": "Filtres",
-    "refreshData": "Actualiser les données"
+    "refreshData": "Actualiser les données",
+    "na": "N/A"
   },
   "features": {
     "badge": "Pourquoi Choisir Vocaid",
@@ -100,6 +101,7 @@
   "nav": {
     "home": "Accueil",
     "dashboard": "Tableau de bord",
+    "performance": "Performance",
     "about": "À propos",
     "credits": "Crédits",
     "contact": "Contact",
@@ -119,6 +121,23 @@
     "main": "Principal",
     "settings": "Paramètres",
     "accountSettings": "Paramètres du Compte"
+  },
+  "performance": {
+    "title": "Performance",
+    "subtitle": "Suivez vos progrès d'entretien et obtenez des insights par IA",
+    "kpis": {
+      "totalInterviews": "Total d'Entretiens",
+      "avgScore": "Score Moyen",
+      "totalTime": "Temps Total",
+      "resumeQuality": "Qualité du CV"
+    },
+    "viewResumes": "Voir les CVs",
+    "quickLinks": "Liens Rapides",
+    "links": {
+      "interviewsDesc": "Voir toutes vos sessions de pratique",
+      "resumesDesc": "Gérer et noter vos CVs",
+      "dashboardDesc": "Aperçu et démarrage rapide"
+    }
   },
   "sidebar": {
     "menu": "Menu",
@@ -202,33 +221,33 @@
     }
   },
   "about": {
-    "title": "À propos de",
-    "subtitle": "Plateforme de préparation aux entretiens propulsée par l'IA",
+    "title": "<black>À propos de</black> <purple>Vocaid</purple>",
+    "subtitle": "Votre assistant chat IA pour maîtriser les entretiens",
     "mission": {
       "title": "Réussissez Chaque Entretien",
-      "description": "Entraînez-vous avec notre intervieweur IA, obtenez des retours instantanés et développez votre confiance. Téléchargez votre CV, entrez les détails du poste et commencez à progresser."
+      "description": "Discutez avec votre assistant IA pour analyser les transcriptions d'entretiens, optimiser votre CV avec un score ATS et obtenir des PDF de feedback personnalisés. Téléchargez votre CV, entrez les détails du poste et laissez votre coach de performance vous guider vers le succès."
     },
     "whyVocaid": "Pourquoi Vocaid ?",
     "features": {
       "realistic": {
-        "title": "Réaliste",
-        "desc": "Conversation naturelle"
+        "title": "Assistant IA",
+        "desc": "Coaching de performance interactif"
       },
       "analytics": {
-        "title": "Analyses",
-        "desc": "Suivez vos progrès"
+        "title": "Analyses Intelligentes",
+        "desc": "Transcriptions et suivi"
       },
       "practice247": {
         "title": "24h/24 7j/7",
         "desc": "Sans rendez-vous"
       },
       "feedback": {
-        "title": "Feedback",
-        "desc": "Conseils pratiques"
+        "title": "PDFs Feedback",
+        "desc": "Conseils téléchargeables"
       },
       "roleSpecific": {
-        "title": "Spécifique",
-        "desc": "Questions adaptées"
+        "title": "Score ATS",
+        "desc": "Optimisation CV"
       },
       "payPerUse": {
         "title": "À l'usage",
@@ -308,6 +327,10 @@
     }
   },
   "interview": {
+    "newInterview": {
+      "title": "<black>Configurez Votre</black> <purple>Entretien</purple>",
+      "subtitle": "Configurez les détails de votre entretien d'entraînement"
+    },
     "setup": {
       "title": "Configuration de l'Entretien",
       "subtitle": "Préparons votre simulation d'entretien",
@@ -599,8 +622,7 @@
     "score": "Score",
     "new": "Nouveau",
     "repository": {
-      "title": "Dépôt",
-      "titleHighlight": "d'Entretiens",
+      "title": "<black>Dépôt</black> <purple>d'Entretiens</purple>",
       "subtitle": "Parcourez, filtrez et analysez toutes vos sessions d'entretien en un seul endroit.",
       "description": "Votre historique complet d'entretiens avec filtrage avancé et analyses.",
       "filters": {
@@ -691,7 +713,14 @@
       "noScoreDataDesc": "Complétez des entretiens pour suivre votre progression",
       "noSpendingData": "Aucune donnée de dépenses disponible",
       "noSpendingDataDesc": "Achetez des crédits pour voir votre historique",
-      "performanceTrend": "Performance Trend"
+      "performanceTrend": "Tendance de Performance",
+      "noData": "Complétez des entretiens pour voir votre tendance de performance"
+    },
+    "periods": {
+      "1w": "1S",
+      "1m": "1M",
+      "6m": "6M",
+      "all": "Tout"
     },
     "recentInterviews": "Entretiens Récents",
     "noInterviews": "Pas encore d'entretiens. Commencez votre première session de pratique !",
@@ -758,7 +787,8 @@
     "current": "Actuelle : {{language}}"
   },
   "feedback": {
-    "title": "Feedback de l'Entretien",
+    "title": "<black>Feedback de</black> <purple>l'Entretien</purple>",
+    "subtitle": "Analyse de performance générée par l'IA et conseils de coaching personnalisés",
     "loading": {
       "title": "Génération du Feedback",
       "analyzing": "Analyse de votre performance en entretien...",
@@ -1043,8 +1073,7 @@
     "askAiInstead": "Demandez à l'IA plutôt"
   },
   "interviewDetails": {
-    "title": "Détails de",
-    "titleHighlight": "l'Entretien",
+    "title": "<black>Détails de</black> <purple>l'Entretien</purple>",
     "subtitle": "Examinez votre performance et votre feedback d'entretien",
     "loadError": "Échec du chargement des détails de l'entretien. Veuillez réessayer.",
     "notFound": "Entretien non trouvé",
@@ -1865,29 +1894,49 @@
     "switchWorkspace": "Switch Workspace",
     "selectWorkspace": "Select Workspace",
     "sections": {
-      "profile": "Profile",
-      "security": "Security",
-      "danger": "Danger Zone"
+      "profile": "Profil",
+      "security": "Sécurité",
+      "danger": "Zone de danger"
     },
     "profile": {
-      "title": "Profile Information",
-      "avatar": "Profile Picture",
-      "avatarHint": "Managed through your OAuth provider",
-      "save": "Save Changes"
+      "title": "Informations du profil",
+      "avatar": "Photo de profil",
+      "avatarHint": "Géré par votre fournisseur OAuth",
+      "save": "Enregistrer les modifications",
+      "phone": "Numéro de téléphone",
+      "phoneDescription": "Vérifiez votre numéro de téléphone pour réclamer des crédits d'entretien gratuits."
     },
     "security": {
-      "title": "Change Password",
-      "currentPassword": "Current Password",
-      "newPassword": "New Password",
-      "confirmPassword": "Confirm New Password",
-      "changePassword": "Change Password"
+      "title": "Réinitialiser le mot de passe",
+      "currentPassword": "Mot de passe actuel",
+      "newPassword": "Nouveau mot de passe",
+      "confirmPassword": "Confirmer le nouveau mot de passe",
+      "changePassword": "Changer le mot de passe",
+      "resetDescription": "Nous vous enverrons un lien sécurisé par email pour finaliser le changement de mot de passe.",
+      "sendResetLink": "Envoyer le lien de réinitialisation",
+      "sendingReset": "Envoi en cours...",
+      "resetEmailSent": "Nous avons envoyé un lien de réinitialisation à votre email.",
+      "resetEmailFailed": "Échec de l'envoi du lien de réinitialisation."
+    },
+    "passwordResetConfirm": {
+      "title": "Définir un nouveau mot de passe",
+      "subtitle": "Entrez un nouveau mot de passe pour votre compte.",
+      "passwordLabel": "Nouveau mot de passe",
+      "confirmLabel": "Confirmer le nouveau mot de passe",
+      "submit": "Mettre à jour le mot de passe",
+      "updating": "Mise à jour...",
+      "successTitle": "Mot de passe mis à jour",
+      "successMessage": "Votre mot de passe a été mis à jour. Vous pouvez maintenant vous connecter.",
+      "missingToken": "Jeton de réinitialisation manquant.",
+      "invalidToken": "Ce lien de réinitialisation est invalide ou a expiré.",
+      "backToSignIn": "Retour à la connexion"
     },
     "danger": {
-      "title": "Delete Account",
-      "warning": "This action is permanent and cannot be undone. All your data will be permanently deleted.",
-      "confirmLabel": "Type DELETE to confirm",
-      "deleteButton": "Permanently Delete Account",
-      "deleting": "Deleting..."
+      "title": "Supprimer le compte",
+      "warning": "Cette action est permanente et ne peut pas être annulée. Toutes vos données seront supprimées définitivement.",
+      "confirmLabel": "Tapez DELETE pour confirmer",
+      "deleteButton": "Supprimer définitivement le compte",
+      "deleting": "Suppression en cours..."
     },
     "validation": {
       "failedToUpdateProfile": "Échec de la mise à jour du profil",
@@ -2031,6 +2080,22 @@
       "updateFailed": "Échec de la mise à jour du CV",
       "uploadFailed": "Échec du téléchargement du CV",
       "readFailed": "Échec de la lecture du fichier"
+    },
+    "roleOptions": {
+      "softwareEngineer": "Ingénieur Logiciel",
+      "productManager": "Chef de Produit",
+      "dataAnalyst": "Analyste de Données",
+      "dataScientist": "Scientifique des Données",
+      "uxDesigner": "Designer UX",
+      "marketingManager": "Responsable Marketing",
+      "projectManager": "Chef de Projet",
+      "devopsEngineer": "Ingénieur DevOps",
+      "frontendDeveloper": "Développeur Frontend",
+      "backendDeveloper": "Développeur Backend",
+      "fullStackDeveloper": "Développeur Full Stack"
+    },
+    "linkedIn": {
+      "placeholder": "Ingénieur Logiciel Senior chez Entreprise Tech"
     }
   },
   "scoreDisplay": {
@@ -2230,5 +2295,41 @@
   "accessDenied": {
     "title": "Accès Refusé",
     "description": "Vous n'avez pas la permission d'accéder à cette page. Cette zone est réservée à des rôles d'utilisateur spécifiques."
+  },
+  "phoneVerification": {
+    "verified": "Téléphone Vérifié",
+    "cta": {
+      "title": "Réclamez des Crédits Gratuits",
+      "description": "Vérifiez votre téléphone pour obtenir 5 crédits d'entretien gratuits",
+      "button": "Vérifier le Téléphone"
+    },
+    "phone": {
+      "title": "Entrez le Numéro de Téléphone",
+      "placeholder": "6 12 34 56 78",
+      "hint": "Nous vous enverrons un code à 6 chiffres par SMS",
+      "send": "Envoyer le Code",
+      "searchCountry": "Rechercher un pays...",
+      "noCountries": "Aucun pays trouvé"
+    },
+    "code": {
+      "title": "Entrez le Code de Vérification",
+      "sent": "Code envoyé à {{phone}}",
+      "resend": "Renvoyer le Code",
+      "resendIn": "Renvoyer dans {{seconds}}s",
+      "verify": "Vérifier"
+    },
+    "success": {
+      "title": "Téléphone Vérifié!",
+      "description": "Vos crédits gratuits ont été ajoutés"
+    },
+    "errors": {
+      "alreadyVerified": "Vous avez déjà vérifié un numéro de téléphone.",
+      "sendFailed": "Échec de l'envoi du code de vérification",
+      "incompleteCode": "Veuillez entrer le code complet à 6 chiffres",
+      "invalidCode": "Code de vérification invalide",
+      "verifyFailed": "La vérification a échoué",
+      "resendFailed": "Échec du renvoi du code",
+      "invalidPhone": "Veuillez entrer un numéro de téléphone valide"
+    }
   }
 }

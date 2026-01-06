@@ -32,6 +32,12 @@ export const CustomAvatar: React.FC<CustomAvatarProps> = ({
   size = 'md',
   className,
 }) => {
+  const [imageError, setImageError] = React.useState(false);
+
+  React.useEffect(() => {
+    setImageError(false);
+  }, [imageUrl]);
+
   // Generate initials from name
   const initials = React.useMemo(() => {
     const first = firstName?.charAt(0)?.toUpperCase() || '';
@@ -42,11 +48,12 @@ export const CustomAvatar: React.FC<CustomAvatarProps> = ({
   const sizeClass = sizeClasses[size];
 
   // If image URL exists, show the image
-  if (imageUrl) {
+  if (imageUrl && !imageError) {
     return (
       <img
         src={imageUrl}
         alt={`${firstName || ''} ${lastName || ''}`.trim() || 'User avatar'}
+        onError={() => setImageError(true)}
         className={cn(
           'rounded-full object-cover',
           sizeClass,

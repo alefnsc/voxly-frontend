@@ -3,37 +3,36 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Footer from '../index';
 
+import { useUser } from 'contexts/AuthContext';
+
+jest.mock('contexts/AuthContext', () => ({
+    __esModule: true,
+    useUser: jest.fn(),
+}));
+
+jest.mock('components/shared/AppFooter', () => ({
+    __esModule: true,
+    AppFooter: ({ variant }: { variant: string }) => (
+        <footer role="contentinfo" data-testid="app-footer" data-variant={variant} />
+    ),
+}));
+
 describe('Footer Component', () => {
     it('renders without crashing', () => {
+        (useUser as jest.Mock).mockReturnValue({ isSignedIn: false, isLoaded: true, user: null });
         render(<Footer />);
-        const footer = screen.getByRole('contentinfo');
-        expect(footer).toBeInTheDocument();
+        expect(screen.getByTestId('app-footer')).toBeInTheDocument();
     });
 
-    it('displays the correct copyright text', () => {
+    it('uses the full footer when signed out', () => {
+        (useUser as jest.Mock).mockReturnValue({ isSignedIn: false, isLoaded: true, user: null });
         render(<Footer />);
-        const copyrightText = screen.getByText('© Vocaid  - All Rights Reserved.');
-        expect(copyrightText).toBeInTheDocument();
+        expect(screen.getByTestId('app-footer')).toHaveAttribute('data-variant', 'full');
     });
 
-    it('has the correct styling classes', () => {
+    it('uses the app footer when signed in', () => {
+        (useUser as jest.Mock).mockReturnValue({ isSignedIn: true, isLoaded: true, user: { id: 'user' } });
         render(<Footer />);
-        const footer = screen.getByRole('contentinfo');
-
-        expect(footer).toHaveClass('flex');
-        expect(footer).toHaveClass('b-0');
-        expect(footer).toHaveClass('h-[90px]');
-        expect(footer).toHaveClass('items-center');
-        expect(footer).toHaveClass('justify-center');
-        expect(footer).toHaveClass('border-t');
-        expect(footer).toHaveClass('border-slate-6');
-    });
-
-    it('has the correct structure', () => {
-        render(<Footer />);
-        const footer = screen.getByRole('contentinfo');
-        expect(footer.tagName).toBe('FOOTER');
-        expect(footer.children.length).toBe(0);
-        expect(footer.textContent).toBe('© Vocaid  - All Rights Reserved.');
+        expect(screen.getByTestId('app-footer')).toHaveAttribute('data-variant', 'app');
     });
 }); 

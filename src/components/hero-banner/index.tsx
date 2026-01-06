@@ -11,7 +11,7 @@
 import { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '@clerk/clerk-react';
+import { useAuth } from 'contexts/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { Button } from '../ui/button';

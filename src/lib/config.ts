@@ -50,21 +50,34 @@ function getBackendUrl(): string {
   }
   
   // Development: prefer DEV URL, fallback to main URL, then localhost
-  const devUrl = process.env.REACT_APP_BACKEND_URL_DEV || 
-                 process.env.REACT_APP_BACKEND_URL || 
-                 'http://localhost:3001';
-  
-  // Warn if using ngrok (common source of CORS issues)
-  if (devUrl.includes('ngrok') || devUrl.includes('ngrok-free.app')) {
+  const configuredDevUrl = process.env.REACT_APP_BACKEND_URL_DEV || process.env.REACT_APP_BACKEND_URL;
+  const localhostUrl = 'http://localhost:3001';
+
+  if (!configuredDevUrl) {
+    return localhostUrl;
+  }
+
+  const isNgrokUrl = configuredDevUrl.includes('ngrok') || configuredDevUrl.includes('ngrok-free.app');
+  const allowNgrok = (process.env.REACT_APP_ALLOW_NGROK || '').toLowerCase() === 'true';
+
+  // Using ngrok for the backend in dev often breaks cookie-based auth (SameSite), so require an explicit opt-in.
+  if (isNgrokUrl && !allowNgrok) {
     console.warn(
-      '⚠️ BACKEND_URL is using ngrok tunnel:', devUrl,
-      '\n   This may cause CORS issues if the ngrok URL is stale.',
-      '\n   For local development, use http://localhost:3001 instead.',
-      '\n   Set REACT_APP_BACKEND_URL_DEV=http://localhost:3001 in .env'
+      '⚠️ BACKEND_URL is set to an ngrok tunnel, which commonly breaks cookie-based auth:', configuredDevUrl,
+      '\n   Falling back to http://localhost:3001 for local development.',
+      '\n   If you *intentionally* want ngrok, set REACT_APP_ALLOW_NGROK=true'
+    );
+    return localhostUrl;
+  }
+
+  if (isNgrokUrl) {
+    console.warn(
+      '⚠️ BACKEND_URL is using ngrok tunnel:', configuredDevUrl,
+      '\n   If /api/auth/me returns 401, this is likely due to SameSite cookie restrictions across domains.'
     );
   }
-  
-  return devUrl;
+
+  return configuredDevUrl;
 }
 
 /**
@@ -113,15 +126,12 @@ export const config = {
   // PayPal
   paypalClientId: getPayPalClientId(),
 
-  // Clerk
-  clerkPublishableKey: process.env.REACT_APP_CLERK_PUBLISHABLE_KEY || '',
-
   // reCAPTCHA
   recaptchaSiteKey: process.env.REACT_APP_RECAPTCHA_SITE_KEY || '',
 
   // Interview duration thresholds (in milliseconds)
   minInterviewDurationMs: parseInt(process.env.REACT_APP_MIN_INTERVIEW_DURATION_MS || '30000', 10),
-  creditRestorationThresholdMs: parseInt(process.env.REACT_APP_CREDIT_RESTORATION_THRESHOLD_MS || '15000', 10),
+  creditRestorationThresholdMs: parseInt(process.env.REACT_APP_CREDIT_RESTORATION_THRESHOLD_MS || '30000', 10),
   
   // Feature flags
   useMockData: process.env.REACT_APP_USE_MOCK_DATA === 'true',

@@ -4,7 +4,7 @@ import TopBar from 'components/top-bar'
 import Sidebar from 'components/sidebar'
 import { cn } from 'lib/utils'
 import React, { createContext, useContext } from 'react'
-import { useUser } from '@clerk/clerk-react'
+import { useUser } from 'contexts/AuthContext'
 
 // ========================================
 // LAYOUT CONTEXT

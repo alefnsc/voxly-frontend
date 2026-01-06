@@ -1,14 +1,13 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { ProtectedInterviewRoute } from '../index';
-import { useUser } from '@clerk/clerk-react';
 import { useAuthCheck } from 'hooks/use-auth-check';
 import { useLocation } from 'react-router-dom';
-import Loading from 'components/loading';
+import { useUser } from 'contexts/AuthContext';
 
-// Mock the hooks and components
-jest.mock('@clerk/clerk-react', () => ({
+jest.mock('contexts/AuthContext', () => ({
+    __esModule: true,
     useUser: jest.fn(),
 }));
 
@@ -49,7 +48,7 @@ describe('ProtectedInterviewRoute', () => {
     });
 
     it('renders loading state when auth is not loaded', () => {
-        (useUser as jest.Mock).mockReturnValue({ isLoaded: false, isSignedIn: false });
+        (useUser as jest.Mock).mockReturnValue({ isLoaded: false, isSignedIn: false, user: null });
         (useAuthCheck as jest.Mock).mockReturnValue({ userCredits: 1, isLoading: false });
         (useLocation as jest.Mock).mockReturnValue(mockLocation);
 
@@ -63,7 +62,7 @@ describe('ProtectedInterviewRoute', () => {
     });
 
     it('renders loading state when auth check is loading', () => {
-        (useUser as jest.Mock).mockReturnValue({ isLoaded: true, isSignedIn: true });
+        (useUser as jest.Mock).mockReturnValue({ isLoaded: true, isSignedIn: true, user: { id: '123' } });
         (useAuthCheck as jest.Mock).mockReturnValue({ userCredits: 1, isLoading: true });
         (useLocation as jest.Mock).mockReturnValue(mockLocation);
 
@@ -76,8 +75,8 @@ describe('ProtectedInterviewRoute', () => {
         expect(screen.getByTestId('loading')).toBeInTheDocument();
     });
 
-    it('redirects to home when user is not signed in', () => {
-        (useUser as jest.Mock).mockReturnValue({ isLoaded: true, isSignedIn: false });
+    it('redirects to home when user is not signed in', async () => {
+        (useUser as jest.Mock).mockReturnValue({ isLoaded: true, isSignedIn: false, user: null });
         (useAuthCheck as jest.Mock).mockReturnValue({ userCredits: 1, isLoading: false });
         (useLocation as jest.Mock).mockReturnValue(mockLocation);
 
@@ -87,12 +86,12 @@ describe('ProtectedInterviewRoute', () => {
             </ProtectedInterviewRoute>
         );
 
-        expect(screen.getByTestId('navigate')).toBeInTheDocument();
+        await waitFor(() => expect(screen.getByTestId('navigate')).toBeInTheDocument());
         expect(screen.getByTestId('navigate')).toHaveAttribute('data-to', '/');
     });
 
-    it('redirects to home when validation token is missing', () => {
-        (useUser as jest.Mock).mockReturnValue({ isLoaded: true, isSignedIn: true });
+    it('redirects to home when validation token is missing', async () => {
+        (useUser as jest.Mock).mockReturnValue({ isLoaded: true, isSignedIn: true, user: { id: '123' } });
         (useAuthCheck as jest.Mock).mockReturnValue({ userCredits: 1, isLoading: false });
         (useLocation as jest.Mock).mockReturnValue(mockLocation);
 
@@ -102,12 +101,12 @@ describe('ProtectedInterviewRoute', () => {
             </ProtectedInterviewRoute>
         );
 
-        expect(screen.getByTestId('navigate')).toBeInTheDocument();
+        await waitFor(() => expect(screen.getByTestId('navigate')).toBeInTheDocument());
         expect(screen.getByTestId('navigate')).toHaveAttribute('data-to', '/');
     });
 
-    it('redirects to home when user has no credits', () => {
-        (useUser as jest.Mock).mockReturnValue({ isLoaded: true, isSignedIn: true });
+    it('redirects to home when user has no credits', async () => {
+        (useUser as jest.Mock).mockReturnValue({ isLoaded: true, isSignedIn: true, user: { id: '123' } });
         (useAuthCheck as jest.Mock).mockReturnValue({ userCredits: 0, isLoading: false });
         (useLocation as jest.Mock).mockReturnValue(mockLocation);
 
@@ -121,12 +120,12 @@ describe('ProtectedInterviewRoute', () => {
             </ProtectedInterviewRoute>
         );
 
-        expect(screen.getByTestId('navigate')).toBeInTheDocument();
+        await waitFor(() => expect(screen.getByTestId('navigate')).toBeInTheDocument());
         expect(screen.getByTestId('navigate')).toHaveAttribute('data-to', '/');
     });
 
-    it('renders children when all validation passes', () => {
-        (useUser as jest.Mock).mockReturnValue({ isLoaded: true, isSignedIn: true });
+    it('renders children when all validation passes', async () => {
+        (useUser as jest.Mock).mockReturnValue({ isLoaded: true, isSignedIn: true, user: { id: '123' } });
         (useAuthCheck as jest.Mock).mockReturnValue({ userCredits: 1, isLoading: false });
         (useLocation as jest.Mock).mockReturnValue(mockLocation);
 
@@ -140,7 +139,7 @@ describe('ProtectedInterviewRoute', () => {
             </ProtectedInterviewRoute>
         );
 
-        expect(screen.getByTestId('protected-content')).toBeInTheDocument();
+        await waitFor(() => expect(screen.getByTestId('protected-content')).toBeInTheDocument());
         expect(screen.queryByTestId('navigate')).not.toBeInTheDocument();
     });
 }); 

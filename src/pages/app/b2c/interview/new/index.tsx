@@ -15,7 +15,7 @@
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from 'contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 import { DefaultLayout } from 'components/default-layout';
 import InterviewBreadcrumbs from 'components/interview-breadcrumbs';
+import { TitleSplit } from 'components/ui/TitleSplit';
 import { useInterviewFlow } from 'hooks/use-interview-flow';
 import { useLanguage } from 'hooks/use-language';
 import { useResumesQuery, useUploadResumeMutation } from 'hooks/queries/useResumeQueries';
@@ -577,6 +578,7 @@ const B2CNewInterviewPage: React.FC = () => {
         companyName: formData.company.trim(),
         jobDescription: formData.jobDescription.trim(),
         language: formData.language,
+        country: formData.country,
         resumeId: formData.resumeId,
         resumeFileName: selectedResume?.fileName,
       });
@@ -634,12 +636,14 @@ const B2CNewInterviewPage: React.FC = () => {
         <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 py-4 sm:py-6 lg:py-8">
           {/* Header */}
           <div className="text-center mb-6 sm:mb-8">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-              {t('interview.newInterview.title', 'Set Up Your Interview')}
-            </h1>
-            <p className="text-sm sm:text-base text-gray-600">
-              {t('interview.newInterview.subtitle', 'Configure your practice interview details')}
-            </p>
+            <TitleSplit 
+              i18nKey="interview.newInterview.title"
+              subtitleKey="interview.newInterview.subtitle"
+              as="h1"
+              className="text-2xl sm:text-3xl"
+              subtitleClassName="text-sm sm:text-base"
+              containerClassName="flex flex-col items-center"
+            />
           </div>
           
           {/* Breadcrumbs */}

@@ -12,7 +12,7 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from 'contexts/AuthContext';
 import { useAuthCheck } from 'hooks/use-auth-check';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -40,6 +40,7 @@ interface NavItem {
 
 const mainNavItems: NavItem[] = [
   { id: 'dashboard', labelKey: 'nav.dashboard', path: B2C_ROUTES.DASHBOARD },
+  { id: 'performance', labelKey: 'nav.performance', path: B2C_ROUTES.PERFORMANCE },
   { id: 'interviews', labelKey: 'nav.interviews', path: B2C_ROUTES.INTERVIEWS },
   { id: 'resumes', labelKey: 'nav.resumes', path: B2C_ROUTES.RESUMES },
   { id: 'credits', labelKey: 'nav.credits', path: B2C_ROUTES.BILLING },
@@ -102,7 +103,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ hasRecentInterview = false }) 
       aria-label="Main sidebar navigation"
     >
       {/* Logo Section */}
-      <div className="h-[100px] flex items-center px-6 border-b border-zinc-200">
+      <div className="h-[80px] flex items-center px-6 border-b border-zinc-200">
         <Link to="/" aria-label="Vocaid Home">
           <BrandMark size="xl" linkToHome={false} />
         </Link>

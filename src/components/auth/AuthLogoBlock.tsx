@@ -39,7 +39,7 @@ export const AuthLogoBlock: React.FC<AuthLogoBlockProps> = ({
       
       {/* Brand tagline */}
       <p className="mt-3 text-sm text-zinc-500 font-medium tracking-wide">
-        {t('auth.tagline', 'Interview Practice. Feedback. Progress.')}
+        {t('auth.tagline', 'HR Intelligence Hub for Fast Progress.')}
       </p>
     </div>
   );

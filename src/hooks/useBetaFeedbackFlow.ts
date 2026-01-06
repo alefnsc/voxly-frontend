@@ -7,7 +7,7 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from 'contexts/AuthContext';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { v4 as uuidv4 } from 'uuid';
 import { 
@@ -92,7 +92,7 @@ export function useBetaFeedbackFlow() {
   
   const [state, setState] = useState<BetaFeedbackWizardState>(() => {
     const initial = createInitialState();
-    // Prefill email from Clerk if available
+    // Prefill email from user profile if available
     if (user?.primaryEmailAddress?.emailAddress) {
       initial.userEmail = user.primaryEmailAddress.emailAddress;
     }

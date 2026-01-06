@@ -38,7 +38,9 @@ const CreditsModal: React.FC<CreditsModalProps> = ({ isOpen, onClose }) => {
                     <ul className="space-y-3 text-sm text-gray-600">
                         <li className="flex items-start">
                             <RefreshCw className="mr-2 text-green-500 shrink-0 mt-0.5 w-4 h-4" data-testid="refresh-icon" />
-                            <span>{formatCreditsText(FREE_TRIAL_CREDITS)} are automatically provided each month</span>
+                            <span>
+                                {formatCreditsText(FREE_TRIAL_CREDITS)} {FREE_TRIAL_CREDITS === 1 ? 'is' : 'are'} automatically provided each month
+                            </span>
                         </li>
                         <li className="flex items-start">
                             <Award className="mr-2 text-amber-500 shrink-0 mt-0.5 w-4 h-4" />

@@ -10,7 +10,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { SignInButton, useAuth } from '@clerk/clerk-react';
+import { Link } from 'react-router-dom';
+import { useAuth } from 'contexts/AuthContext';
 import { ArrowRight, X, Sparkles } from 'lucide-react';
 import { Button } from '../ui/button';
 
@@ -110,7 +111,7 @@ export function FloatingCTA({
                 </div>
 
                 {/* CTA Button */}
-                <SignInButton mode="modal">
+                <Link to="/sign-in">
                   <Button
                     size="lg"
                     className="group w-full sm:w-auto px-6 py-3 text-sm font-semibold bg-purple-600 hover:bg-purple-500 text-white rounded-xl transition-all duration-200"
@@ -118,7 +119,7 @@ export function FloatingCTA({
                     {t('floatingCta.button', 'Get Started Free')}
                     <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
                   </Button>
-                </SignInButton>
+                </Link>
               </div>
             </div>
           </div>

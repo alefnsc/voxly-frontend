@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import CreditsModal from '../index';
+import { FREE_TRIAL_CREDITS, formatCreditsText } from 'config/credits';
 
 // Mock the window.open function
 const mockWindowOpen = jest.fn();
@@ -32,7 +33,11 @@ describe('CreditsModal Component', () => {
 
         // Check if credit earning methods are listed
         expect(screen.getByText('How to earn more credits:')).toBeInTheDocument();
-        expect(screen.getByText('3 credits are automatically provided each month')).toBeInTheDocument();
+        expect(
+            screen.getByText(
+                `${formatCreditsText(FREE_TRIAL_CREDITS)} ${FREE_TRIAL_CREDITS === 1 ? 'is' : 'are'} automatically provided each month`
+            )
+        ).toBeInTheDocument();
         expect(screen.getByText('Earn additional credits through community participation and contributions')).toBeInTheDocument();
 
         // Check if buttons are present

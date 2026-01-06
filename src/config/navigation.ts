@@ -162,7 +162,7 @@ export const NAV_CONFIG: NavItem[] = [
   {
     id: 'b2c-resumes',
     labelKey: 'nav.resumes',
-    path: '/app/b2c/resumes',
+    path: '/app/b2c/resume-library',
     icon: 'FileText',
     section: 'main',
     order: 4,
@@ -253,7 +253,7 @@ export const NAV_CONFIG: NavItem[] = [
   {
     id: 'billing',
     labelKey: 'nav.billing',
-    path: '/app/b2c/billing',
+    path: '/account?section=creditsPurchase',
     icon: 'CreditCard',
     section: 'billing',
     order: 1,

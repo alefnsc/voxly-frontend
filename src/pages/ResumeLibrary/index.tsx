@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from 'contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
-import { DefaultLayout } from 'components/default-layout';
+import { motion } from 'framer-motion';
 import Loading from 'components/loading';
 import { Input } from 'components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from 'components/ui/select';
 import PurpleButton from 'components/ui/purple-button';
+import { TitleSplit } from 'components/ui/TitleSplit';
 import {
   Upload,
   FileText,
@@ -25,10 +25,30 @@ import {
   X,
   Linkedin,
   Target,
-  TrendingUp,
-  RefreshCw
+  Calendar,
+  BarChart3
 } from 'lucide-react';
 import apiService, { ResumeListItem } from 'services/APIService';
+
+// ========================================
+// TYPES & CONSTANTS
+// ========================================
+
+type SortOption = 'date' | 'usage';
+type DateFilter = 'all' | 'week' | 'month' | 'quarter' | 'year';
+
+const DATE_FILTER_OPTIONS: Array<{ value: DateFilter; labelKey: string }> = [
+  { value: 'all', labelKey: 'common.allTime' },
+  { value: 'week', labelKey: 'common.lastWeek' },
+  { value: 'month', labelKey: 'common.lastMonth' },
+  { value: 'quarter', labelKey: 'common.last3Months' },
+  { value: 'year', labelKey: 'common.lastYear' }
+];
+
+const SORT_OPTIONS: Array<{ value: SortOption; labelKey: string }> = [
+  { value: 'date', labelKey: 'resumeLibrary.sortByDate' },
+  { value: 'usage', labelKey: 'resumeLibrary.sortByUsage' }
+];
 
 const ResumeLibrary: React.FC = () => {
   const navigate = useNavigate();
@@ -45,10 +65,10 @@ const ResumeLibrary: React.FC = () => {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   
-  // Role scoring state
-  const [selectedRole, setSelectedRole] = useState<string>('');
-  const [resumeScores, setResumeScores] = useState<Record<string, number>>({});
-  const [isScoring, setIsScoring] = useState<string | null>(null);
+  // Filter & Sort state
+  const [roleFilter, setRoleFilter] = useState<string>('all');
+  const [dateFilter, setDateFilter] = useState<DateFilter>('all');
+  const [sortBy, setSortBy] = useState<SortOption>('date');
   
   // LinkedIn import state
   const [showLinkedInModal, setShowLinkedInModal] = useState(false);
@@ -58,21 +78,6 @@ const ResumeLibrary: React.FC = () => {
   const [linkedInHeadline, setLinkedInHeadline] = useState('');
   const [isImportingLinkedIn, setIsImportingLinkedIn] = useState(false);
   
-  // Common role options for filtering/scoring
-  const roleOptions = [
-    'Software Engineer',
-    'Product Manager',
-    'Data Analyst',
-    'Data Scientist',
-    'UX Designer',
-    'Marketing Manager',
-    'Project Manager',
-    'DevOps Engineer',
-    'Frontend Developer',
-    'Backend Developer',
-    'Full Stack Developer'
-  ];
-
   // Load resumes
   const loadResumes = useCallback(async () => {
     if (!user?.id) return;
@@ -197,7 +202,13 @@ const ResumeLibrary: React.FC = () => {
 
   // Update resume title
   const handleUpdateTitle = async (resumeId: string) => {
-    if (!user?.id || !editTitle.trim()) return;
+    if (!user?.id) return;
+    
+    // Validate title is not empty
+    if (!editTitle.trim()) {
+      setError(t('resumeLibrary.errors.titleRequired', 'Resume title cannot be empty'));
+      return;
+    }
 
     try {
       await apiService.updateResume(user.id, resumeId, { title: editTitle.trim() });
@@ -210,33 +221,15 @@ const ResumeLibrary: React.FC = () => {
     }
   };
 
-  // Score resume for selected role
-  const handleScoreResume = async (resumeId: string) => {
-    if (!user?.id || !selectedRole) return;
-    
-    setIsScoring(resumeId);
-    try {
-      const response = await apiService.scoreResume(user.id, resumeId, selectedRole);
-      if (response.status === 'success' && response.data) {
-        setResumeScores(prev => ({
-          ...prev,
-          [resumeId]: response.data.score
-        }));
-      }
-    } catch (err) {
-      console.error('Failed to score resume:', err);
-      setError(t('resumeLibrary.errors.scoreFailed', 'Failed to score resume'));
-    } finally {
-      setIsScoring(null);
-    }
-  };
-
-  // Score all resumes for selected role
-  const handleScoreAllResumes = async () => {
-    if (!user?.id || !selectedRole) return;
-    
-    for (const resume of resumes) {
-      await handleScoreResume(resume.id);
+  // Handle keyboard events for rename input
+  const handleRenameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, resumeId: string) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleUpdateTitle(resumeId);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      setEditingResume(null);
+      setEditTitle('');
     }
   };
 
@@ -273,16 +266,69 @@ const ResumeLibrary: React.FC = () => {
   };
 
   // Filter resumes
-  const filteredResumes = resumes.filter(resume =>
-    resume.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    resume.fileName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    resume.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const filteredResumes = useMemo(() => {
+    return resumes.filter(resume => {
+      // Search filter
+      const matchesSearch = searchQuery.trim() === '' || 
+        resume.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        resume.fileName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        resume.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+      
+      // Role filter
+      const matchesRole = roleFilter === 'all' || resume.alignedRole === roleFilter;
+      
+      // Date filter
+      let matchesDate = true;
+      if (dateFilter !== 'all') {
+        const resumeDate = new Date(resume.createdAt);
+        const now = new Date();
+        switch (dateFilter) {
+          case 'week':
+            matchesDate = resumeDate >= new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            break;
+          case 'month':
+            matchesDate = resumeDate >= new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            break;
+          case 'quarter':
+            matchesDate = resumeDate >= new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+            break;
+          case 'year':
+            matchesDate = resumeDate >= new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+            break;
+        }
+      }
+      
+      return matchesSearch && matchesRole && matchesDate;
+    });
+  }, [resumes, searchQuery, roleFilter, dateFilter]);
   
-  // Sort by score if role is selected
-  const sortedResumes = selectedRole 
-    ? [...filteredResumes].sort((a, b) => (resumeScores[b.id] || 0) - (resumeScores[a.id] || 0))
-    : filteredResumes;
+  // Sort resumes
+  const sortedResumes = useMemo(() => {
+    const sorted = [...filteredResumes];
+    
+    switch (sortBy) {
+      case 'date':
+        return sorted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      case 'usage':
+        return sorted.sort((a, b) => b.usageCount - a.usageCount);
+      default:
+        return sorted;
+    }
+  }, [filteredResumes, sortBy]);
+
+  // Derive unique aligned roles from user's resumes for filtering
+  const availableRoles = useMemo(() => {
+    const roles = new Map<string, string>();
+    resumes.forEach(resume => {
+      if (resume.alignedRole && resume.alignedRoleLabel) {
+        roles.set(resume.alignedRole, resume.alignedRoleLabel);
+      }
+    });
+    return Array.from(roles.entries()).map(([value, label]) => ({ value, label }));
+  }, [resumes]);
+
+  // Check if any filters are active
+  const hasActiveFilters = roleFilter !== 'all' || dateFilter !== 'all' || searchQuery.trim() !== '';
 
   // Format file size
   const formatFileSize = (bytes: number) => {
@@ -304,18 +350,40 @@ const ResumeLibrary: React.FC = () => {
     return <Loading />;
   }
 
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
+  };
+
   return (
-    <DefaultLayout className="flex flex-col overflow-hidden bg-zinc-50 min-h-screen">
-      <div className="page-container py-6 sm:py-8">
+    <div className="min-h-screen bg-zinc-50">
+      <motion.div
+        className="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
         {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+        <motion.div
+          className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6"
+          variants={itemVariants}
+        >
           <div className="flex-1">
-            <h1 className="text-2xl sm:text-3xl font-bold text-zinc-900 mb-2">
-              {t('resumeLibrary.title', 'Resume')} <span className="text-purple-600">{t('resumeLibrary.titleHighlight', 'Library')}</span>
-            </h1>
-            <p className="text-zinc-600 mt-1">
-              {t('resumeLibrary.subtitle', 'Manage your resumes for quick interview setup')}
-            </p>
+            <TitleSplit
+              i18nKey="resumeLibrary.title"
+              subtitleKey="resumeLibrary.subtitle"
+              as="h1"
+              size="lg"
+            />
           </div>
 
           {/* Action Buttons */}
@@ -360,74 +428,96 @@ const ResumeLibrary: React.FC = () => {
               </PurpleButton>
             </label>
           </div>
-        </div>
+        </motion.div>
 
         {/* Error Message */}
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-center justify-between">
+          <motion.div 
+            className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-center justify-between"
+            variants={itemVariants}
+          >
             <span>{error}</span>
             <button onClick={() => setError(null)}>
               <X className="w-4 h-4" />
             </button>
-          </div>
+          </motion.div>
         )}
 
-        {/* Role Filter & Scoring Section */}
-        <div className="mb-6 p-4 bg-white border border-zinc-200 rounded-xl">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Target className="w-5 h-5 text-purple-600" />
-              <span className="font-medium text-zinc-900">
-                {t('resumeLibrary.compareFor', 'Compare for Role:')}
-              </span>
+        {/* Unified Search and Filters Bar */}
+        <motion.div 
+          className="bg-white rounded-xl border border-zinc-200 p-3 sm:p-4 mb-4 sm:mb-6"
+          variants={itemVariants}
+        >
+          <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+            {/* Search */}
+            <div className="relative flex-1 min-w-0">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+              <input
+                type="text"
+                placeholder={t('resumeLibrary.search', 'Search resumes...')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-zinc-50 border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent min-h-[40px]"
+              />
             </div>
-            
-            <Select value={selectedRole} onValueChange={setSelectedRole}>
-              <SelectTrigger className="w-full sm:w-64">
-                <SelectValue placeholder={t('resumeLibrary.selectRole', 'Select a role to compare...')} />
-              </SelectTrigger>
-              <SelectContent>
-                {roleOptions.map((role) => (
-                  <SelectItem key={role} value={role}>{role}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            
-            {selectedRole && (
-              <PurpleButton
-                variant="secondary"
-                size="sm"
-                onClick={handleScoreAllResumes}
-                className="flex items-center gap-2"
-              >
-                <TrendingUp className="w-4 h-4" />
-                {t('resumeLibrary.scoreAll', 'Score All Resumes')}
-              </PurpleButton>
-            )}
-          </div>
-          
-          {selectedRole && (
-            <p className="mt-2 text-sm text-zinc-500">
-              {t('resumeLibrary.scoringInfo', 'Scores show how well each resume matches the selected role. Higher is better.')}
-            </p>
-          )}
-        </div>
 
-        {/* Search Bar */}
-        <div className="mb-6">
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-            <Input
-              type="text"
-              placeholder={t('resumeLibrary.search', 'Search resumes...')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
+            {/* Filters Row */}
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Role Filter - only show if user has resumes with aligned roles */}
+              {availableRoles.length > 0 && (
+                <select
+                  value={roleFilter}
+                  onChange={(e) => setRoleFilter(e.target.value)}
+                  className="flex-shrink-0 px-3 py-2.5 bg-zinc-50 border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 min-h-[44px]"
+                >
+                  <option value="all">{t('resumeLibrary.allRoles', 'All Roles')}</option>
+                  {availableRoles.map(role => (
+                    <option key={role.value} value={role.value}>{role.label}</option>
+                  ))}
+                </select>
+              )}
+
+              {/* Date Filter */}
+              <select
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value as DateFilter)}
+                className="flex-shrink-0 px-3 py-2.5 bg-zinc-50 border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 min-h-[44px]"
+              >
+                {DATE_FILTER_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{t(opt.labelKey, opt.value)}</option>
+                ))}
+              </select>
+
+              {/* Sort */}
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortOption)}
+                className="flex-shrink-0 px-3 py-2.5 bg-zinc-50 border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 min-h-[44px]"
+              >
+                {SORT_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{t(opt.labelKey, opt.value)}</option>
+                ))}
+              </select>
+
+              {/* Clear Filters */}
+              {hasActiveFilters && (
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setRoleFilter('all');
+                    setDateFilter('all');
+                  }}
+                  className="flex-shrink-0 px-3 py-2.5 text-sm text-purple-600 hover:text-purple-800 hover:bg-purple-50 rounded-lg transition-colors"
+                >
+                  {t('common.clearFilters', 'Clear')}
+                </button>
+              )}
+            </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Resumes Grid */}
+        <motion.div variants={itemVariants}>
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
             <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
@@ -525,12 +615,14 @@ const ResumeLibrary: React.FC = () => {
                       type="text"
                       value={editTitle}
                       onChange={(e) => setEditTitle(e.target.value)}
+                      onKeyDown={(e) => handleRenameKeyDown(e, resume.id)}
                       className="h-8 text-sm"
                       autoFocus
                     />
                     <button
                       onClick={() => handleUpdateTitle(resume.id)}
                       className="p-1.5 bg-purple-100 hover:bg-purple-200 rounded text-purple-600"
+                      title={t('common.save', 'Save')}
                     >
                       <Check className="w-4 h-4" />
                     </button>
@@ -540,6 +632,7 @@ const ResumeLibrary: React.FC = () => {
                         setEditTitle('');
                       }}
                       className="p-1.5 bg-zinc-100 hover:bg-zinc-200 rounded text-zinc-600"
+                      title={t('common.cancel', 'Cancel')}
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -550,11 +643,21 @@ const ResumeLibrary: React.FC = () => {
 
                 <p className="text-xs text-zinc-500 mb-3 truncate">{resume.fileName}</p>
 
+                {/* Aligned Role Badge */}
+                {resume.alignedRoleLabel && (
+                  <div className="mb-2">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-50 text-purple-700 text-xs font-medium rounded-full">
+                      <Target className="w-3 h-3" />
+                      {resume.alignedRoleLabel}
+                    </span>
+                  </div>
+                )}
+
                 {/* Metadata */}
                 <div className="flex items-center gap-3 text-xs text-zinc-500 mb-3">
                   <span className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {formatDate(resume.updatedAt)}
+                    <Calendar className="w-3 h-3" />
+                    {formatDate(resume.createdAt)}
                   </span>
                   <span>{formatFileSize(resume.fileSize)}</span>
                   {resume.usageCount > 0 && (
@@ -588,48 +691,6 @@ const ResumeLibrary: React.FC = () => {
                   </div>
                 )}
 
-                {/* Role-Based ATS Score */}
-                {selectedRole && (
-                  <div className="mb-3 p-2 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg border border-purple-100">
-                    <div className="flex items-center justify-between text-xs mb-1">
-                      <span className="text-purple-700 font-medium flex items-center gap-1">
-                        <Target className="w-3 h-3" />
-                        {selectedRole} {t('resumeLibrary.fit', 'Fit')}
-                      </span>
-                      {isScoring === resume.id ? (
-                        <RefreshCw className="w-3 h-3 text-purple-600 animate-spin" />
-                      ) : resumeScores[resume.id] !== undefined ? (
-                        <span className={`font-bold ${
-                          resumeScores[resume.id] >= 80 ? 'text-green-600' :
-                          resumeScores[resume.id] >= 60 ? 'text-amber-600' :
-                          'text-red-600'
-                        }`}>
-                          {resumeScores[resume.id]}%
-                        </span>
-                      ) : (
-                        <button
-                          onClick={() => handleScoreResume(resume.id)}
-                          className="text-purple-600 hover:text-purple-800 font-medium"
-                        >
-                          {t('resumeLibrary.score', 'Score')}
-                        </button>
-                      )}
-                    </div>
-                    {resumeScores[resume.id] !== undefined && (
-                      <div className="h-1.5 bg-purple-100 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all duration-500 ${
-                            resumeScores[resume.id] >= 80 ? 'bg-green-500' :
-                            resumeScores[resume.id] >= 60 ? 'bg-amber-500' :
-                            'bg-red-500'
-                          }`}
-                          style={{ width: `${resumeScores[resume.id]}%` }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
-
                 {/* Tags */}
                 {resume.tags.length > 0 && (
                   <div className="flex flex-wrap gap-1">
@@ -659,7 +720,8 @@ const ResumeLibrary: React.FC = () => {
             ))}
           </div>
         )}
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* Click outside to close menu */}
       {activeMenu && (
@@ -740,7 +802,7 @@ const ResumeLibrary: React.FC = () => {
                   type="text"
                   value={linkedInHeadline}
                   onChange={(e) => setLinkedInHeadline(e.target.value)}
-                  placeholder="Senior Software Engineer at Tech Company"
+                  placeholder={t('resumeLibrary.linkedIn.placeholder', 'Senior Software Engineer at Tech Company')}
                 />
               </div>
             </div>
@@ -780,7 +842,7 @@ const ResumeLibrary: React.FC = () => {
           </div>
         </div>
       )}
-    </DefaultLayout>
+    </div>
   );
 };
 

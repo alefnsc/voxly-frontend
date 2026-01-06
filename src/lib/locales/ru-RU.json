@@ -26,7 +26,8 @@
     "soon": "Скоро",
     "goBack": "Go Back",
     "filters": "Фильтры",
-    "refreshData": "Обновить данные"
+    "refreshData": "Обновить данные",
+    "na": "Н/Д"
   },
   "features": {
     "badge": "Почему Vocaid",
@@ -112,6 +113,7 @@
   "nav": {
     "home": "Главная",
     "dashboard": "Панель",
+    "performance": "Результаты",
     "about": "О нас",
     "credits": "Кредиты",
     "contact": "Контакты",
@@ -131,6 +133,23 @@
     "main": "Главное",
     "settings": "Настройки",
     "accountSettings": "Настройки Аккаунта"
+  },
+  "performance": {
+    "title": "Результаты",
+    "subtitle": "Отслеживайте прогресс собеседований и получайте инсайты с ИИ",
+    "kpis": {
+      "totalInterviews": "Всего собеседований",
+      "avgScore": "Средний балл",
+      "totalTime": "Общее время",
+      "resumeQuality": "Качество резюме"
+    },
+    "viewResumes": "Посмотреть резюме",
+    "quickLinks": "Быстрые ссылки",
+    "links": {
+      "interviewsDesc": "Просмотреть все сессии практики",
+      "resumesDesc": "Управлять и оценивать резюме",
+      "dashboardDesc": "Обзор и быстрый старт"
+    }
   },
   "sidebar": {
     "menu": "Меню",
@@ -214,33 +233,33 @@
     }
   },
   "about": {
-    "title": "О",
-    "subtitle": "Платформа подготовки к собеседованиям на базе ИИ",
+    "title": "<black>О</black> <purple>Vocaid</purple>",
+    "subtitle": "Ваш ИИ-ассистент для мастерства в собеседованиях",
     "mission": {
       "title": "Побеждайте на Каждом Собеседовании",
-      "description": "Практикуйтесь с нашим ИИ-интервьюером, получайте мгновенную обратную связь и обретайте уверенность. Загрузите резюме, введите детали вакансии и начните совершенствоваться сегодня."
+      "description": "Общайтесь с ИИ-ассистентом для анализа транскриптов собеседований, оптимизации резюме с ATS-оценкой и получения персонализированных PDF-отчётов. Загрузите резюме, введите детали вакансии и позвольте вашему коучу вести вас к успеху."
     },
     "whyVocaid": "Почему Vocaid?",
     "features": {
       "realistic": {
-        "title": "Реалистично",
-        "desc": "Естественный разговор"
+        "title": "ИИ-Ассистент",
+        "desc": "Интерактивный коучинг"
       },
       "analytics": {
-        "title": "Аналитика",
-        "desc": "Отслеживайте прогресс"
+        "title": "Умная Аналитика",
+        "desc": "Транскрипты и прогресс"
       },
       "practice247": {
         "title": "24/7",
         "desc": "Без записи"
       },
       "feedback": {
-        "title": "Обратная связь",
-        "desc": "Практические советы"
+        "title": "PDF-Отчёты",
+        "desc": "Скачиваемые советы"
       },
       "roleSpecific": {
-        "title": "Специфично",
-        "desc": "Персональные вопросы"
+        "title": "ATS-Оценка",
+        "desc": "Оптимизация резюме"
       },
       "payPerUse": {
         "title": "Оплата за использование",
@@ -320,6 +339,10 @@
     }
   },
   "interview": {
+    "newInterview": {
+      "title": "<black>Настройте Ваше</black> <purple>Собеседование</purple>",
+      "subtitle": "Настройте детали вашей практики"
+    },
     "setup": {
       "title": "Настройка Собеседования",
       "subtitle": "Подготовим вашу симуляцию собеседования",
@@ -611,8 +634,7 @@
     "score": "Оценка",
     "new": "Новый",
     "repository": {
-      "title": "Репозиторий",
-      "titleHighlight": "Собеседований",
+      "title": "<black>Репозиторий</black> <purple>Собеседований</purple>",
       "subtitle": "Просматривайте, фильтруйте и анализируйте все ваши сессии собеседований в одном месте.",
       "description": "Ваша полная история собеседований с расширенной фильтрацией и аналитикой.",
       "filters": {
@@ -783,7 +805,8 @@
     "current": "Текущий: {{language}}"
   },
   "feedback": {
-    "title": "Отзыв о Собеседовании",
+    "title": "<black>Отзыв о</black> <purple>Собеседовании</purple>",
+    "subtitle": "Анализ эффективности на базе ИИ и персонализированные рекомендации коуча",
     "loading": {
       "title": "Генерация Отзыва",
       "analyzing": "Анализ вашего выступления на собеседовании...",
@@ -1068,8 +1091,7 @@
     "askAiInstead": "Спросите ИИ вместо этого"
   },
   "interviewDetails": {
-    "title": "Детали",
-    "titleHighlight": "Собеседования",
+    "title": "<black>Детали</black> <purple>Собеседования</purple>",
     "subtitle": "Просмотрите свою производительность и отзыв о собеседовании",
     "loadError": "Не удалось загрузить детали интервью. Попробуйте снова.",
     "notFound": "Собеседование не найдено",
@@ -1890,29 +1912,49 @@
     "switchWorkspace": "Switch Workspace",
     "selectWorkspace": "Select Workspace",
     "sections": {
-      "profile": "Profile",
-      "security": "Security",
-      "danger": "Danger Zone"
+      "profile": "Профиль",
+      "security": "Безопасность",
+      "danger": "Опасная зона"
     },
     "profile": {
-      "title": "Profile Information",
-      "avatar": "Profile Picture",
-      "avatarHint": "Managed through your OAuth provider",
-      "save": "Save Changes"
+      "title": "Информация профиля",
+      "avatar": "Фото профиля",
+      "avatarHint": "Управляется через вашего OAuth-провайдера",
+      "save": "Сохранить изменения",
+      "phone": "Номер телефона",
+      "phoneDescription": "Подтвердите номер телефона, чтобы получить бесплатные кредиты на собеседования."
     },
     "security": {
-      "title": "Change Password",
-      "currentPassword": "Current Password",
-      "newPassword": "New Password",
-      "confirmPassword": "Confirm New Password",
-      "changePassword": "Change Password"
+      "title": "Сбросить пароль",
+      "currentPassword": "Текущий пароль",
+      "newPassword": "Новый пароль",
+      "confirmPassword": "Подтвердите новый пароль",
+      "changePassword": "Изменить пароль",
+      "resetDescription": "Мы отправим вам защищённую ссылку по электронной почте для завершения смены пароля.",
+      "sendResetLink": "Отправить ссылку для сброса",
+      "sendingReset": "Отправка...",
+      "resetEmailSent": "Мы отправили ссылку для сброса на вашу почту.",
+      "resetEmailFailed": "Не удалось отправить ссылку для сброса."
+    },
+    "passwordResetConfirm": {
+      "title": "Установите новый пароль",
+      "subtitle": "Введите новый пароль для вашей учётной записи.",
+      "passwordLabel": "Новый пароль",
+      "confirmLabel": "Подтвердите новый пароль",
+      "submit": "Обновить пароль",
+      "updating": "Обновление...",
+      "successTitle": "Пароль обновлён",
+      "successMessage": "Ваш пароль был обновлён. Теперь вы можете войти.",
+      "missingToken": "Отсутствует токен сброса.",
+      "invalidToken": "Эта ссылка для сброса недействительна или истекла.",
+      "backToSignIn": "Вернуться к входу"
     },
     "danger": {
-      "title": "Delete Account",
-      "warning": "This action is permanent and cannot be undone. All your data will be permanently deleted.",
-      "confirmLabel": "Type DELETE to confirm",
-      "deleteButton": "Permanently Delete Account",
-      "deleting": "Deleting..."
+      "title": "Удалить аккаунт",
+      "warning": "Это действие является постоянным и не может быть отменено. Все ваши данные будут удалены навсегда.",
+      "confirmLabel": "Введите DELETE для подтверждения",
+      "deleteButton": "Удалить аккаунт навсегда",
+      "deleting": "Удаление..."
     },
     "validation": {
       "failedToUpdateProfile": "Не удалось обновить профиль",
@@ -2056,6 +2098,22 @@
       "updateFailed": "Не удалось обновить резюме",
       "uploadFailed": "Не удалось загрузить резюме",
       "readFailed": "Не удалось прочитать файл"
+    },
+    "roleOptions": {
+      "softwareEngineer": "Инженер-программист",
+      "productManager": "Продуктовый менеджер",
+      "dataAnalyst": "Аналитик данных",
+      "dataScientist": "Специалист по данным",
+      "uxDesigner": "Дизайнер UX",
+      "marketingManager": "Менеджер по маркетингу",
+      "projectManager": "Менеджер проекта",
+      "devopsEngineer": "Инженер DevOps",
+      "frontendDeveloper": "Frontend-разработчик",
+      "backendDeveloper": "Backend-разработчик",
+      "fullStackDeveloper": "Full Stack-разработчик"
+    },
+    "linkedIn": {
+      "placeholder": "Старший инженер-программист в Технологической компании"
     }
   },
   "scoreDisplay": {
@@ -2255,5 +2313,41 @@
   "accessDenied": {
     "title": "Доступ Запрещён",
     "description": "У вас нет разрешения на доступ к этой странице. Эта область ограничена определёнными ролями пользователей."
+  },
+  "phoneVerification": {
+    "verified": "Телефон Подтверждён",
+    "cta": {
+      "title": "Получите Бесплатные Кредиты",
+      "description": "Подтвердите телефон и получите 5 бесплатных кредитов для интервью",
+      "button": "Подтвердить Телефон"
+    },
+    "phone": {
+      "title": "Введите Номер Телефона",
+      "placeholder": "(999) 123-45-67",
+      "hint": "Мы отправим 6-значный код по SMS",
+      "send": "Отправить Код",
+      "searchCountry": "Поиск страны...",
+      "noCountries": "Страны не найдены"
+    },
+    "code": {
+      "title": "Введите Код Подтверждения",
+      "sent": "Код отправлен на {{phone}}",
+      "resend": "Отправить Повторно",
+      "resendIn": "Повторить через {{seconds}}с",
+      "verify": "Подтвердить"
+    },
+    "success": {
+      "title": "Телефон Подтверждён!",
+      "description": "Ваши бесплатные кредиты были добавлены"
+    },
+    "errors": {
+      "alreadyVerified": "Вы уже подтвердили номер телефона.",
+      "sendFailed": "Не удалось отправить код подтверждения",
+      "incompleteCode": "Пожалуйста, введите полный 6-значный код",
+      "invalidCode": "Неверный код подтверждения",
+      "verifyFailed": "Подтверждение не удалось",
+      "resendFailed": "Не удалось повторно отправить код",
+      "invalidPhone": "Пожалуйста, введите действительный номер телефона"
+    }
   }
 }

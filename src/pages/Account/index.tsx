@@ -10,8 +10,8 @@
 'use client';
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { useUser, useClerk } from '@clerk/clerk-react';
-import { useNavigate } from 'react-router-dom';
+import { useUser, useAuth } from 'contexts/AuthContext';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { cn } from 'lib/utils';
@@ -22,10 +22,12 @@ import { CustomAvatar } from 'components/auth/CustomAvatar';
 import { AuthInput } from 'components/auth/AuthInput';
 import { AuthSelect } from 'components/auth/AuthSelect';
 import { profileUpdateSchema, USER_ROLES, SUPPORTED_COUNTRIES, UserRole } from 'components/auth/validation';
+import { CreditsPurchaseSection, BillingHistorySection } from 'components/billing';
+import { PhoneVerificationCard } from 'pages/app/b2c/dashboard/PhoneVerificationCard';
 import apiService from 'services/APIService';
 
 // Section types
-type Section = 'profile' | 'security' | 'danger';
+type Section = 'profile' | 'security' | 'creditsPurchase' | 'billingHistory';
 
 // Animation variants
 const fadeVariants = {
@@ -42,13 +44,30 @@ interface ProfileFormData {
 
 const AccountDashboard: React.FC = () => {
   const { user, isLoaded, isSignedIn } = useUser();
-  const { signOut } = useClerk();
+  const { signOut, updateUser } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { t } = useTranslation();
   const { currentLanguage, changeLanguage } = useLanguage();
 
-  // Section state
-  const [activeSection, setActiveSection] = useState<Section>('profile');
+  // Section state - profile is the default/first section
+  const [activeSection, setActiveSection] = useState<Section>(() => {
+    const sectionParam = searchParams.get('section');
+    const validSections: Section[] = ['profile', 'security', 'creditsPurchase', 'billingHistory'];
+    if (sectionParam && validSections.includes(sectionParam as Section)) {
+      return sectionParam as Section;
+    }
+    return 'profile';
+  });
+
+  // Keep activeSection in sync with ?section query param
+  useEffect(() => {
+    const sectionParam = searchParams.get('section');
+    const validSections: Section[] = ['profile', 'security', 'creditsPurchase', 'billingHistory'];
+    if (sectionParam && validSections.includes(sectionParam as Section) && sectionParam !== activeSection) {
+      setActiveSection(sectionParam as Section);
+    }
+  }, [searchParams, activeSection]);
   
   // Loading states
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
@@ -86,7 +105,7 @@ const AccountDashboard: React.FC = () => {
         lastName: user.lastName || '',
         role: (user.publicMetadata?.role as UserRole) || 'Candidate',
       });
-      // Load country from Clerk metadata
+      // Load country from user metadata
       const userCountry = user.publicMetadata?.countryCode as string;
       if (userCountry) {
         setCountryCode(userCountry);
@@ -141,8 +160,8 @@ const AccountDashboard: React.FC = () => {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'x-user-id': user.id,
         },
+        credentials: 'include',
         body: JSON.stringify({ preferredLanguage: newLanguage }),
       });
       
@@ -166,8 +185,8 @@ const AccountDashboard: React.FC = () => {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'x-user-id': user.id,
         },
+        credentials: 'include',
         body: JSON.stringify({ countryCode: newCountry }),
       });
       
@@ -205,26 +224,31 @@ const AccountDashboard: React.FC = () => {
     setProfileSuccess(null);
 
     try {
-      // Update Clerk user
-      await user.update({
-        firstName: profileData.firstName,
-        lastName: profileData.lastName,
-      });
-
-      // Update metadata via backend
-      const response = await fetch(`${config.backendUrl}/api/users/metadata`, {
-        method: 'POST',
+      // Update profile via backend API
+      const response = await fetch(`${config.backendUrl}/api/users/profile`, {
+        method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
-          'x-user-id': user.id,
         },
-        body: JSON.stringify({ role: profileData.role }),
+        credentials: 'include',
+        body: JSON.stringify({
+          firstName: profileData.firstName,
+          lastName: profileData.lastName,
+          role: profileData.role,
+        }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error?.message || errorData.message || 'Failed to update profile');
       }
+
+      // Update local user state
+      updateUser({
+        firstName: profileData.firstName,
+        lastName: profileData.lastName,
+        fullName: `${profileData.firstName} ${profileData.lastName}`.trim(),
+      });
 
       setProfileSuccess(t('account.profileUpdated', 'Profile updated successfully'));
     } catch (error: any) {
@@ -267,7 +291,20 @@ const AccountDashboard: React.FC = () => {
     setDeleteError(null);
 
     try {
-      await user.delete();
+      // Delete account via backend API
+      const response = await fetch(`${config.backendUrl}/api/users/delete`, {
+        method: 'DELETE',
+        headers: { 
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete account');
+      }
+
       await signOut();
       navigate('/');
     } catch (error: any) {
@@ -308,7 +345,8 @@ const AccountDashboard: React.FC = () => {
                 {[
                   { id: 'profile', label: t('account.sections.profile', 'Profile') },
                   { id: 'security', label: t('account.sections.security', 'Security') },
-                  { id: 'danger', label: t('account.sections.danger', 'Danger Zone') },
+                  { id: 'creditsPurchase', label: t('account.sections.creditsPurchase', 'Buy Credits') },
+                  { id: 'billingHistory', label: t('account.sections.billingHistory', 'Transaction History') },
                 ].map((section) => (
                   <li key={section.id}>
                     <button
@@ -341,7 +379,7 @@ const AccountDashboard: React.FC = () => {
                     {user?.firstName} {user?.lastName}
                   </p>
                   <p className="text-xs text-zinc-500 truncate">
-                    {user?.primaryEmailAddress?.emailAddress}
+                    {user?.email || user?.primaryEmailAddress?.emailAddress}
                   </p>
                 </div>
               </div>
@@ -419,7 +457,7 @@ const AccountDashboard: React.FC = () => {
                           {t('auth.email', 'Email')}
                         </label>
                         <div className="px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-lg text-sm text-zinc-500">
-                          {user?.primaryEmailAddress?.emailAddress}
+                          {user?.email || user?.primaryEmailAddress?.emailAddress}
                         </div>
                       </div>
 
@@ -471,6 +509,79 @@ const AccountDashboard: React.FC = () => {
                         )}
                       </button>
                     </form>
+
+                    {/* Phone Verification Section */}
+                    <div className="mt-6 pt-6 border-t border-zinc-100">
+                      <h3 className="text-lg font-semibold text-zinc-900 mb-4">
+                        {t('account.profile.phone', 'Phone Number')}
+                      </h3>
+                      <p className="text-sm text-zinc-500 mb-4">
+                        {t('account.profile.phoneDescription', 'Verify your phone number to claim free interview credits.')}
+                      </p>
+                      <PhoneVerificationCard className="w-full" />
+                    </div>
+
+                    {/* Danger Zone (nested in Profile) */}
+                    <div className="mt-8 pt-6 border-t border-zinc-100">
+                      <h3 className="text-lg font-semibold text-zinc-900 mb-2">
+                        {t('account.danger.title', 'Delete Account')}
+                      </h3>
+                      <p className="text-sm text-zinc-500 mb-4">
+                        {t('account.danger.warning', 'This action is permanent and cannot be undone. All your data will be permanently deleted.')}
+                      </p>
+
+                      {/* Error Message */}
+                      {deleteError && (
+                        <div className="mb-4 p-3 bg-zinc-50 border-l-4 border-black rounded-r">
+                          <p className="text-sm text-zinc-700">{deleteError}</p>
+                        </div>
+                      )}
+
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+                            {t('account.danger.confirmLabel', 'Type DELETE to confirm')}
+                          </label>
+                          <input
+                            type="text"
+                            value={deleteConfirmation}
+                            onChange={(e) => {
+                              setDeleteConfirmation(e.target.value);
+                              setDeleteError(null);
+                            }}
+                            placeholder="DELETE"
+                            className={cn(
+                              'w-full px-4 py-3 bg-white border rounded-lg text-sm text-zinc-900',
+                              'transition-all duration-200 outline-none',
+                              'border-zinc-200 focus:border-zinc-900'
+                            )}
+                          />
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={handleDeleteAccount}
+                          disabled={isDeletingAccount || deleteConfirmation !== 'DELETE'}
+                          className={cn(
+                            'w-full py-3 px-4 rounded-lg text-sm font-bold',
+                            'bg-white text-zinc-900 border-2 border-zinc-900',
+                            'transition-all duration-200',
+                            'hover:bg-zinc-100',
+                            'focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2',
+                            'disabled:opacity-50 disabled:cursor-not-allowed'
+                          )}
+                        >
+                          {isDeletingAccount ? (
+                            <span className="flex items-center justify-center gap-2">
+                              <span className="w-4 h-4 border-2 border-zinc-900 border-t-transparent rounded-full animate-spin" />
+                              {t('account.danger.deleting', 'Deleting...')}
+                            </span>
+                          ) : (
+                            t('account.danger.deleteButton', 'Permanently Delete Account')
+                          )}
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </motion.div>
               )}
@@ -533,76 +644,31 @@ const AccountDashboard: React.FC = () => {
                 </motion.div>
               )}
 
-              {/* Danger Zone Section */}
-              {activeSection === 'danger' && (
+              {/* Credits Purchase Section */}
+              {activeSection === 'creditsPurchase' && (
                 <motion.div
-                  key="danger"
+                  key="creditsPurchase"
                   variants={fadeVariants}
                   initial="initial"
                   animate="animate"
                   exit="exit"
                   transition={{ duration: 0.2 }}
                 >
-                  <div className="bg-white border border-zinc-200 rounded-xl p-6">
-                    <h2 className="text-xl font-bold text-zinc-900 mb-2">
-                      {t('account.danger.title', 'Delete Account')}
-                    </h2>
-                    <p className="text-sm text-zinc-500 mb-6">
-                      {t('account.danger.warning', 'This action is permanent and cannot be undone. All your data will be permanently deleted.')}
-                    </p>
+                  <CreditsPurchaseSection />
+                </motion.div>
+              )}
 
-                    {/* Error Message */}
-                    {deleteError && (
-                      <div className="mb-4 p-3 bg-zinc-50 border-l-4 border-black rounded-r">
-                        <p className="text-sm text-zinc-700">{deleteError}</p>
-                      </div>
-                    )}
-
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-zinc-700 mb-1.5">
-                          {t('account.danger.confirmLabel', 'Type DELETE to confirm')}
-                        </label>
-                        <input
-                          type="text"
-                          value={deleteConfirmation}
-                          onChange={(e) => {
-                            setDeleteConfirmation(e.target.value);
-                            setDeleteError(null);
-                          }}
-                          placeholder="DELETE"
-                          className={cn(
-                            'w-full px-4 py-3 bg-white border rounded-lg text-sm text-zinc-900',
-                            'transition-all duration-200 outline-none',
-                            'border-zinc-200 focus:border-zinc-900'
-                          )}
-                        />
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={handleDeleteAccount}
-                        disabled={isDeletingAccount || deleteConfirmation !== 'DELETE'}
-                        className={cn(
-                          'w-full py-3 px-4 rounded-lg text-sm font-bold',
-                          'bg-white text-zinc-900 border-2 border-zinc-900',
-                          'transition-all duration-200',
-                          'hover:bg-zinc-100',
-                          'focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2',
-                          'disabled:opacity-50 disabled:cursor-not-allowed'
-                        )}
-                      >
-                        {isDeletingAccount ? (
-                          <span className="flex items-center justify-center gap-2">
-                            <span className="w-4 h-4 border-2 border-zinc-900 border-t-transparent rounded-full animate-spin" />
-                            {t('account.danger.deleting', 'Deleting...')}
-                          </span>
-                        ) : (
-                          t('account.danger.deleteButton', 'Permanently Delete Account')
-                        )}
-                      </button>
-                    </div>
-                  </div>
+              {/* Billing History Section */}
+              {activeSection === 'billingHistory' && (
+                <motion.div
+                  key="billingHistory"
+                  variants={fadeVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  transition={{ duration: 0.2 }}
+                >
+                  <BillingHistorySection />
                 </motion.div>
               )}
             </AnimatePresence>

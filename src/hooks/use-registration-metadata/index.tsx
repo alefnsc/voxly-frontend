@@ -1,16 +1,15 @@
 /**
  * Registration Metadata Hook
  * 
- * Captures and syncs user registration metadata to Clerk publicMetadata.
- * This includes geolocation data, preferred language, and onboarding status.
+ * Provides registration metadata state and actions for first-party auth.
+ * Uses backend API for metadata storage.
  * 
  * @module hooks/use-registration-metadata
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { useUser, useAuth } from '@clerk/clerk-react';
-import { detectGeolocation, GeoLocation } from '../../lib/geolocation';
-import { getCurrentLanguage, SupportedLanguageCode } from '../../lib/i18n';
+import { useUser, useAuth } from 'contexts/AuthContext';
+import { SupportedLanguageCode } from '../../lib/i18n';
 
 // ========================================
 // TYPES
@@ -19,6 +18,9 @@ import { getCurrentLanguage, SupportedLanguageCode } from '../../lib/i18n';
 export interface RegistrationMetadata {
   // Onboarding
   onboarding_complete: boolean;
+  
+  // Phone Verification
+  phone_verification_skipped_for_credits?: boolean;
   
   // Language & Localization
   preferred_language: SupportedLanguageCode;
@@ -65,36 +67,36 @@ export function useRegistrationMetadata(): UseRegistrationMetadataReturn {
   const [isSyncing, setIsSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  // Derived state
-  const isNewUser = !!(user && !user.publicMetadata?.registered_at);
-  const needsOnboarding = !!(user && user.publicMetadata?.onboarding_complete !== true);
+  // Derived state - use user.publicMetadata from first-party auth
+  const pm = user?.publicMetadata || {};
+  const isNewUser = !!(user && !pm.registered_at);
+  const needsOnboarding = !!(user && pm.onboarding_complete !== true);
   
   /**
-   * Get current metadata from Clerk (checks both unsafeMetadata and publicMetadata)
+   * Get current metadata from user publicMetadata
    */
   const getCurrentMetadata = useCallback((): RegistrationMetadata | null => {
     if (!user) return null;
     
-    // Use unsafeMetadata as primary source (can be set from client)
-    // Fall back to publicMetadata (set from backend/webhook)
-    const um = user.unsafeMetadata || {};
     const pm = user.publicMetadata || {};
     
     return {
-      onboarding_complete: (um.onboarding_complete ?? pm.onboarding_complete) as boolean ?? false,
-      preferred_language: (um.preferred_language ?? pm.preferred_language) as SupportedLanguageCode ?? 'en-US',
-      languageSetByUser: (um.languageSetByUser ?? pm.languageSetByUser) as boolean ?? false,
-      registration_region: (um.registration_region ?? pm.registration_region) as string,
-      registration_country: (um.registration_country ?? pm.registration_country) as string,
-      initial_ip: (um.initial_ip ?? pm.initial_ip) as string,
-      registered_at: (um.registered_at ?? pm.registered_at) as string,
-      metadata_updated_at: (um.metadata_updated_at ?? pm.metadata_updated_at) as string,
+      onboarding_complete: pm.onboarding_complete ?? false,
+      phone_verification_skipped_for_credits: pm.phone_verification_skipped_for_credits ?? false,
+      preferred_language: (pm.preferred_language as SupportedLanguageCode) ?? 'en-US',
+      languageSetByUser: pm.languageSetByUser ?? false,
+      registration_region: pm.registration_region,
+      registration_country: pm.registration_country,
+      initial_ip: pm.initial_ip,
+      registered_at: pm.registered_at,
+      metadata_updated_at: pm.metadata_updated_at,
     };
   }, [user]);
   
   /**
    * Capture registration data for new users
-   * Called once on first sign-up to capture initial geolocation
+   * With first-party auth, registration data is captured on the backend during sign-up
+   * This function now just returns the current metadata
    */
   const captureRegistrationData = useCallback(async (): Promise<RegistrationMetadata | null> => {
     if (!user) {
@@ -102,55 +104,15 @@ export function useRegistrationMetadata(): UseRegistrationMetadataReturn {
       return null;
     }
     
-    // Don't re-capture if already registered
-    if (user.publicMetadata?.registered_at) {
-      console.log('User already has registration data');
-      return getCurrentMetadata();
-    }
-    
-    setIsSyncing(true);
-    setError(null);
-    
-    try {
-      // Detect geolocation
-      const geo: GeoLocation | null = await detectGeolocation();
-      
-      // Build registration metadata
-      const registrationData: RegistrationMetadata = {
-        onboarding_complete: false,
-        preferred_language: geo?.inferredLanguage as SupportedLanguageCode ?? getCurrentLanguage(),
-        languageSetByUser: false,
-        registration_region: geo?.region,
-        registration_country: geo?.country,
-        initial_ip: geo?.ip,
-        registered_at: new Date().toISOString(),
-        metadata_updated_at: new Date().toISOString(),
-      };
-      
-      // Sync to Clerk using unsafeMetadata (publicMetadata can only be set from backend)
-      await user.update({
-        unsafeMetadata: {
-          ...user.unsafeMetadata,
-          ...registrationData,
-        },
-      });
-      
-      setMetadata(registrationData);
-      console.log('Registration data captured:', registrationData);
-      
-      return registrationData;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to capture registration data';
-      console.error('Failed to capture registration data:', err);
-      setError(message);
-      return null;
-    } finally {
-      setIsSyncing(false);
-    }
+    // With first-party auth, registration is handled by the backend
+    // Just return current metadata
+    return getCurrentMetadata();
   }, [user, getCurrentMetadata]);
   
   /**
    * Update specific metadata fields
+   * Note: With first-party auth, metadata updates should go through backend API
+   * This is a simplified version that just updates local state
    */
   const updateMetadata = useCallback(async (updates: Partial<RegistrationMetadata>): Promise<boolean> => {
     if (!user) {
@@ -162,19 +124,15 @@ export function useRegistrationMetadata(): UseRegistrationMetadataReturn {
     setError(null);
     
     try {
+      // TODO: Call backend API to update user metadata when endpoint is available
+      // For now, just update local state
       const updatedData = {
         ...updates,
         metadata_updated_at: new Date().toISOString(),
       };
       
-      await user.update({
-        unsafeMetadata: {
-          ...user.unsafeMetadata,
-          ...updatedData,
-        },
-      });
-      
       setMetadata(prev => prev ? { ...prev, ...updatedData } : null);
+      console.log('Metadata updated locally:', updatedData);
       return true;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to update metadata';

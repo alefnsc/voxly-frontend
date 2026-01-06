@@ -1,15 +1,18 @@
 import { useEffect } from 'react';
-import { useAuth } from '@clerk/clerk-react';
+import { useAuth } from 'contexts/AuthContext';
 
 /**
  * Hook to validate interview session tokens
  * This ensures users can only access the interview page with a valid session
+ * 
+ * Note: With first-party session-based auth, JWT token validation is no longer
+ * needed as sessions are managed server-side with httpOnly cookies.
  */
 export const useTokenValidation = (navigate: any) => {
     const { isSignedIn, isLoaded } = useAuth();
 
     useEffect(() => {
-        // Wait for Clerk to load
+        // Wait for auth to load
         if (!isLoaded) {
             return;
         }

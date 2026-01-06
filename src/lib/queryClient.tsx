@@ -105,6 +105,14 @@ export const queryKeys = {
     packages: () => ['billing', 'packages'] as const,
     history: (userId: string) => ['billing', 'history', userId] as const,
   },
+
+  // Performance (deep dive)
+  performance: {
+    all: ['performance'] as const,
+    summary: (userId: string, params?: { range?: string; role?: string; company?: string }) =>
+      ['performance', 'summary', userId, params] as const,
+    goal: (userId: string) => ['performance', 'goal', userId] as const,
+  },
 };
 
 // ============================================

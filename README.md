@@ -26,11 +26,9 @@
 - **15-minute timed sessions** with automatic warnings and graceful endings
 - **Resume congruency detection** - AI verifies your resume matches the job description
 
-### 🔐 Authentication (Clerk)
-- Seamless sign-up/sign-in with multiple providers (Google, Email, etc.)
-- User profile management with first/last name
-- Role-based access via `publicMetadata`
-- Credits stored in `publicMetadata` (backend-managed)
+### 🔐 Authentication
+- First-party, cookie-based sessions managed by the backend
+- Sign-up/sign-in via the app’s auth flow
 
 ### 💳 Payment System (MercadoPago)
 - **Three credit packages**: Starter (5), Intermediate (10), Professional (15)
@@ -72,7 +70,6 @@
 
 - Node.js 18+
 - npm or yarn
-- Clerk account
 - Backend server running (for interviews)
 
 ### Installation
@@ -100,10 +97,6 @@ App runs at http://localhost:3000
 Create a `.env` file in the project root:
 
 ```env
-# Clerk Authentication (Required)
-# Get keys at: https://dashboard.clerk.com/
-REACT_APP_CLERK_PUBLISHABLE_KEY=pk_test_your_key_here
-
 # Google reCAPTCHA v3 (Required for Contact Form)
 # Get keys at: https://www.google.com/recaptcha/admin
 REACT_APP_RECAPTCHA_SITE_KEY=your_site_key_here
@@ -128,7 +121,7 @@ REACT_APP_API_URL=http://localhost:3001
 | Framework | React 18 with TypeScript |
 | Routing | React Router v6 |
 | Styling | Tailwind CSS |
-| Authentication | Clerk |
+| Authentication | First-party sessions (cookies) |
 | Payments | MercadoPago SDK |
 | Contact Form | Formspree + reCAPTCHA v3 |
 | Voice Calls | Retell Web Client |
@@ -229,7 +222,7 @@ Popup opens with MercadoPago checkout
        ↓
 User completes payment → Webhook notifies backend
        ↓
-Backend adds credits via Clerk Admin API
+Backend adds credits via internal credits ledger
        ↓
 Frontend polls for credit update → UI refreshes
 ```
@@ -283,7 +276,6 @@ npm test -- --coverage
 
 1. Connect GitHub repository to Vercel
 2. Configure environment variables in Vercel dashboard:
-   - `REACT_APP_CLERK_PUBLISHABLE_KEY`
    - `REACT_APP_RECAPTCHA_SITE_KEY`
    - `REACT_APP_MERCADOPAGO_PUBLIC_KEY`
    - `REACT_APP_BACKEND_URL`
@@ -295,24 +287,9 @@ npm test -- --coverage
 vercel --prod
 ```
 
-### Environment-Specific Config
-
-| Environment | Clerk Key | Backend URL |
-|-------------|-----------|-------------|
-| Development | `pk_test_*` | `http://localhost:3001` |
-| Production | `pk_live_*` | `https://your-backend.com` |
-
 ---
 
 ## Configuration
-
-### Clerk Setup
-
-1. Create application at [Clerk Dashboard](https://dashboard.clerk.com/)
-2. Enable desired sign-in methods (Google, Email, etc.)
-3. Configure redirect URLs:
-   - Development: `http://localhost:3000`
-   - Production: `https://your-domain.com`
 
 ### reCAPTCHA Setup
 
@@ -359,8 +336,7 @@ vercel --prod
 ### Credits Not Updating
 
 1. Ensure backend webhook received payment notification
-2. Check Clerk Admin API access
-3. Try refreshing the page or signing out/in
+2. Try refreshing the page or signing out/in
 
 ---
 
@@ -370,7 +346,7 @@ vercel --prod
 - Use test keys for development, live keys for production
 - reCAPTCHA protects contact form from spam
 - All payments processed securely via MercadoPago
-- User data stored securely in Clerk
+- User sessions are managed server-side
 
 ---
 

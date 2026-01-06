@@ -115,9 +115,9 @@ class MercadoPagoService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning': 'true',
-          'x-user-id': userId
+          'ngrok-skip-browser-warning': 'true'
         },
+        credentials: 'include',
         body: JSON.stringify({
           packageId,
           userId,
@@ -160,9 +160,9 @@ class MercadoPagoService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning': 'true',
-          'x-user-id': userId
+          'ngrok-skip-browser-warning': 'true'
         },
+        credentials: 'include',
         body: JSON.stringify({
           packageId,
           userId,
@@ -210,7 +210,7 @@ class MercadoPagoService {
       console.log('🔍 Payment verification handled automatically via backend webhook');
       // Payment verification is handled automatically by the backend
       // via Mercado Pago webhooks. When payment is approved, credits
-      // are automatically added to the user's Clerk metadata.
+      // are automatically added to the user's account.
       return true;
     } catch (error) {
       console.error('Error verifying payment:', error);

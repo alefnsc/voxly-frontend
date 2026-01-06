@@ -13,7 +13,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from 'contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DefaultLayout } from 'components/default-layout';
 import { useGraphQLQuery } from 'hooks/queries';
@@ -35,6 +35,7 @@ import {
   Building2,
   Globe2
 } from 'lucide-react';
+import { TitleSplit } from 'components/ui/TitleSplit';
 
 // ========================================
 // TYPES
@@ -429,12 +430,12 @@ export default function InterviewRepository() {
           
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
             <div className="flex-1 min-w-0">
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900">
-                {t('interviews.repository.title')} <span className="text-purple-600">{t('interviews.repository.titleHighlight')}</span>
-              </h1>
-              <p className="text-sm sm:text-base text-zinc-600 mt-1">
-                {t('interviews.repository.subtitle')}
-              </p>
+              <TitleSplit 
+                i18nKey="interviews.repository.title"
+                subtitleKey="interviews.repository.subtitle"
+                as="h1"
+                className="text-xl sm:text-2xl lg:text-3xl"
+              />
             </div>
             
             {/* Actions - Desktop */}

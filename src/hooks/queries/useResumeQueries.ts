@@ -11,7 +11,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from 'contexts/AuthContext';
 import { useUserContext } from '../../contexts/UserContext';
 import { queryKeys, invalidateResumes } from '../../lib/queryClient';
 import apiService from '../../services/APIService';
@@ -65,28 +65,6 @@ export function useResumeDetailQuery(resumeId: string | undefined, includeData =
     },
     enabled: !!resumeId && !!user?.id && isSignedIn,
     staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-}
-
-// ============================================
-// RESUME SCORES QUERY
-// ============================================
-
-/**
- * Query hook for fetching resume scores for a specific role
- */
-export function useResumeScoresQuery(resumeId: string | undefined) {
-  const { user, isSignedIn } = useUser();
-
-  return useQuery({
-    queryKey: queryKeys.resumes.scores(resumeId || ''),
-    queryFn: async () => {
-      if (!resumeId || !user?.id) throw new Error('Missing parameters');
-      const response = await apiService.getResumeScores(user.id, resumeId);
-      return response.data;
-    },
-    enabled: !!resumeId && !!user?.id && isSignedIn,
-    staleTime: 5 * 60 * 1000, // 5 minutes - scores are cached
   });
 }
 
@@ -175,31 +153,6 @@ export function useDeleteResumeMutation() {
     },
     onSuccess: () => {
       invalidateResumes();
-    },
-  });
-}
-
-/**
- * Mutation for scoring a resume against a role
- */
-export function useScoreResumeMutation() {
-  const queryClient = useQueryClient();
-  const { user } = useUser();
-
-  return useMutation({
-    mutationFn: async ({ 
-      resumeId, 
-      roleTitle 
-    }: { 
-      resumeId: string; 
-      roleTitle: string;
-    }) => {
-      if (!user?.id) throw new Error('User not authenticated');
-      return apiService.scoreResume(user.id, resumeId, roleTitle);
-    },
-    onSuccess: (_, { resumeId }) => {
-      // Invalidate scores for this resume
-      queryClient.invalidateQueries({ queryKey: queryKeys.resumes.scores(resumeId) });
     },
   });
 }

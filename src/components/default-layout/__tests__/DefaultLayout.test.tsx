@@ -3,6 +3,15 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { DefaultLayout } from '../index';
 
+jest.mock('contexts/AuthContext', () => ({
+    __esModule: true,
+    useUser: () => ({
+        user: null,
+        isLoaded: true,
+        isSignedIn: false,
+    }),
+}));
+
 // Mock the TopBar component
 jest.mock('components/top-bar', () => ({
     __esModule: true,
@@ -39,7 +48,7 @@ describe('DefaultLayout Component', () => {
 
         // Test the content container
         const contentContainer = screen.getByTestId('content-container');
-        expect(contentContainer).toHaveClass('mx-auto', 'container', 'pt-6', customClass);
+        expect(contentContainer).toHaveClass('mx-auto', 'w-full', 'max-w-7xl', 'pt-4', 'sm:pt-6', customClass);
     });
 
     it('has correct default layout structure', () => {
@@ -47,7 +56,7 @@ describe('DefaultLayout Component', () => {
 
         // Test the root container
         const rootContainer = screen.getByTestId('root-container');
-        expect(rootContainer).toHaveClass('flex', 'min-h-screen');
+        expect(rootContainer).toHaveClass('flex', 'min-h-[100dvh]');
 
         // Test the main element
         const mainElement = screen.getByTestId('main-content');
@@ -57,8 +66,8 @@ describe('DefaultLayout Component', () => {
         const contentWrapper = screen.getByTestId('content-wrapper');
         const contentContainer = screen.getByTestId('content-container');
 
-        expect(contentWrapper).toHaveClass('pb-0');
-        expect(contentContainer).toHaveClass('mx-auto', 'container', 'pt-6');
+        expect(contentWrapper).toHaveClass('flex-1', 'min-h-0');
+        expect(contentContainer).toHaveClass('mx-auto', 'w-full', 'max-w-7xl', 'pt-4', 'sm:pt-6');
     });
 
     it('renders multiple children correctly', () => {
@@ -85,7 +94,7 @@ describe('DefaultLayout Component', () => {
 
         // Test the content container without custom class
         const contentContainer = screen.getByTestId('content-container');
-        expect(contentContainer).toHaveClass('mx-auto', 'container', 'pt-6');
+        expect(contentContainer).toHaveClass('mx-auto', 'w-full', 'max-w-7xl', 'pt-4', 'sm:pt-6');
     });
 
     it('maintains correct padding and margin structure', () => {
@@ -94,8 +103,8 @@ describe('DefaultLayout Component', () => {
         const contentWrapper = screen.getByTestId('content-wrapper');
         const contentContainer = screen.getByTestId('content-container');
 
-        expect(contentWrapper).toHaveClass('pb-0');
-        expect(contentContainer).toHaveClass('mx-auto', 'container', 'pt-6');
+        expect(contentWrapper).toHaveClass('flex-1', 'min-h-0');
+        expect(contentContainer).toHaveClass('mx-auto', 'w-full', 'max-w-7xl', 'pt-4', 'sm:pt-6');
     });
 
     it('renders complex children components', () => {

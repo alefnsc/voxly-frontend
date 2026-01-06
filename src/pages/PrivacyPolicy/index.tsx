@@ -3,8 +3,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ArrowLeft, AlertCircle } from 'lucide-react'
-import TopBar from 'components/top-bar'
-import Footer from 'components/footer'
 
 export default function PrivacyPolicy() {
   const navigate = useNavigate()
@@ -14,10 +12,8 @@ export default function PrivacyPolicy() {
   const isEnglish = i18n.language === 'en-US' || i18n.language.startsWith('en')
 
   return (
-    <div className="min-h-screen bg-zinc-50 flex flex-col">
-      <TopBar showLogo={true} />
-      
-      <main className="flex-1">
+    <div className="min-h-screen bg-zinc-50">
+      <main>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
           <div className="mb-6 sm:mb-8">
@@ -72,7 +68,7 @@ export default function PrivacyPolicy() {
             <h3 className="text-lg font-medium text-zinc-800 mt-4 mb-2">Account Information</h3>
             <ul className="list-disc list-inside text-zinc-600 space-y-2 ml-4 mb-4">
               <li>Email address, name, and profile details provided during registration</li>
-              <li>Authentication credentials managed through our provider (Clerk)</li>
+              <li>Authentication credentials for account access</li>
               <li>Phone number (if provided for verification)</li>
             </ul>
 
@@ -272,12 +268,6 @@ export default function PrivacyPolicy() {
               <p className="text-zinc-700 mb-2"><strong>Vocaid Privacy Team</strong></p>
               <p className="text-zinc-600 mb-1">
                 Email:{' '}
-                <a href="mailto:privacy@vocaid.ai" className="text-purple-600 hover:underline">
-                  privacy@vocaid.ai
-                </a>
-              </p>
-              <p className="text-zinc-600">
-                For general inquiries:{' '}
                 <a href="mailto:support@vocaid.ai" className="text-purple-600 hover:underline">
                   support@vocaid.ai
                 </a>
@@ -287,8 +277,6 @@ export default function PrivacyPolicy() {
         </div>
         </div>
       </main>
-      
-      <Footer />
     </div>
   )
 }

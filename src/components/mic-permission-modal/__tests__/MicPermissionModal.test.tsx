@@ -64,7 +64,9 @@ describe('MicPermissionCheck Component', () => {
     });
 
     it('shows modal when permission is denied', async () => {
-        mockGetUserMedia.mockRejectedValueOnce(new Error('NotAllowedError'));
+        const err = new Error('no');
+        (err as any).name = 'NotAllowedError';
+        mockGetUserMedia.mockRejectedValueOnce(err);
         render(<MicPermissionCheck onPermissionGranted={mockOnPermissionGranted} />);
 
         await waitFor(() => {
@@ -107,7 +109,9 @@ describe('MicPermissionCheck Component', () => {
 
     it('shows troubleshooting steps when permission is denied after request', async () => {
         // Initial permission check fails
-        mockGetUserMedia.mockRejectedValueOnce(new Error('NotAllowedError'));
+        const err1 = new Error('no');
+        (err1 as any).name = 'NotAllowedError';
+        mockGetUserMedia.mockRejectedValueOnce(err1);
 
         render(<MicPermissionCheck onPermissionGranted={mockOnPermissionGranted} />);
 
@@ -118,16 +122,18 @@ describe('MicPermissionCheck Component', () => {
         expect(screen.getByText('Enable Microphone')).toBeInTheDocument();
 
         // Second attempt also fails
-        mockGetUserMedia.mockRejectedValueOnce(new Error('NotAllowedError'));
+        const err2 = new Error('no');
+        (err2 as any).name = 'NotAllowedError';
+        mockGetUserMedia.mockRejectedValueOnce(err2);
 
         const enableButton = screen.getByText('Enable Microphone');
         fireEvent.click(enableButton);
 
         await waitFor(() => {
-            expect(screen.getByText('Microphone Access Troubleshooting')).toBeInTheDocument();
+            expect(screen.getByText('Microphone Troubleshooting')).toBeInTheDocument();
         });
 
-        expect(screen.getByText(/We're still unable to access your microphone/)).toBeInTheDocument();
+        expect(screen.getByText(/unable to access your microphone/i)).toBeInTheDocument();
     });
 
 });

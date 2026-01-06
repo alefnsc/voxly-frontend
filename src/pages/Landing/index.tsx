@@ -1,9 +1,9 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Helmet } from 'react-helmet'
+import { useLocation } from 'react-router-dom'
 import {
-  LandingHeader,
   Hero,
   PlatformShowcase,
   Integrations,
@@ -25,9 +25,23 @@ import { FREE_TRIAL_CREDITS } from 'config/credits'
 import { HEADER_OFFSET_CLASSES } from 'config/layout'
 
 export const Landing: React.FC = () => {
+  const location = useLocation()
   const [demoModalOpen, setDemoModalOpen] = useState(false)
   const [waitlistOpen, setWaitlistOpen] = useState(false)
   const [preselectedModule, setPreselectedModule] = useState<WaitlistModule | undefined>()
+
+  useEffect(() => {
+    const scrollTo = (location.state as { scrollTo?: string } | null)?.scrollTo
+    if (!scrollTo) return
+
+    // Defer so the DOM is ready after navigation.
+    requestAnimationFrame(() => {
+      const element = document.querySelector(scrollTo)
+      if (element) element.scrollIntoView({ behavior: 'smooth' })
+      // Clear state so refresh/back doesn’t re-scroll.
+      window.history.replaceState({}, document.title)
+    })
+  }, [location.state])
 
   const handleDemoClick = () => {
     setDemoModalOpen(true)
@@ -67,9 +81,7 @@ export const Landing: React.FC = () => {
       </Helmet>
 
       <div className="min-h-screen bg-white overflow-x-hidden">
-        <LandingHeader onDemoClick={handleDemoClick} />
-        
-        <main className={HEADER_OFFSET_CLASSES.paddingTop}>
+        <main>
           {/* Hero with language badges and dual CTAs */}
           <Hero onDemoClick={handleDemoClick} />
           

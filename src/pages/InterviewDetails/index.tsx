@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useUser } from '@clerk/clerk-react'
+import { useUser } from 'contexts/AuthContext'
 import { useTranslation } from 'react-i18next'
+import { motion } from 'framer-motion'
 import Loading from 'components/loading'
 import PurpleButton from 'components/ui/purple-button'
 import StatsCard from 'components/ui/stats-card'
@@ -37,8 +38,24 @@ import {
   Mic,
   Award,
   TrendingUp,
-  Download
+  Download,
+  RefreshCw
 } from 'lucide-react'
+import { TitleSplit } from '../../components/ui/TitleSplit'
+
+// Animation variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08 }
+  }
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
+}
 
 // Format duration from milliseconds to mm:ss
 const formatDuration = (ms: number | null | undefined): string => {
@@ -49,8 +66,11 @@ const formatDuration = (ms: number | null | undefined): string => {
   return `${mins}:${secs.toString().padStart(2, '0')}`
 }
 
-// Score progress bar with purple theme
-const ScoreBar: React.FC<{ label: string; score: number; icon: React.ReactNode }> = ({ label, score, icon }) => {
+// Score progress bar with purple theme (handles null scores gracefully)
+const ScoreBar: React.FC<{ label: string; score: number | null; icon: React.ReactNode }> = ({ label, score, icon }) => {
+  // Don't render if score is null
+  if (score === null) return null
+  
   return (
     <div className="mb-5 last:mb-0">
       <div className="flex items-center justify-between mb-2">
@@ -101,6 +121,8 @@ export default function InterviewDetails() {
   const [learningPathData, setLearningPathData] = useState<LearningPathData | null>(null)
   const [analyticsLoading, setAnalyticsLoading] = useState(false)
   const [currentTime, setCurrentTime] = useState<number>(0)
+  const [transcriptRefreshing, setTranscriptRefreshing] = useState(false)
+  const [transcriptError, setTranscriptError] = useState<string | null>(null)
 
   /**
    * Role-aware back navigation
@@ -130,6 +152,55 @@ export default function InterviewDetails() {
     navigate(destination);
   }, [userRole, navigate]);
 
+  /**
+   * Manually refresh transcript from Retell
+   * Called when transcript wasn't persisted during interview completion
+   */
+  const handleRefreshTranscript = useCallback(async () => {
+    if (!user?.id || !id) return;
+    
+    setTranscriptRefreshing(true);
+    setTranscriptError(null);
+    
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL || ''}/api/interviews/${id}/transcript/refresh`,
+        {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        }
+      );
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to refresh transcript: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.status === 'success' && data.data?.segments) {
+        // Map backend segments to frontend TranscriptSegment format
+        const mappedSegments: TranscriptSegment[] = data.data.segments.map((seg: any, index: number) => ({
+          id: seg.id || `segment-${index}`,
+          speaker: seg.speaker,
+          content: seg.content,
+          startTime: seg.startTime,
+          endTime: seg.endTime,
+          sentimentScore: seg.sentimentScore
+        }));
+        setTranscript(mappedSegments);
+      }
+    } catch (err: any) {
+      console.error('Failed to refresh transcript:', err);
+      setTranscriptError(err.message || t('interviewDetails.transcriptRefreshError'));
+    } finally {
+      setTranscriptRefreshing(false);
+    }
+  }, [user?.id, id, t]);
+
   const fetchInterviewDetails = useCallback(async () => {
     if (!user?.id || !id) return
 
@@ -157,17 +228,18 @@ export default function InterviewDetails() {
       // Fetch all analytics data in parallel
       const [analyticsRes, transcriptRes, benchmarkRes, recommendationsRes] = await Promise.allSettled([
         fetch(`${process.env.REACT_APP_API_URL || ''}/api/interviews/${id}/analytics`, {
-          headers: { 'x-user-id': user.id }
+          credentials: 'include'
         }),
         fetch(`${process.env.REACT_APP_API_URL || ''}/api/interviews/${id}/transcript`, {
-          headers: { 'x-user-id': user.id }
+          credentials: 'include'
         }),
         interview.jobTitle ? fetch(`${process.env.REACT_APP_API_URL || ''}/api/benchmarks/${encodeURIComponent(interview.jobTitle)}`, {
-          headers: { 'x-user-id': user.id }
+          credentials: 'include'
         }) : Promise.reject('No job title'),
         fetch(`${process.env.REACT_APP_API_URL || ''}/api/interviews/${id}/recommendations`, {
           method: 'POST',
-          headers: { 'x-user-id': user.id, 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include'
         })
       ])
       
@@ -357,12 +429,18 @@ export default function InterviewDetails() {
   const displayPosition = interview.jobTitle || interview.position || 'N/A'
   const displayCompany = interview.companyName || interview.company || 'N/A'
   const displayDuration = formatDuration(interview.callDuration)
-  const displayScore = interview.score ?? interview.feedback?.overallScore ?? null
+  // Overall score comes from Interview.score only (no fallback)
+  const displayScore = interview.score
   return (
     <div className="min-h-screen bg-zinc-50">
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+      <motion.div 
+        className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
         {/* Header */}
-        <div className="flex flex-col gap-4 mb-4 sm:mb-6 lg:mb-8">
+        <motion.div className="flex flex-col gap-4 mb-4 sm:mb-6 lg:mb-8" variants={itemVariants}>
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
               <button 
@@ -372,13 +450,15 @@ export default function InterviewDetails() {
               >
                 <ArrowLeft className="w-5 h-5 text-zinc-600" />
               </button>
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900">
-                {t('interviewDetails.title')} <span className="text-purple-600">{t('interviewDetails.titleHighlight')}</span>
-              </h1>
+              <TitleSplit 
+                i18nKey="interviewDetails.title"
+                subtitleKey="interviewDetails.subtitle"
+                as="h1"
+                className="text-xl sm:text-2xl lg:text-3xl"
+                containerClassName="flex flex-col gap-1"
+                subtitleClassName="text-sm sm:text-base text-zinc-600"
+              />
             </div>
-            <p className="text-sm sm:text-base text-zinc-600 mt-1 ml-10 sm:ml-12">
-              {t('interviewDetails.subtitle')}
-            </p>
           </div>
 
           {/* Status Badge and Download Buttons */}
@@ -407,10 +487,13 @@ export default function InterviewDetails() {
             )}
 
           </div>
-        </div>
+        </motion.div>
 
         {/* Interview Info Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-6 sm:mb-8">
+        <motion.div 
+          className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-6 sm:mb-8"
+          variants={itemVariants}
+        >
           <StatsCard
             title={t('interviewDetails.stats.position')}
             value={displayPosition}
@@ -439,13 +522,13 @@ export default function InterviewDetails() {
             value={displayScore !== null ? displayScore : 'N/A'}
             icon={<Award />}
           />
-        </div>
+        </motion.div>
 
         {/* Score and Breakdown Section */}
         {interview.feedback && (
           <>
             {/* Overall Score Section */}
-            <div className="mb-6 sm:mb-8">
+            <motion.div className="mb-6 sm:mb-8" variants={itemVariants}>
               <div className="flex items-center gap-2 mb-3 sm:mb-4">
                 <Award className="w-5 h-5 text-purple-600" />
                 <h2 className="text-lg sm:text-xl font-semibold text-zinc-900">{t('interviewDetails.performanceScore')}</h2>
@@ -520,10 +603,10 @@ export default function InterviewDetails() {
                   </div>
                 </div>
               </div>
-            </div>
+            </motion.div>
 
             {/* Summary Section */}
-            <div className="mb-6 sm:mb-8">
+            <motion.div className="mb-6 sm:mb-8" variants={itemVariants}>
               <div className="flex items-center gap-2 mb-3 sm:mb-4">
                 <Mic className="w-5 h-5 text-purple-600" />
                 <h2 className="text-lg sm:text-xl font-semibold text-zinc-900">{t('interviewDetails.summary')}</h2>
@@ -531,10 +614,13 @@ export default function InterviewDetails() {
               <div className="p-6 bg-white border border-zinc-200 rounded-xl">
                 <p className="text-zinc-700 leading-relaxed">{interview.feedback.summary}</p>
               </div>
-            </div>
+            </motion.div>
 
             {/* Feedback Sections Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-18 sm:mb-20">
+            <motion.div 
+              className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-18 sm:mb-20"
+              variants={itemVariants}
+            >
               {/* Strengths */}
               <div>
                 <div className="flex items-center gap-2 mb-3 sm:mb-4">
@@ -600,11 +686,14 @@ export default function InterviewDetails() {
                   )}
                 </div>
               </div>
-            </div>
+            </motion.div>
 
             {/* Advanced Analytics Section */}
             {(softSkills || transcript.length > 0 || benchmark || learningPathData) && (
-              <div className="mt-8 pt-8 border-t border-zinc-200">
+              <motion.div 
+                className="mt-8 pt-8 border-t border-zinc-200"
+                variants={itemVariants}
+              >
                 <h2 className="text-xl sm:text-2xl font-bold text-zinc-900 mb-6">
                   {t('interviewDetails.analytics.title')} <span className="text-purple-600">{t('interviewDetails.analytics.highlight')}</span>
                 </h2>
@@ -622,14 +711,37 @@ export default function InterviewDetails() {
 
                 {/* Two Column Layout for Transcript and Benchmark */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 sm:mb-8">
-                  {/* Transcript Viewer */}
-                  {transcript.length > 0 && (
+                  {/* Transcript Viewer or Empty State */}
+                  {transcript.length > 0 ? (
                     <TranscriptViewer
                       segments={transcript}
                       currentTime={currentTime}
                       onSeek={handleSeek}
                     />
-                  )}
+                  ) : interview.status === 'COMPLETED' ? (
+                    <div className="bg-white rounded-xl border border-zinc-200 p-6">
+                      <div className="flex items-center gap-2 mb-4">
+                        <MessageSquare className="w-5 h-5 text-purple-600" />
+                        <h3 className="text-lg font-semibold text-zinc-900">{t('interviewDetails.transcript.title')}</h3>
+                      </div>
+                      <div className="text-center py-8">
+                        <FileText className="w-12 h-12 text-zinc-300 mx-auto mb-4" />
+                        <p className="text-zinc-600 mb-2">{t('interviewDetails.transcript.notAvailable')}</p>
+                        <p className="text-sm text-zinc-400 mb-4">{t('interviewDetails.transcript.refreshHint')}</p>
+                        {transcriptError && (
+                          <p className="text-sm text-red-500 mb-4">{transcriptError}</p>
+                        )}
+                        <button
+                          onClick={handleRefreshTranscript}
+                          disabled={transcriptRefreshing}
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <RefreshCw className={`w-4 h-4 ${transcriptRefreshing ? 'animate-spin' : ''}`} />
+                          {transcriptRefreshing ? t('interviewDetails.transcript.refreshing') : t('interviewDetails.transcript.refreshButton')}
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
 
                   {/* Comparative Benchmark */}
                   {benchmark && (
@@ -645,26 +757,29 @@ export default function InterviewDetails() {
                     <LearningPath data={learningPathData} />
                   </div>
                 )}
-              </div>
+              </motion.div>
             )}
 
             {/* Analytics Loading State */}
             {analyticsLoading && (
-              <div className="mt-8 pt-8 border-t border-zinc-200">
+              <motion.div 
+                className="mt-8 pt-8 border-t border-zinc-200"
+                variants={itemVariants}
+              >
                 <div className="flex items-center justify-center py-12">
                   <div className="flex flex-col items-center gap-3">
                     <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
                     <p className="text-sm text-zinc-500">{t('interviewDetails.loadingAnalytics')}</p>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             )}
           </>
         )}
 
         {/* No Feedback Message */}
         {!interview.feedback && (
-          <div className="mb-6 sm:mb-8">
+          <motion.div className="mb-6 sm:mb-8" variants={itemVariants}>
             <div className="flex items-center gap-2 mb-3 sm:mb-4">
               <BarChart3 className="w-5 h-5 text-purple-600" />
               <h2 className="text-lg sm:text-xl font-semibold text-zinc-900">Performance Feedback</h2>
@@ -682,10 +797,10 @@ export default function InterviewDetails() {
                   : 'This interview may have ended early or encountered an issue.'}
               </p>
             </div>
-          </div>
+          </motion.div>
         )}
 
-      </div>
+      </motion.div>
     </div>
   )
 }
