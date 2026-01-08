@@ -24,10 +24,11 @@ import { AuthSelect } from 'components/auth/AuthSelect';
 import { profileUpdateSchema, USER_ROLES, SUPPORTED_COUNTRIES, UserRole } from 'components/auth/validation';
 import { CreditsPurchaseSection, BillingHistorySection } from 'components/billing';
 import { PhoneVerificationCard } from 'pages/app/b2c/dashboard/PhoneVerificationCard';
+import { ConnectedAccountsSection } from 'components/account';
 import apiService from 'services/APIService';
 
 // Section types
-type Section = 'profile' | 'security' | 'creditsPurchase' | 'billingHistory';
+type Section = 'profile' | 'connections' | 'security' | 'creditsPurchase' | 'billingHistory';
 
 // Animation variants
 const fadeVariants = {
@@ -53,7 +54,7 @@ const AccountDashboard: React.FC = () => {
   // Section state - profile is the default/first section
   const [activeSection, setActiveSection] = useState<Section>(() => {
     const sectionParam = searchParams.get('section');
-    const validSections: Section[] = ['profile', 'security', 'creditsPurchase', 'billingHistory'];
+    const validSections: Section[] = ['profile', 'connections', 'security', 'creditsPurchase', 'billingHistory'];
     if (sectionParam && validSections.includes(sectionParam as Section)) {
       return sectionParam as Section;
     }
@@ -63,7 +64,7 @@ const AccountDashboard: React.FC = () => {
   // Keep activeSection in sync with ?section query param
   useEffect(() => {
     const sectionParam = searchParams.get('section');
-    const validSections: Section[] = ['profile', 'security', 'creditsPurchase', 'billingHistory'];
+    const validSections: Section[] = ['profile', 'connections', 'security', 'creditsPurchase', 'billingHistory'];
     if (sectionParam && validSections.includes(sectionParam as Section) && sectionParam !== activeSection) {
       setActiveSection(sectionParam as Section);
     }
@@ -344,6 +345,7 @@ const AccountDashboard: React.FC = () => {
               <ul className="space-y-1">
                 {[
                   { id: 'profile', label: t('account.sections.profile', 'Profile') },
+                  { id: 'connections', label: t('account.sections.connections', 'Connected Accounts') },
                   { id: 'security', label: t('account.sections.security', 'Security') },
                   { id: 'creditsPurchase', label: t('account.sections.creditsPurchase', 'Buy Credits') },
                   { id: 'billingHistory', label: t('account.sections.billingHistory', 'Transaction History') },
@@ -583,6 +585,20 @@ const AccountDashboard: React.FC = () => {
                       </div>
                     </div>
                   </div>
+                </motion.div>
+              )}
+
+              {/* Connected Accounts Section */}
+              {activeSection === 'connections' && (
+                <motion.div
+                  key="connections"
+                  variants={fadeVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  transition={{ duration: 0.2 }}
+                >
+                  <ConnectedAccountsSection />
                 </motion.div>
               )}
 

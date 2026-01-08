@@ -28,6 +28,9 @@ export { CustomAvatar } from './CustomAvatar';
 export { FirstPartySignIn } from './FirstPartySignIn';
 export { FirstPartySignUp } from './FirstPartySignUp';
 
+// X Email Capture (when X OAuth doesn't provide email)
+export { XEmailCapture } from './XEmailCapture';
+
 // Password setup (for OAuth users)
 export { SetPasswordForm } from './SetPasswordForm';
 export { SetPasswordModal } from './SetPasswordModal';

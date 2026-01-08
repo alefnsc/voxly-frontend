@@ -10,3 +10,4 @@ export { InterviewScoreSection } from './InterviewScoreSection';
 export { InterviewFeedbackSections } from './InterviewFeedbackSections';
 export { InterviewAnalyticsSection } from './InterviewAnalyticsSection';
 export { InterviewNoFeedback } from './InterviewNoFeedback';
+export { RecordingSection } from './RecordingSection';

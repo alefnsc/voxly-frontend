@@ -40,7 +40,7 @@ export const FirstPartySignIn: React.FC<FirstPartySignInProps> = ({
   onSuccess,
   className,
 }) => {
-  const { signIn, signInWithGoogle, signInWithLinkedIn, signInWithX, isLoaded } = useAuth();
+  const { signIn, signInWithGoogle, signInWithMicrosoft, signInWithLinkedIn, signInWithX, isLoaded } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const prefersReducedMotion = useReducedMotion();
@@ -49,6 +49,7 @@ export const FirstPartySignIn: React.FC<FirstPartySignInProps> = ({
   const [step, setStep] = useState<SignInStep>('form');
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isMicrosoftLoading, setIsMicrosoftLoading] = useState(false);
   const [isLinkedInLoading, setIsLinkedInLoading] = useState(false);
   const [isXLoading, setIsXLoading] = useState(false);
   const [globalError, setGlobalError] = useState<string | null>(null);
@@ -134,6 +135,21 @@ export const FirstPartySignIn: React.FC<FirstPartySignInProps> = ({
       console.error('Google sign-in error:', error);
       setGlobalError(t('auth.errors.googleFailed', 'Failed to sign in with Google. Please try again.'));
       setIsGoogleLoading(false);
+    }
+  };
+
+  // Handle Microsoft OAuth
+  const handleMicrosoftSignIn = async () => {
+    setIsMicrosoftLoading(true);
+    setGlobalError(null);
+    
+    try {
+      await signInWithMicrosoft();
+      // This will redirect to Microsoft, so we don't need to do anything else
+    } catch (error: any) {
+      console.error('Microsoft sign-in error:', error);
+      setGlobalError(t('auth.errors.microsoftFailed', 'Failed to sign in with Microsoft. Please try again.'));
+      setIsMicrosoftLoading(false);
     }
   };
 
@@ -231,9 +247,11 @@ export const FirstPartySignIn: React.FC<FirstPartySignInProps> = ({
         {/* OAuth Buttons */}
         <FirstPartyAuthButtons
           onGoogleClick={handleGoogleSignIn}
+          onMicrosoftClick={handleMicrosoftSignIn}
           onLinkedInClick={handleLinkedInSignIn}
           onXClick={handleXSignIn}
           isGoogleLoading={isGoogleLoading}
+          isMicrosoftLoading={isMicrosoftLoading}
           isLinkedInLoading={isLinkedInLoading}
           isXLoading={isXLoading}
           disabled={isLoading}

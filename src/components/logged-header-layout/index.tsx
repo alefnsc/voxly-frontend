@@ -8,6 +8,7 @@ import { LayoutProvider } from 'components/default-layout'
 import { HEADER_OFFSET_CLASSES } from 'config/layout'
 import { cn } from 'lib/utils'
 import { useUser } from 'contexts/AuthContext'
+import CookieConsentBanner from 'components/cookie-consent/CookieConsentBanner'
 
 export const LoggedHeaderLayout: React.FC = () => {
   const { isLoaded, isSignedIn } = useUser()
@@ -38,6 +39,7 @@ export const LoggedHeaderLayout: React.FC = () => {
           <Outlet />
         </div>
         <AppFooter variant="app" />
+        <CookieConsentBanner />
       </div>
     </LayoutProvider>
   )

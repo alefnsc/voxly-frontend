@@ -64,6 +64,7 @@ export interface User {
   countryCode: string | null;
   phoneNumber: string | null;
   phoneVerified: boolean;
+  accountTypeConfirmedAt: string | null;
   createdAt: string;
   
   // Legacy compatibility properties
@@ -106,6 +107,7 @@ export interface AuthContextType extends AuthState {
   signUp: (data: SignUpData) => Promise<{ success: boolean; requiresVerification?: boolean; error?: string }>;
   signIn: (data: SignInData) => Promise<{ success: boolean; error?: string }>;
   signInWithGoogle: () => Promise<void>;
+  signInWithMicrosoft: () => Promise<void>;
   signInWithLinkedIn: () => Promise<void>;
   signInWithX: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -113,6 +115,11 @@ export interface AuthContextType extends AuthState {
   // Email verification
   verifyEmail: (email: string, code: string) => Promise<{ success: boolean; error?: string }>;
   resendVerificationEmail: (email: string) => Promise<{ success: boolean; error?: string }>;
+  
+  // X Email capture flow (when X doesn't provide email)
+  getXPendingInfo: (xPendingId: string) => Promise<{ success: boolean; data?: { username: string; name: string; pictureUrl?: string }; error?: string }>;
+  requestXEmailVerification: (xPendingId: string, email: string) => Promise<{ success: boolean; error?: string }>;
+  verifyXEmail: (xPendingId: string, email: string, code: string) => Promise<{ success: boolean; returnTo?: string; error?: string }>;
   
   // Password reset
   requestPasswordReset: (email: string) => Promise<{ success: boolean; error?: string }>;
@@ -195,12 +202,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // ========================================
 
   const validateSession = useCallback(async (): Promise<User | null> => {
-    const { data, error } = await authFetch<{ user: User }>('/api/auth/me');
-    
-    if (error || !data?.user) {
-      return null;
-    }
+    const { data } = await authFetch<{ authenticated: boolean; user: User | null }>('/api/auth/me');
 
+    if (!data?.authenticated || !data.user) return null;
     return data.user;
   }, []);
 
@@ -295,6 +299,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // ========================================
+  // MICROSOFT OAUTH
+  // ========================================
+
+  const signInWithMicrosoft = useCallback(async () => {
+    // Redirect to Microsoft OAuth endpoint with returnTo for post-login routing
+    window.location.href = `${API_BASE}/api/auth/microsoft?returnTo=/auth/post-login`;
+  }, []);
+
+  // ========================================
   // LINKEDIN OAUTH
   // ========================================
 
@@ -358,6 +371,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // ========================================
+  // X EMAIL CAPTURE FLOW
+  // ========================================
+
+  const getXPendingInfo = useCallback(async (xPendingId: string) => {
+    const { data, error } = await authFetch<{ data: { username: string; name: string; pictureUrl?: string } }>(
+      `/api/auth/x/pending/${xPendingId}`
+    );
+
+    if (error) {
+      return { success: false, error };
+    }
+
+    return { success: true, data: data?.data };
+  }, []);
+
+  const requestXEmailVerification = useCallback(async (xPendingId: string, email: string) => {
+    const { error } = await authFetch('/api/auth/x/request-email', {
+      method: 'POST',
+      body: JSON.stringify({ xPendingId, email }),
+    });
+
+    if (error) {
+      return { success: false, error };
+    }
+
+    return { success: true };
+  }, []);
+
+  const verifyXEmail = useCallback(async (xPendingId: string, email: string, code: string) => {
+    const { data, error } = await authFetch<{ returnTo: string }>('/api/auth/x/verify-email', {
+      method: 'POST',
+      body: JSON.stringify({ xPendingId, email, code }),
+    });
+
+    if (error) {
+      return { success: false, error };
+    }
+
+    // User is now logged in; refresh session
+    await refreshSession();
+
+    return { success: true, returnTo: data?.returnTo };
+  }, [refreshSession]);
+
+  // ========================================
   // PASSWORD RESET
   // ========================================
 
@@ -415,11 +473,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signUp,
       signIn,
       signInWithGoogle,
+      signInWithMicrosoft,
       signInWithLinkedIn,
       signInWithX,
       signOut,
       verifyEmail,
       resendVerificationEmail,
+      getXPendingInfo,
+      requestXEmailVerification,
+      verifyXEmail,
       requestPasswordReset,
       resetPassword,
       refreshSession,
@@ -433,11 +495,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signUp,
       signIn,
       signInWithGoogle,
+      signInWithMicrosoft,
       signInWithLinkedIn,
       signInWithX,
       signOut,
       verifyEmail,
       resendVerificationEmail,
+      getXPendingInfo,
+      requestXEmailVerification,
+      verifyXEmail,
       requestPasswordReset,
       resetPassword,
       refreshSession,

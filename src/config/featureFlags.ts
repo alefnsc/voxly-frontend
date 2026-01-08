@@ -22,20 +22,6 @@ export const isClosedBetaFeedbackEnabled = (): boolean => {
   return flag !== 'false';
 };
 
-/**
- * Get the Formspree endpoint for beta feedback
- */
-export const getBetaFeedbackFormspreeUrl = (): string => {
-  return process.env.REACT_APP_FORMSPREE_BETA_FEEDBACK_URL || '';
-};
-
-/**
- * Get the original Contact Us Formspree ID
- */
-export const getContactFormspreeId = (): string => {
-  return process.env.REACT_APP_FORMSPREE_ID || 'mqaregzo';
-};
-
 // ============================================================================
 // APP VERSION & ENVIRONMENT
 // ============================================================================

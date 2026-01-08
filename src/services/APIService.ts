@@ -1122,6 +1122,186 @@ class APIService {
         return result.data;
     }
 
+    // ==========================================
+    // INTERVIEW MEDIA (RECORDING) METHODS
+    // ==========================================
+
+    /**
+     * Get a SAS URL for uploading interview recording
+     */
+    async getMediaUploadUrl(interviewId: string, params: {
+        mimeType: string;
+        sizeBytes: number;
+    }): Promise<{
+        uploadUrl: string;
+        blobKey: string;
+        mediaId: string;
+        expiresAt: string;
+        headers: Record<string, string>;
+    }> {
+        const response = await fetch(`${BACKEND_URL}/api/interviews/${interviewId}/media/upload-url`, {
+            method: 'POST',
+            headers: getHeaders(),
+            credentials: 'include',
+            body: JSON.stringify(params),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || `Error getting upload URL: ${response.status}`);
+        }
+
+        const result = await response.json();
+        return result.data;
+    }
+
+    /**
+     * Upload a recording blob directly to Azure Blob Storage
+     */
+    async uploadMediaBlob(
+        uploadUrl: string, 
+        blob: Blob, 
+        headers: Record<string, string>
+    ): Promise<void> {
+        const response = await fetch(uploadUrl, {
+            method: 'PUT',
+            headers: {
+                ...headers,
+                'Content-Length': blob.size.toString(),
+            },
+            body: blob,
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to upload media: ${response.status}`);
+        }
+    }
+
+    /**
+     * Mark media upload as complete
+     */
+    async completeMediaUpload(interviewId: string, params: {
+        blobKey: string;
+        mimeType: string;
+        sizeBytes: number;
+        durationSec?: number;
+    }): Promise<{ mediaId: string }> {
+        const response = await fetch(`${BACKEND_URL}/api/interviews/${interviewId}/media/complete`, {
+            method: 'POST',
+            headers: getHeaders(),
+            credentials: 'include',
+            body: JSON.stringify(params),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || `Error completing upload: ${response.status}`);
+        }
+
+        const result = await response.json();
+        return result.data;
+    }
+
+    /**
+     * Mark media upload as failed (for retry)
+     */
+    async failMediaUpload(interviewId: string): Promise<void> {
+        await fetch(`${BACKEND_URL}/api/interviews/${interviewId}/media/fail`, {
+            method: 'POST',
+            headers: getHeaders(),
+            credentials: 'include',
+        });
+    }
+
+    /**
+     * Get media info for an interview
+     */
+    async getInterviewMedia(interviewId: string): Promise<{
+        id: string;
+        status: 'UPLOADING' | 'AVAILABLE' | 'FAILED';
+        mimeType: string;
+        sizeBytes: number;
+        durationSec: number | null;
+        downloadUrl?: string;
+        createdAt: string;
+    } | null> {
+        const response = await fetch(`${BACKEND_URL}/api/interviews/${interviewId}/media`, {
+            method: 'GET',
+            headers: getHeaders(),
+            credentials: 'include',
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error fetching media info: ${response.status}`);
+        }
+
+        const result = await response.json();
+        return result.data;
+    }
+
+    /**
+     * Get a signed download URL for interview media
+     */
+    async getMediaDownloadUrl(interviewId: string): Promise<string> {
+        const response = await fetch(`${BACKEND_URL}/api/interviews/${interviewId}/media/download`, {
+            method: 'GET',
+            headers: getHeaders(),
+            credentials: 'include',
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || `Error getting download URL: ${response.status}`);
+        }
+
+        const result = await response.json();
+        return result.data.downloadUrl;
+    }
+
+    /**
+     * Full upload flow: get URL, upload blob, complete
+     */
+    async uploadInterviewRecording(
+        interviewId: string,
+        blob: Blob,
+        mimeType: string,
+        durationMs: number,
+        onProgress?: (status: 'getting-url' | 'uploading' | 'completing' | 'done' | 'failed') => void
+    ): Promise<{ success: boolean; mediaId?: string; error?: string }> {
+        try {
+            // Step 1: Get upload URL
+            onProgress?.('getting-url');
+            const uploadInfo = await this.getMediaUploadUrl(interviewId, {
+                mimeType,
+                sizeBytes: blob.size,
+            });
+
+            // Step 2: Upload blob
+            onProgress?.('uploading');
+            await this.uploadMediaBlob(uploadInfo.uploadUrl, blob, uploadInfo.headers);
+
+            // Step 3: Complete upload
+            onProgress?.('completing');
+            const result = await this.completeMediaUpload(interviewId, {
+                blobKey: uploadInfo.blobKey,
+                mimeType,
+                sizeBytes: blob.size,
+                durationSec: Math.round(durationMs / 1000),
+            });
+
+            onProgress?.('done');
+            return { success: true, mediaId: result.mediaId };
+        } catch (error: any) {
+            console.error('[APIService] Media upload failed:', error);
+            onProgress?.('failed');
+            
+            // Mark as failed for retry
+            await this.failMediaUpload(interviewId).catch(() => {});
+            
+            return { success: false, error: error.message };
+        }
+    }
+
     /**
      * Get user's payment history (cached for 1 minute)
      */
@@ -1557,8 +1737,11 @@ class APIService {
         useCase?: string;
     }): Promise<{ status: string; message: string; data?: { id: string } }> {
         console.log('📧 Submitting demo request:', { email: data.email, company: data.company });
+
+        const ref = new URLSearchParams(window.location.search).get('ref')?.trim();
+        const url = `${BACKEND_URL}/api/leads/demo-request${ref ? `?ref=${encodeURIComponent(ref)}` : ''}`;
         
-        const response = await fetch(`${BACKEND_URL}/api/leads/demo-request`, {
+        const response = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1580,16 +1763,20 @@ class APIService {
     async submitEarlyAccess(data: {
         name: string;
         email: string;
-        company?: string;
-        phone?: string;
-        interestedModules?: string[];
+        companyName?: string;
+        companySizeTier?: 'STARTUP' | 'SMALL' | 'MEDIUM' | 'ENTERPRISE';
+        phoneE164?: string;
+        interestedModules: string[];
     }): Promise<{ status: string; message: string; data?: { id: string } }> {
         console.log('🚀 Submitting early access request:', { 
             email: data.email, 
             modules: data.interestedModules 
         });
+
+        const ref = new URLSearchParams(window.location.search).get('ref')?.trim();
+        const url = `${BACKEND_URL}/api/leads/early-access${ref ? `?ref=${encodeURIComponent(ref)}` : ''}`;
         
-        const response = await fetch(`${BACKEND_URL}/api/leads/early-access`, {
+        const response = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -3107,6 +3294,7 @@ class APIService {
         const response = await fetch(`${BACKEND_URL}/api/users/me`, {
             method: 'GET',
             headers: getHeaders(userId),
+            credentials: 'include',
         });
 
         const result = await safeJsonParse<{
@@ -3132,11 +3320,13 @@ class APIService {
             preferredLanguage?: string;
             role?: string;
             marketingOptIn?: boolean;
+            accountTypeConfirmed?: boolean;
         }
     ): Promise<B2CUserProfile> {
         const response = await fetch(`${BACKEND_URL}/api/users/me`, {
             method: 'PUT',
             headers: getHeaders(userId),
+            credentials: 'include',
             body: JSON.stringify(updates),
         });
 
@@ -3160,12 +3350,125 @@ class APIService {
     }
 
     /**
+     * Get onboarding status (whether user needs to complete onboarding)
+     * Checks for resume, LinkedIn profile, and profile completion
+     * Uses session-based authentication via cookies
+     */
+    async getOnboardingStatus(): Promise<OnboardingStatus> {
+        const response = await fetch(`${BACKEND_URL}/api/users/onboarding-status`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'ngrok-skip-browser-warning': 'true',
+            },
+            credentials: 'include',
+        });
+
+        const result = await safeJsonParse<{
+            ok: boolean;
+            status: string;
+            data: OnboardingStatus;
+        }>(response, 'getOnboardingStatus');
+
+        if (!response.ok || !result.ok) {
+            throw new Error('Failed to fetch onboarding status');
+        }
+
+        return result.data;
+    }
+
+    /**
+     * Redirect to LinkedIn profile import flow
+     * Uses session-based authentication - user must be logged in
+     * @param returnTo - Path to return to after import (default: /onboarding)
+     */
+    startLinkedInProfileImport(returnTo: string = '/onboarding'): void {
+        const url = `${BACKEND_URL}/api/auth/linkedin-profile?returnTo=${encodeURIComponent(returnTo)}`;
+        window.location.href = url;
+    }
+
+    // ==========================================
+    // CONNECTED ACCOUNTS MANAGEMENT
+    // ==========================================
+
+    /**
+     * Get all connected OAuth provider accounts
+     * Returns connection status for Google, Microsoft, X, and LinkedIn
+     */
+    async getConnectedAccounts(): Promise<ConnectedAccounts> {
+        const response = await fetch(`${BACKEND_URL}/api/account/connections`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'ngrok-skip-browser-warning': 'true',
+            },
+            credentials: 'include',
+        });
+
+        const result = await safeJsonParse<{
+            status: string;
+            data: ConnectedAccounts;
+        }>(response, 'getConnectedAccounts');
+
+        if (!response.ok || result.status !== 'success') {
+            throw new Error('Failed to fetch connected accounts');
+        }
+
+        return result.data;
+    }
+
+    /**
+     * Disconnect an OAuth provider account
+     * @param provider - Provider to disconnect (google, microsoft, x, linkedin)
+     * @returns Updated connection status for the provider
+     */
+    async disconnectProvider(provider: 'google' | 'microsoft' | 'x' | 'linkedin'): Promise<{ connected: boolean; provider: string }> {
+        const response = await fetch(`${BACKEND_URL}/api/account/connections/${provider}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'ngrok-skip-browser-warning': 'true',
+            },
+            credentials: 'include',
+        });
+
+        const result = await safeJsonParse<{
+            status: string;
+            data: { connected: boolean; provider: string };
+            message?: string;
+            code?: string;
+        }>(response, 'disconnectProvider');
+
+        // Handle lockout error (409)
+        if (response.status === 409) {
+            throw new Error(result.message || 'Cannot disconnect your only sign-in method');
+        }
+
+        if (!response.ok || result.status !== 'success') {
+            throw new Error(result.message || 'Failed to disconnect provider');
+        }
+
+        return result.data;
+    }
+
+    /**
+     * Start OAuth flow to connect a provider to existing account
+     * @param provider - Provider to connect (google, microsoft, x, linkedin)
+     * @param returnTo - Path to return to after connection (default: /account)
+     */
+    startProviderConnect(provider: 'google' | 'microsoft' | 'x' | 'linkedin', returnTo: string = '/account?section=profile'): void {
+        const url = `${BACKEND_URL}/api/auth/${provider}?mode=link&returnTo=${encodeURIComponent(returnTo)}`;
+        window.location.href = url;
+    }
+
+    /**
      * Get B2C access status (eligibility checks)
      */
     async getB2CStatus(userId: string): Promise<B2CAccessStatus> {
         const response = await fetch(`${BACKEND_URL}/api/users/me/b2c-status`, {
             method: 'GET',
             headers: getHeaders(userId),
+            credentials: 'include',
         });
 
         const result = await safeJsonParse<{
@@ -3448,7 +3751,7 @@ export class B2CApiError extends Error {
 // B2C TYPES
 // ==========================================
 
-export type UserType = 'PERSONAL' | 'CANDIDATE' | 'EMPLOYEE';
+export type UserType = 'PERSONAL';
 
 export interface B2CUserProfile {
     id: string;
@@ -3462,6 +3765,7 @@ export interface B2CUserProfile {
     preferredLanguage: string | null;
     currentRole: string | null;
     currentSeniority: string | null;
+    accountTypeConfirmedAt?: string | null;
     onboardingComplete: boolean;
     createdAt: string;
     updatedAt: string;
@@ -3562,6 +3866,46 @@ export interface ConsentSubmitResult {
     hasRequiredConsents: boolean;
     marketingOptIn: boolean;
     onboardingCompletedAt: string | null;
+}
+
+export interface OnboardingStatus {
+    onboardingComplete: boolean;
+    hasResume: boolean;
+    hasLinkedInProfile: boolean;
+    isLinkedInConnected: boolean;
+    hasCompleteName: boolean;
+    phoneVerified: boolean;
+    linkedInProfile: {
+        name: string | null;
+        email: string | null;
+        pictureUrl: string | null;
+        source: string;
+        connectedAt: string | null;
+    } | null;
+}
+
+/**
+ * Connection status for a single OAuth provider
+ */
+export interface ProviderConnection {
+    connected: boolean;
+    email?: string;
+    name?: string;
+    username?: string;
+    pictureUrl?: string;
+    profileUrl?: string;
+    connectedAt?: string;
+    providerId?: string;
+}
+
+/**
+ * All connected OAuth provider accounts
+ */
+export interface ConnectedAccounts {
+    google: ProviderConnection;
+    microsoft: ProviderConnection;
+    x: ProviderConnection;
+    linkedin: ProviderConnection;
 }
 
 // ==========================================

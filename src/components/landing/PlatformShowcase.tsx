@@ -9,12 +9,11 @@
 
 'use client'
 
-import React, { useState } from 'react'
+import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion, useReducedMotion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { Button } from 'components/ui/button'
-import { WaitlistModal, type WaitlistModule } from './WaitlistModal'
 import {
   LineChart,
   Line,
@@ -59,13 +58,15 @@ export const PlatformShowcase: React.FC = () => {
   const navigate = useNavigate()
   const prefersReducedMotion = useReducedMotion()
   
-  // Waitlist modal state
-  const [waitlistOpen, setWaitlistOpen] = useState(false)
-  const [preselectedModule, setPreselectedModule] = useState<WaitlistModule | undefined>()
-
-  const openWaitlist = (module: WaitlistModule) => {
-    setPreselectedModule(module)
-    setWaitlistOpen(true)
+  // Scroll to hero waitlist form instead of opening modal
+  const scrollToWaitlistForm = () => {
+    const el = document.getElementById('business-waitlist')
+    if (el) {
+      const header = document.querySelector('[data-landing-header="true"]')
+      const headerHeight = header?.getBoundingClientRect().height ?? 80
+      const top = el.getBoundingClientRect().top + window.scrollY - headerHeight - 16
+      window.scrollTo({ top, behavior: 'smooth' })
+    }
   }
 
   const containerVariants = {
@@ -124,9 +125,6 @@ export const PlatformShowcase: React.FC = () => {
           transition={{ duration: 0.6 }}
           className="text-center mb-8 sm:mb-12 lg:mb-16"
         >
-          <span className="inline-block px-3 py-1 text-xs font-semibold text-purple-700 bg-purple-100 rounded-full mb-3 sm:mb-4">
-            {t('landing.platformShowcase.badge')}
-          </span>
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 sm:mb-4">
             <span className="text-zinc-900">{t('landing.platformShowcase.titleBlack')}</span>{' '}
             <span className="text-purple-600">{t('landing.platformShowcase.titlePurple')}</span>
@@ -325,7 +323,7 @@ export const PlatformShowcase: React.FC = () => {
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => openWaitlist('recruiter_platform')}
+                onClick={scrollToWaitlistForm}
                 className="w-full border-purple-200 text-purple-700 hover:bg-purple-50"
               >
                 {t('landing.platformShowcase.b2b.cta')} <span className="ml-1">→</span>
@@ -406,7 +404,7 @@ export const PlatformShowcase: React.FC = () => {
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => openWaitlist('employee_hub')}
+                onClick={scrollToWaitlistForm}
                 className="w-full border-purple-200 text-purple-700 hover:bg-purple-50"
               >
                 {t('landing.platformShowcase.hr.cta')} <span className="ml-1">→</span>
@@ -415,13 +413,6 @@ export const PlatformShowcase: React.FC = () => {
           </motion.div>
         </motion.div>
       </div>
-      
-      {/* Waitlist Modal */}
-      <WaitlistModal
-        open={waitlistOpen}
-        onOpenChange={setWaitlistOpen}
-        preselectedModule={preselectedModule}
-      />
     </section>
   )
 }

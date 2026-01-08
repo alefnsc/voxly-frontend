@@ -42,6 +42,7 @@ import {
   RefreshCw
 } from 'lucide-react'
 import { TitleSplit } from '../../components/ui/TitleSplit'
+import { RecordingSection } from './components'
 
 // Animation variants
 const containerVariants = {
@@ -615,6 +616,13 @@ export default function InterviewDetails() {
                 <p className="text-zinc-700 leading-relaxed">{interview.feedback.summary}</p>
               </div>
             </motion.div>
+
+            {/* Recording Section */}
+            {id && (
+              <div className="mb-6 sm:mb-8">
+                <RecordingSection interviewId={id} />
+              </div>
+            )}
 
             {/* Feedback Sections Grid */}
             <motion.div 

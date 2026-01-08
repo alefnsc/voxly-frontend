@@ -34,6 +34,15 @@ export default function OnboardingPasswordPage() {
       return;
     }
 
+    // Account type must be confirmed before password step
+    if (!user.accountTypeConfirmedAt) {
+      navigate('/onboarding/account-type', {
+        replace: true,
+        state: { returnTo: '/onboarding/password' },
+      });
+      return;
+    }
+
     // Only OAuth/SSO users without a password should stay on this page
     if (user.hasPassword !== false) {
       navigate('/onboarding/consent', { replace: true });
@@ -61,7 +70,7 @@ export default function OnboardingPasswordPage() {
   }
 
   // Not signed in or doesn't need password - will redirect
-  if (!isSignedIn || !user || user.hasPassword !== false) {
+  if (!isSignedIn || !user || !user.accountTypeConfirmedAt || user.hasPassword !== false) {
     return (
       <AuthShell>
         <div className="flex items-center justify-center min-h-[300px]">
@@ -79,8 +88,10 @@ export default function OnboardingPasswordPage() {
         transition={{ duration: 0.4 }}
         className="w-full max-w-md mx-auto"
       >
-        {/* Progress indicator */}
+        {/* Progress indicator - 3 steps: account-type (done) → password (current) → consent */}
         <div className="flex items-center justify-center gap-2 mb-8">
+          <div className="w-3 h-3 rounded-full bg-purple-600" />
+          <div className="w-8 h-0.5 bg-purple-600" />
           <div className="w-3 h-3 rounded-full bg-purple-600" />
           <div className="w-8 h-0.5 bg-zinc-200" />
           <div className="w-3 h-3 rounded-full bg-zinc-200" />
@@ -118,10 +129,10 @@ export default function OnboardingPasswordPage() {
           onSuccess={handlePasswordSet}
         />
 
-        {/* Step indicator */}
+        {/* Step indicator - Password is step 2 of 3 (account-type → password → consent) */}
         <div className="mt-8 pt-6 border-t border-zinc-200">
           <div className="flex items-center justify-center gap-2 text-sm text-zinc-500">
-            <span>{t('onboarding.step', 'Step')} 1 {t('onboarding.of', 'of')} 2</span>
+            <span>{t('onboarding.step', 'Step')} 2 {t('onboarding.of', 'of')} 3</span>
             <ArrowRight className="w-4 h-4" />
             <span className="text-zinc-400">{t('onboarding.nextConsent', 'Terms & Privacy')}</span>
           </div>

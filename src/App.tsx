@@ -50,6 +50,7 @@ const B2CInterviewNew = lazy(() => import('./pages/app/b2c/interview/new'));
 const B2CInterviews = lazy(() => import('./pages/app/b2c/interviews'));
 const ConsentPage = lazy(() => import('./pages/Onboarding/ConsentPage'));
 const PasswordPage = lazy(() => import('./pages/Onboarding/PasswordPage'));
+const AccountTypePage = lazy(() => import('./pages/Onboarding/AccountTypePage'));
 const PostLogin = lazy(() => import('./pages/PostLogin'));
 
 // ============================================
@@ -87,6 +88,7 @@ const App: React.FC = () => {
                           <Route path="under-construction" element={<UnderConstruction />} />
                           
                           {/* Onboarding pages (outside main layout) */}
+                          <Route path="onboarding/account-type" element={<AccountTypePage />} />
                           <Route path="onboarding/password" element={<PasswordPage />} />
                           <Route path="onboarding/consent" element={<ConsentPage />} />
 

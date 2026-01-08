@@ -13,9 +13,11 @@ import { cn } from 'lib/utils';
 
 interface FirstPartyAuthButtonsProps {
   onGoogleClick: () => void;
+  onMicrosoftClick?: () => void;
   onLinkedInClick?: () => void;
   onXClick?: () => void;
   isGoogleLoading?: boolean;
+  isMicrosoftLoading?: boolean;
   isLinkedInLoading?: boolean;
   isXLoading?: boolean;
   disabled?: boolean;
@@ -24,16 +26,18 @@ interface FirstPartyAuthButtonsProps {
 
 export const FirstPartyAuthButtons: React.FC<FirstPartyAuthButtonsProps> = ({
   onGoogleClick,
+  onMicrosoftClick,
   onLinkedInClick,
   onXClick,
   isGoogleLoading = false,
+  isMicrosoftLoading = false,
   isLinkedInLoading = false,
   isXLoading = false,
   disabled = false,
   className,
 }) => {
   const { t } = useTranslation();
-  const anyLoading = isGoogleLoading || isLinkedInLoading || isXLoading;
+  const anyLoading = isGoogleLoading || isMicrosoftLoading || isLinkedInLoading || isXLoading;
 
   return (
     <div className={cn('space-y-3', className)}>
@@ -91,6 +95,51 @@ export const FirstPartyAuthButtons: React.FC<FirstPartyAuthButtonsProps> = ({
         )}
         {t('auth.oauth.google', 'Continue with Google')}
       </button>
+
+      {/* Microsoft OAuth Button */}
+      {onMicrosoftClick && (
+        <button
+          type="button"
+          onClick={onMicrosoftClick}
+          disabled={disabled || anyLoading}
+          className={cn(
+            'w-full flex items-center justify-center gap-3 px-4 py-3',
+            'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl',
+            'text-gray-700 dark:text-gray-200 font-medium text-sm',
+            'hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500',
+            'focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2',
+            'transition-all duration-200',
+            'disabled:opacity-50 disabled:cursor-not-allowed'
+          )}
+        >
+          {isMicrosoftLoading ? (
+            <svg className="animate-spin h-5 w-5 text-gray-500" viewBox="0 0 24 24">
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+                fill="none"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+              />
+            </svg>
+          ) : (
+            <svg className="h-5 w-5" viewBox="0 0 24 24">
+              <path d="M11.4 24H0V12.6h11.4V24z" fill="#00A4EF"/>
+              <path d="M24 24H12.6V12.6H24V24z" fill="#FFB900"/>
+              <path d="M11.4 11.4H0V0h11.4v11.4z" fill="#F25022"/>
+              <path d="M24 11.4H12.6V0H24v11.4z" fill="#7FBA00"/>
+            </svg>
+          )}
+          {t('auth.oauth.microsoft', 'Continue with Microsoft')}
+        </button>
+      )}
 
       {/* LinkedIn OAuth Button */}
       {onLinkedInClick && (

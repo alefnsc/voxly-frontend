@@ -17,7 +17,10 @@ import { useTranslation } from 'react-i18next';
 import { X, Send, ChevronLeft, SkipForward, Loader2, Check, Plus, Trash2, Bug, Lightbulb, Sparkles } from 'lucide-react';
 import { cn } from 'lib/utils';
 import { useBetaFeedbackFlow } from 'hooks/useBetaFeedbackFlow';
-import { ChatMessage } from 'types/betaFeedback';
+import { ChatMessage, WizardStep } from 'types/betaFeedback';
+
+const MIN_TITLE_LENGTH = 5;
+const MIN_DESCRIPTION_LENGTH = 10;
 
 // ============================================================================
 // SUB-COMPONENTS
@@ -30,6 +33,7 @@ interface MessageBubbleProps {
   onStepsSubmit?: (steps: string[]) => void;
   isLatest: boolean;
   animationDelay?: number;
+  currentStep?: WizardStep;
 }
 
 const MessageBubble: React.FC<MessageBubbleProps> = ({
@@ -39,13 +43,25 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   onStepsSubmit,
   isLatest,
   animationDelay = 0,
+  currentStep,
 }) => {
   const { t } = useTranslation();
   const isAssistant = message.role === 'assistant';
   const [inputValue, setInputValue] = useState('');
   const [steps, setSteps] = useState<string[]>([]);
   const [isVisible, setIsVisible] = useState(false);
+  const [inputError, setInputError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
+
+  const trimmedInputValue = inputValue.trim();
+  const minLengthRequired = currentStep === 'title'
+    ? MIN_TITLE_LENGTH
+    : currentStep === 'description'
+      ? MIN_DESCRIPTION_LENGTH
+      : 0;
+
+  const isTooShort = minLengthRequired > 0 && trimmedInputValue.length > 0 && trimmedInputValue.length < minLengthRequired;
+  const canSubmitText = trimmedInputValue.length > 0 && !isTooShort;
 
   // Animate in
   useEffect(() => {
@@ -71,19 +87,29 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         }
       } else if (message.inputType !== 'textarea') {
         e.preventDefault();
-        if (inputValue.trim()) {
-          onTextSubmit?.(inputValue);
-          setInputValue('');
+        if (!trimmedInputValue) return;
+        if (isTooShort) {
+          setInputError(`Please enter at least ${minLengthRequired} characters.`);
+          return;
         }
+
+        setInputError(null);
+        onTextSubmit?.(inputValue);
+        setInputValue('');
       }
     }
   };
 
   const handleTextSubmit = () => {
-    if (inputValue.trim()) {
-      onTextSubmit?.(inputValue);
-      setInputValue('');
+    if (!trimmedInputValue) return;
+    if (isTooShort) {
+      setInputError(`Please enter at least ${minLengthRequired} characters.`);
+      return;
     }
+
+    setInputError(null);
+    onTextSubmit?.(inputValue);
+    setInputValue('');
   };
 
   const handleStepsSubmit = () => {
@@ -170,7 +196,10 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
               <textarea
                 ref={inputRef as React.RefObject<HTMLTextAreaElement>}
                 value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
+                onChange={(e) => {
+                  setInputValue(e.target.value);
+                  if (inputError) setInputError(null);
+                }}
                 onKeyDown={handleKeyDown}
                 placeholder={message.inputPlaceholder}
                 rows={4}
@@ -184,7 +213,10 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                 ref={inputRef as React.RefObject<HTMLInputElement>}
                 type={message.inputType === 'email' ? 'email' : 'text'}
                 value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
+                onChange={(e) => {
+                  setInputValue(e.target.value);
+                  if (inputError) setInputError(null);
+                }}
                 onKeyDown={handleKeyDown}
                 placeholder={message.inputPlaceholder}
                 className="w-full px-4 py-3 text-sm bg-white border border-zinc-200 rounded-xl
@@ -193,9 +225,16 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                   transition-shadow"
               />
             )}
+
+            {isLatest && isAssistant && (inputError || isTooShort) && (
+              <div className="mt-2 text-xs text-red-600">
+                {inputError || `Please enter at least ${minLengthRequired} characters.`}
+              </div>
+            )}
+
             <button
               onClick={handleTextSubmit}
-              disabled={!inputValue.trim()}
+              disabled={!canSubmitText}
               className="mt-3 w-full px-4 py-2.5 text-sm font-medium text-white
                 bg-gradient-to-r from-purple-600 to-purple-700 
                 hover:from-purple-700 hover:to-purple-800 
@@ -485,6 +524,7 @@ const BetaFeedbackChatModal: React.FC<BetaFeedbackChatModalProps> = ({
               onStepsSubmit={handleStepsInput}
               isLatest={index === messages.length - 1}
               animationDelay={index === messages.length - 1 ? 100 : 0}
+              currentStep={state.step}
             />
           ))}
 

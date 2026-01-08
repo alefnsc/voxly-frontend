@@ -154,7 +154,7 @@ export const LandingHeroPromoBanner: React.FC = () => {
                 onClick={handleStartFree}
                 className="w-full sm:w-auto bg-white hover:bg-purple-50 text-purple-700 font-semibold px-5 py-2.5 shadow-lg shadow-purple-900/20 hover:shadow-xl transition-all group"
               >
-                {t('Start free')}
+                {t('Start Interview Practice for Free')}
                 <ArrowRight className="w-4 h-4 ml-1.5 group-hover:translate-x-0.5 transition-transform" />
               </Button>
               

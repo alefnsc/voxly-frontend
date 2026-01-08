@@ -6,9 +6,10 @@
  * 
  * Flow:
  * 1. If not signed in → /sign-in
- * 2. If hasPassword=false → /onboarding/password
- * 3. If consent missing → /onboarding/consent
- * 4. Otherwise → /app/b2c/dashboard
+ * 2. If account type not confirmed → /onboarding/account-type
+ * 3. If hasPassword=false → /onboarding/password
+ * 4. If consent missing → /onboarding/consent
+ * 5. Otherwise → /app/b2c/dashboard
  * 
  * @module pages/PostLogin
  */
@@ -42,13 +43,24 @@ export default function PostLoginRouter() {
       setStatus('redirecting');
 
       try {
-        // Step 1: Check if user needs to set password
+        // Step 1: Account type onboarding (must be completed for all users)
+        if (!user.accountTypeConfirmedAt) {
+          navigate('/onboarding/account-type', {
+            replace: true,
+            state: {
+              returnTo: (location.state as any)?.returnTo || '/app/b2c/dashboard',
+            },
+          });
+          return;
+        }
+
+        // Step 2: Check if user needs to set password
         if (user.hasPassword === false) {
           navigate('/onboarding/password', { replace: true });
           return;
         }
 
-        // Step 2: Check consent status
+        // Step 3: Check consent status
         const consentStatus = await apiService.getConsentStatus();
         
         if (!consentStatus.hasRequiredConsents || consentStatus.needsReConsent) {
@@ -62,7 +74,7 @@ export default function PostLoginRouter() {
           return;
         }
 
-        // Step 3: All good - go to dashboard
+        // Step 4: All good - go to dashboard
         // Check if there's a returnTo in location state
         const returnTo = (location.state as any)?.returnTo || '/app/b2c/dashboard';
         navigate(returnTo, { replace: true });

@@ -25,6 +25,9 @@ import {
 import { getAppVersion, getAppEnvironment } from 'config/featureFlags';
 import { submitBetaFeedback } from 'services/betaFeedbackApi';
 
+const MIN_TITLE_LENGTH = 5;
+const MIN_DESCRIPTION_LENGTH = 10;
+
 // ============================================================================
 // STEP CONFIGURATION
 // ============================================================================
@@ -308,15 +311,15 @@ export function useBetaFeedbackFlow() {
         addAssistantMessage(
           t('betaFeedback.reviewMessage', "Here's a summary of your feedback:") + '\n\n' + reviewSummary,
           [
-            { id: 'submit', label: t('betaFeedback.submitButton', '📤 Submit Feedback'), value: 'submit' },
-            { id: 'edit', label: t('betaFeedback.editButton', '✏️ Edit'), value: 'edit' },
+            { id: 'submit', label: t('betaFeedback.submitButton', 'Submit Feedback'), value: 'submit' },
+            { id: 'edit', label: t('betaFeedback.editButton', 'Edit'), value: 'edit' },
           ]
         );
         break;
 
       case 'success':
         addAssistantMessage(
-          t('betaFeedback.successMessage', `Thank you! Your feedback has been submitted. 🎉\n\nReference ID: **${state.refId}**\n\nWe really appreciate you helping us improve Vocaid!`)
+          t('betaFeedback.successMessage', `Thank you! Your feedback has been submitted.\n\nReference ID: **${state.refId}**\n\nWe really appreciate you helping us improve Vocaid!`)
         );
         break;
 
@@ -324,7 +327,7 @@ export function useBetaFeedbackFlow() {
         addAssistantMessage(
           t('betaFeedback.errorMessage', `Sorry, there was an error submitting your feedback: ${state.submissionError}\n\nPlease try again.`),
           [
-            { id: 'retry', label: t('betaFeedback.retryButton', '🔄 Try Again'), value: 'retry' },
+            { id: 'retry', label: t('betaFeedback.retryButton', 'Try Again'), value: 'retry' },
           ]
         );
         break;
@@ -516,13 +519,27 @@ export function useBetaFeedbackFlow() {
   // ============================================================================
 
   const handleSubmit = useCallback(async () => {
-    // Client-side validation: title must not be empty
-    if (!state.title.trim()) {
+    const trimmedTitle = state.title.trim();
+    const trimmedDescription = state.description.trim();
+
+    // Client-side validation (mirror backend Zod rules)
+    if (trimmedTitle.length < MIN_TITLE_LENGTH) {
       setState(prev => ({ 
         ...prev, 
         step: 'error', 
         isSubmitting: false, 
-        submissionError: 'Title is required',
+        submissionError: `Title must be at least ${MIN_TITLE_LENGTH} characters.`,
+      }));
+      goToStep('error');
+      return;
+    }
+
+    if (trimmedDescription.length < MIN_DESCRIPTION_LENGTH) {
+      setState(prev => ({
+        ...prev,
+        step: 'error',
+        isSubmitting: false,
+        submissionError: `Description must be at least ${MIN_DESCRIPTION_LENGTH} characters.`,
       }));
       goToStep('error');
       return;
@@ -559,8 +576,8 @@ export function useBetaFeedbackFlow() {
 
     const payload: BetaFeedbackRequest = {
       type: state.feedbackType!,
-      title: state.title.trim(),
-      description: state.description,
+      title: trimmedTitle,
+      description: trimmedDescription,
       pageUrl: window.location.href,
       userEmail: state.userEmail,
       userId: isSignedIn && user?.id ? user.id : undefined,
@@ -615,12 +632,16 @@ export function useBetaFeedbackFlow() {
             refId,
           });
         }
+
+        const issueMessage = result.issues?.length
+          ? `${result.issues[0].field}: ${result.issues[0].message}`
+          : null;
         
         setState(prev => ({ 
           ...prev, 
           step: 'error', 
           isSubmitting: false, 
-          submissionError: result.error || 'Unknown error',
+          submissionError: issueMessage || result.error || 'Unknown error',
           refId,
         }));
         goToStep('error');

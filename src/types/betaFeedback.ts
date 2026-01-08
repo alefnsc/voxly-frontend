@@ -116,7 +116,7 @@ export interface BetaFeedbackRequest {
   userAgent: string;
   allowFollowUp: boolean;
   refId: string;
-  // reCAPTCHA v3 token (for Formspree spam protection)
+  // reCAPTCHA v3 token
   recaptchaToken?: string;
 }
 
@@ -125,6 +125,10 @@ export interface BetaFeedbackResponse {
   refId: string;
   message?: string;
   error?: string;
+  issues?: Array<{
+    field: string;
+    message: string;
+  }>;
 }
 
 // ============================================================================

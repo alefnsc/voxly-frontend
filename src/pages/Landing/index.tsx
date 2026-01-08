@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import { Helmet } from 'react-helmet'
 import { useLocation } from 'react-router-dom'
 import {
@@ -8,7 +8,6 @@ import {
   PlatformShowcase,
   Integrations,
   FAQAccordion,
-  DemoModal,
   FinalCTA,
   LandingB2CFeatures,
   LandingB2BRecruiting,
@@ -16,19 +15,13 @@ import {
   LandingTrust,
   LandingPreviewTabs,
   DashboardPreviewTabs,
-  WaitlistModal,
   LandingHiringCollaborationPreview,
 } from 'components/landing'
-import type { WaitlistModule } from 'components/landing/WaitlistModal'
-import { PricingSection } from 'components/landing/pricing'
 import { FREE_TRIAL_CREDITS } from 'config/credits'
 import { HEADER_OFFSET_CLASSES } from 'config/layout'
 
 export const Landing: React.FC = () => {
   const location = useLocation()
-  const [demoModalOpen, setDemoModalOpen] = useState(false)
-  const [waitlistOpen, setWaitlistOpen] = useState(false)
-  const [preselectedModule, setPreselectedModule] = useState<WaitlistModule | undefined>()
 
   useEffect(() => {
     const scrollTo = (location.state as { scrollTo?: string } | null)?.scrollTo
@@ -43,13 +36,20 @@ export const Landing: React.FC = () => {
     })
   }, [location.state])
 
-  const handleDemoClick = () => {
-    setDemoModalOpen(true)
+  const scrollToWaitlistForm = () => {
+    const element = document.getElementById('business-waitlist')
+    if (element) {
+      const headerOffset = 96 // Account for fixed header
+      const elementPosition = element.getBoundingClientRect().top + window.scrollY
+      window.scrollTo({
+        top: elementPosition - headerOffset,
+        behavior: 'smooth',
+      })
+    }
   }
 
-  const handleWaitlistClick = (module: WaitlistModule) => {
-    setPreselectedModule(module)
-    setWaitlistOpen(true)
+  const handleDemoClick = () => {
+    scrollToWaitlistForm()
   }
 
   const creditsText = FREE_TRIAL_CREDITS === 1 ? '1 Free Credit' : `${FREE_TRIAL_CREDITS} Free Credits`
@@ -87,6 +87,8 @@ export const Landing: React.FC = () => {
           
           {/* Interactive 5-tab product preview - #product anchor */}
           <div id="product" className={HEADER_OFFSET_CLASSES.scrollMarginTop}>
+
+          <PlatformShowcase />
             <LandingPreviewTabs />
           </div>
           
@@ -99,8 +101,8 @@ export const Landing: React.FC = () => {
             <div id="organizations">
               {/* Also add b2b-section id for Hero scroll target compatibility */}
               <div id="b2b-section" className={HEADER_OFFSET_CLASSES.scrollMarginTop} />
-              <LandingB2BRecruiting onWaitlistClick={() => handleWaitlistClick('recruiter_platform')} />
-              <LandingB2BEmployeeHub onWaitlistClick={() => handleWaitlistClick('employee_hub')} />
+              <LandingB2BRecruiting onWaitlistClick={scrollToWaitlistForm} />
+              <LandingB2BEmployeeHub onWaitlistClick={scrollToWaitlistForm} />
             </div>
           </div>
           
@@ -110,19 +112,13 @@ export const Landing: React.FC = () => {
           {/* Trust/Security section */}
           <LandingTrust />
           
-          {/* Platform showcase and integrations - #integrations anchor */}
-          <PlatformShowcase />
+                      {/* Platform showcase and integrations - #integrations anchor */}
           <div id="integrations" className={HEADER_OFFSET_CLASSES.scrollMarginTop}>
             <Integrations />
           </div>
           
           {/* Dashboard preview with API key demo and analytics charts */}
           <DashboardPreviewTabs />
-          
-          {/* Pricing Section - #pricing anchor */}
-          <div id="pricing" className={HEADER_OFFSET_CLASSES.scrollMarginTop}>
-            <PricingSection onDemoClick={handleDemoClick} />
-          </div>
           
           {/* FAQ Section - #faq anchor */}
           <div id="faq" className={HEADER_OFFSET_CLASSES.scrollMarginTop}>
@@ -131,13 +127,6 @@ export const Landing: React.FC = () => {
           
           <FinalCTA onDemoClick={handleDemoClick} />
         </main>
-        
-        <DemoModal open={demoModalOpen} onOpenChange={setDemoModalOpen} />
-        <WaitlistModal
-          open={waitlistOpen}
-          onOpenChange={setWaitlistOpen}
-          preselectedModule={preselectedModule}
-        />
       </div>
     </>
   )

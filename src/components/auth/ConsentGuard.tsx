@@ -5,6 +5,8 @@
  * Redirects to /onboarding/password if password is not set (OAuth users).
  * Redirects to /onboarding/consent if consent is missing or needs update.
  * 
+ * Uses centralized onboarding routing logic from lib/onboarding.
+ * 
  * Usage:
  * - Wrap protected routes with this component
  * - Works with both form sign-up and OAuth users
@@ -14,6 +16,20 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useUser } from '../../contexts/AuthContext';
 import apiService from '../../services/APIService';
+import { 
+  getNextOnboardingRoute, 
+  buildReturnToState,
+  type OnboardingUser,
+  type ConsentStatus,
+} from '../../lib/onboarding';
+
+// Debug logging (development only)
+const DEBUG = process.env.NODE_ENV !== 'production';
+function debugLog(message: string, data?: Record<string, unknown>): void {
+  if (DEBUG) {
+    console.log(`🛡️ [ConsentGuard] ${message}`, data ? data : '');
+  }
+}
 
 interface ConsentGuardProps {
   children: React.ReactNode;
@@ -65,6 +81,7 @@ function setCachedConsentStatus(hasConsent: boolean): void {
 export function clearConsentCache(): void {
   try {
     sessionStorage.removeItem(CONSENT_CACHE_KEY);
+    debugLog('Cache cleared');
   } catch {
     // Ignore
   }
@@ -78,65 +95,110 @@ export function ConsentGuard({ children, showLoading = true }: ConsentGuardProps
   const [hasConsent, setHasConsent] = useState<boolean | null>(null);
 
   const checkConsent = useCallback(async () => {
+    const currentPath = location.pathname + location.search;
+    
     // Not signed in - let normal auth flow handle it
     if (!isSignedIn || !user?.id) {
+      debugLog('Not signed in, allowing auth flow', { currentPath });
       setIsChecking(false);
       setHasConsent(true); // Don't block, auth will handle redirect
       return;
     }
 
-    // First, check if user needs to set a password
-    if (user.hasPassword === false) {
-      navigate('/onboarding/password', {
+    // Build user object for routing decision
+    const onboardingUser: OnboardingUser = {
+      id: user.id,
+      accountTypeConfirmedAt: user.accountTypeConfirmedAt,
+      hasPassword: user.hasPassword,
+      phoneVerified: user.phoneVerified,
+    };
+
+    // Check pre-consent steps first (account type, password)
+    // These don't require API calls
+    const preConsentResult = getNextOnboardingRoute({
+      user: onboardingUser,
+      isAuthLoaded: isLoaded,
+      isSignedIn,
+      consentStatus: null, // Haven't checked yet
+      currentPath,
+    });
+
+    // If we need account-type or password step, redirect immediately
+    if (preConsentResult.nextRoute && 
+        (preConsentResult.reason.includes('accountType') || 
+         preConsentResult.reason.includes('password'))) {
+      debugLog('Pre-consent step needed', { 
+        nextRoute: preConsentResult.nextRoute, 
+        reason: preConsentResult.reason 
+      });
+      navigate(preConsentResult.nextRoute, {
         replace: true,
-        state: {
-          returnTo: location.pathname + location.search,
-        },
+        state: buildReturnToState(currentPath),
       });
       setHasConsent(false);
       setIsChecking(false);
       return;
     }
 
-    // Check cache first
+    // Check cache first for consent
     const cached = getCachedConsentStatus();
     if (cached?.hasConsent) {
+      debugLog('Consent cached as complete', { currentPath });
       setHasConsent(true);
       setIsChecking(false);
       return;
     }
 
-    // Check from backend
+    // Check consent from backend
     try {
+      debugLog('Checking consent status from backend', { currentPath });
       const status = await apiService.getConsentStatus();
       
-      const needsConsent = !status.hasRequiredConsents || status.needsReConsent;
-      setHasConsent(!needsConsent);
-      setCachedConsentStatus(!needsConsent);
+      const consentStatus: ConsentStatus = {
+        hasRequiredConsents: status.hasRequiredConsents,
+        needsReConsent: status.needsReConsent,
+      };
 
-      if (needsConsent) {
-        // Determine source for OAuth users
+      // Use centralized routing logic
+      const result = getNextOnboardingRoute({
+        user: onboardingUser,
+        isAuthLoaded: isLoaded,
+        isSignedIn,
+        consentStatus,
+        currentPath,
+      });
+
+      debugLog('Routing decision', { 
+        allowAccess: result.allowAccess, 
+        nextRoute: result.nextRoute,
+        reason: result.reason,
+      });
+
+      if (result.allowAccess) {
+        setHasConsent(true);
+        setCachedConsentStatus(true);
+      } else if (result.nextRoute) {
+        // Determine source for OAuth users (for analytics)
         const source = user.authProviders?.includes('google') ? 'OAUTH' : 'FORM';
         
-        navigate('/onboarding/consent', {
+        navigate(result.nextRoute, {
           replace: true,
           state: {
-            returnTo: location.pathname + location.search,
+            ...buildReturnToState(currentPath),
             source,
           },
         });
+        setHasConsent(false);
       }
     } catch (error) {
-      // Backend check failed (likely user not yet synced to DB).
-      // For new users, redirect to consent to complete onboarding.
-      // The consent page will create the user record via validateUser/submitConsent.
-      console.warn('Consent check failed, redirecting to onboarding:', error);
+      // Backend check failed - redirect to consent
+      debugLog('Consent check failed, redirecting to consent', { error });
       
       const source = user.authProviders?.includes('google') ? 'OAUTH' : 'FORM';
       navigate('/onboarding/consent', {
         replace: true,
         state: {
-          returnTo: location.pathname + location.search,
+          ...buildReturnToState(currentPath),
           source,
         },
       });
@@ -144,7 +206,7 @@ export function ConsentGuard({ children, showLoading = true }: ConsentGuardProps
     } finally {
       setIsChecking(false);
     }
-  }, [isSignedIn, user, navigate, location]);
+  }, [isSignedIn, user, navigate, location, isLoaded]);
 
   useEffect(() => {
     if (isLoaded) {

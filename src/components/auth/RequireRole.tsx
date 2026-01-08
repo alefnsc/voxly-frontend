@@ -41,11 +41,15 @@ export const RequireRole: React.FC<RequireRoleProps> = ({
   children
 }) => {
   const { isLoaded, isSignedIn } = useUser();
-  const { isLoading, dbUser, isSynced } = useUserContext();
+  const { isLoading, dbUser } = useUserContext();
   const location = useLocation();
 
   // Still loading auth state
-  if (!isLoaded || isLoading || (isSignedIn && !isSynced)) {
+  // NOTE: We intentionally do NOT block on isSynced here.
+  // isSynced may stay false if validateUser() fails, but we should still allow access
+  // since ConsentGuard handles onboarding requirements separately.
+  // This prevents "stuck loading" after skip phone verification.
+  if (!isLoaded || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loading />

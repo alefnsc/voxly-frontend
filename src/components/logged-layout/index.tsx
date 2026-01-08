@@ -34,6 +34,7 @@ import { LayoutProvider } from 'components/default-layout';
 import { BetaFeedbackFab } from 'components/beta-feedback';
 import { isClosedBetaFeedbackEnabled } from 'config/featureFlags';
 import AppHeader from 'components/header';
+import CookieConsentBanner from 'components/cookie-consent/CookieConsentBanner';
 
 // ========================================
 // TYPES
@@ -549,6 +550,7 @@ export const LoggedLayout: React.FC<LoggedLayoutProps> = ({ children }) => {
 
           {/* Feedback FAB (global) */}
           {isClosedBetaFeedbackEnabled() && <BetaFeedbackFab />}
+          <CookieConsentBanner />
         </div>
       </LayoutProvider>
     </LoggedLayoutContext.Provider>

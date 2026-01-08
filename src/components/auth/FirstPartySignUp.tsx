@@ -18,7 +18,6 @@ import { firstPartySignUpSchema, FirstPartySignUpFormData } from './validation';
 import { AuthInput } from './AuthInput';
 import { FirstPartyAuthButtons, FirstPartyAuthDivider } from './FirstPartyAuthButtons';
 import { AuthLegalNotice } from './AuthLegalNotice';
-import { B2C_ROUTES } from 'routes/b2cRoutes';
 import { useAuth } from 'contexts/AuthContext';
 
 // Form step types
@@ -43,7 +42,7 @@ export const FirstPartySignUp: React.FC<FirstPartySignUpProps> = ({
   className,
   showFeaturePills = false,
 }) => {
-  const { signUp, signInWithGoogle, signInWithLinkedIn, signInWithX, verifyEmail, resendVerificationEmail, isLoaded } = useAuth();
+  const { signUp, signInWithGoogle, signInWithMicrosoft, signInWithLinkedIn, signInWithX, verifyEmail, resendVerificationEmail, isLoaded } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const prefersReducedMotion = useReducedMotion();
@@ -52,6 +51,7 @@ export const FirstPartySignUp: React.FC<FirstPartySignUpProps> = ({
   const [step, setStep] = useState<SignUpStep>('form');
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isMicrosoftLoading, setIsMicrosoftLoading] = useState(false);
   const [isLinkedInLoading, setIsLinkedInLoading] = useState(false);
   const [isXLoading, setIsXLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
@@ -150,6 +150,21 @@ export const FirstPartySignUp: React.FC<FirstPartySignUpProps> = ({
       console.error('Google sign-up error:', error);
       setGlobalError(t('auth.errors.googleFailed', 'Failed to sign up with Google. Please try again.'));
       setIsGoogleLoading(false);
+    }
+  };
+
+  // Handle Microsoft OAuth
+  const handleMicrosoftSignUp = async () => {
+    setIsMicrosoftLoading(true);
+    setGlobalError(null);
+    
+    try {
+      await signInWithMicrosoft();
+      // This will redirect to Microsoft
+    } catch (error: any) {
+      console.error('Microsoft sign-up error:', error);
+      setGlobalError(t('auth.errors.microsoftFailed', 'Failed to sign up with Microsoft. Please try again.'));
+      setIsMicrosoftLoading(false);
     }
   };
 
@@ -259,9 +274,9 @@ export const FirstPartySignUp: React.FC<FirstPartySignUpProps> = ({
         {...animationProps}
         className={cn('flex flex-col items-center justify-center py-8', className)}
       >
-        <div className="h-16 w-16 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center mb-4">
+        <div className="h-16 w-16 rounded-full bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center mb-4">
           <svg
-            className="h-8 w-8 text-blue-600 dark:text-blue-400"
+            className="h-8 w-8 text-purple-600 dark:text-purple-400"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -389,9 +404,11 @@ export const FirstPartySignUp: React.FC<FirstPartySignUpProps> = ({
         {/* OAuth Buttons */}
         <FirstPartyAuthButtons
           onGoogleClick={handleGoogleSignUp}
+          onMicrosoftClick={handleMicrosoftSignUp}
           onLinkedInClick={handleLinkedInSignUp}
           onXClick={handleXSignUp}
           isGoogleLoading={isGoogleLoading}
+          isMicrosoftLoading={isMicrosoftLoading}
           isLinkedInLoading={isLinkedInLoading}
           isXLoading={isXLoading}
           disabled={isLoading}

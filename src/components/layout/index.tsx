@@ -5,6 +5,7 @@ import AppHeader from 'components/header';
 import Footer from 'components/footer';
 import Metadata from 'components/metadata';
 import { BetaFeedbackFab } from 'components/beta-feedback';
+import CookieConsentBanner from 'components/cookie-consent/CookieConsentBanner';
 import { isClosedBetaFeedbackEnabled } from 'config/featureFlags';
 import { HEADER_OFFSET_CLASSES } from 'config/layout';
 
@@ -21,6 +22,7 @@ const Layout: React.FC = () => {
       <Footer />
       {/* Show Beta Feedback FAB when in beta mode */}
       {isBetaMode && <BetaFeedbackFab />}
+      <CookieConsentBanner />
     </div>
   );
 }

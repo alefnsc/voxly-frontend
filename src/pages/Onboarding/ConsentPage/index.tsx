@@ -11,6 +11,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useUser, useAuth } from 'contexts/AuthContext';
+import { useUserContext } from 'contexts/UserContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { 
@@ -27,6 +28,7 @@ import apiService, { ConsentRequirements } from 'services/APIService';
 import { clearConsentCache } from 'components/auth/ConsentGuard';
 import { AuthShell } from 'components/auth';
 import { useLanguage } from 'hooks/use-language';
+import { parseReturnTo, ONBOARDING_ROUTES } from 'lib/onboarding';
 import {
   CountryCode,
   getAllCountriesWithCallingCodes,
@@ -47,8 +49,24 @@ export default function ConsentPage() {
   const location = useLocation();
   const { user, isLoaded } = useUser();
   const { signOut } = useAuth();
+  const { invalidateCache: invalidateUserCache } = useUserContext();
   const { t, i18n } = useTranslation();
   const { preferredPhoneCountry, detectedCountry, setPreferredPhoneCountry } = useLanguage();
+
+  // Account type must be confirmed before consent
+  useEffect(() => {
+    if (!isLoaded) return;
+    if (!user?.id) return;
+
+    if (!user.accountTypeConfirmedAt) {
+      navigate('/onboarding/account-type', {
+        replace: true,
+        state: {
+          returnTo: location.pathname + location.search,
+        },
+      });
+    }
+  }, [isLoaded, user?.id, user?.accountTypeConfirmedAt, navigate, location.pathname, location.search]);
 
   // State - Steps: 1=Terms, 2=Marketing, 3=Phone (password step removed, now handled in PasswordPage)
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -257,9 +275,12 @@ export default function ConsentPage() {
   // Handle skip phone verification
   // Consent was already stored in step 2 - just record skip preference and navigate
   const handleSkipPhone = async () => {
+    // Parse returnTo using centralized helper
+    const returnTo = parseReturnTo(location.state);
+    
     if (!user?.id) {
       // Fallback navigation if no user
-      const returnTo = (location.state as any)?.returnTo || '/app/b2c/dashboard';
+      console.log('🔀 [Onboarding] Skip phone: no user, redirecting to', returnTo);
       navigate(returnTo, { replace: true });
       return;
     }
@@ -268,22 +289,32 @@ export default function ConsentPage() {
     setSkipError(null);
 
     try {
+      console.log('🔀 [Onboarding] Skip phone: calling API');
+      
       // Record skip preference via backend API
       const result = await apiService.skipPhoneForCredits();
       if (!result.success) {
+        console.warn('🔀 [Onboarding] Skip phone: API failed', result.error);
         setSkipError(result.error || t('consent.step3.skipFailed', 'Something went wrong. Please try again.'));
         setIsSkipping(false);
         return;
       }
 
-      // Clear consent cache so guards refetch fresh status.
+      console.log('🔀 [Onboarding] Skip phone: success, clearing caches');
+      
+      // Clear consent cache so guards refetch fresh status
       clearConsentCache();
+      
+      // CRITICAL: Invalidate user context cache to prevent "stuck loading"
+      // This ensures RequireAuth doesn't block on stale sync state
+      invalidateUserCache();
 
-      // Navigate to dashboard
-      const returnTo = (location.state as any)?.returnTo || '/app/b2c/dashboard';
+      console.log('🔀 [Onboarding] Skip phone: navigating to', returnTo);
+      
+      // Navigate to dashboard (or returnTo destination)
       navigate(returnTo, { replace: true });
     } catch (err) {
-      console.error('Failed during skip flow:', err);
+      console.error('🔀 [Onboarding] Skip phone: exception', err);
       setSkipError(t('consent.step3.skipFailed', 'Something went wrong. Please try again.'));
       setIsSkipping(false);
     }

@@ -25,7 +25,7 @@ export async function submitBetaFeedback(
       body: JSON.stringify(payload),
     });
 
-    const data = await response.json();
+    const data = await response.json().catch(() => ({}));
 
     if (response.ok && data.ok) {
       return {
@@ -39,6 +39,7 @@ export async function submitBetaFeedback(
       ok: false,
       refId: payload.refId,
       error: data.error || 'Failed to submit feedback',
+      issues: Array.isArray(data.issues) ? data.issues : undefined,
     };
   } catch (error) {
     console.error('Beta feedback submission error:', error);

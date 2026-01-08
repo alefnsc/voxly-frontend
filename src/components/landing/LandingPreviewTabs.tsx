@@ -17,7 +17,7 @@ import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion, useReducedMotion, AnimatePresence } from 'framer-motion'
 import { useInView } from 'react-intersection-observer'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/ui/tabs'
+import { Tabs, TabsList, TabsTrigger } from 'components/ui/tabs'
 import { Card } from 'components/ui/card'
 import {
   LineChart,
@@ -118,9 +118,6 @@ export const LandingPreviewTabs: React.FC = () => {
         >
           {/* Section Header */}
           <motion.div variants={itemVariants} className="text-center mb-8 sm:mb-12">
-            <span className="inline-block px-3 py-1 text-xs font-semibold text-purple-700 bg-purple-100 rounded-full mb-3 sm:mb-4">
-              {t('landing.previewTabs.badge', 'Product Preview')}
-            </span>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-zinc-900 mb-3 sm:mb-4">
               {t('landing.previewTabs.title', 'See Vocaid in')} <span className="text-purple-600">{t('landing.previewTabs.titleHighlight', 'Action')}</span>
             </h2>
@@ -172,66 +169,26 @@ export const LandingPreviewTabs: React.FC = () => {
 
                 {/* Tab Panels */}
                 <div className="p-3 sm:p-4 lg:p-6 min-h-[300px] sm:min-h-[400px]">
-                  <AnimatePresence mode="wait">
-                    {/* Dashboard Tab */}
-                    <TabsContent value="dashboard" className="mt-0">
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.2 }}
-                      >
+                  <AnimatePresence mode="wait" initial={false}>
+                    <motion.div
+                      key={activeTab}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      {activeTab === 'dashboard' ? (
                         <DashboardPreview />
-                      </motion.div>
-                    </TabsContent>
-
-                    {/* Interview Flow Tab */}
-                    <TabsContent value="interview" className="mt-0">
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.2 }}
-                      >
+                      ) : activeTab === 'interview' ? (
                         <InterviewFlowPreview />
-                      </motion.div>
-                    </TabsContent>
-
-                    {/* Resumes Tab */}
-                    <TabsContent value="resumes" className="mt-0">
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.2 }}
-                      >
+                      ) : activeTab === 'resumes' ? (
                         <ResumeRepositoryPreview />
-                      </motion.div>
-                    </TabsContent>
-
-                    {/* Recruiter Tab */}
-                    <TabsContent value="recruiter" className="mt-0">
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.2 }}
-                      >
+                      ) : activeTab === 'recruiter' ? (
                         <RecruiterAnalyticsPreview />
-                      </motion.div>
-                    </TabsContent>
-
-                    {/* HR Hub Tab */}
-                    <TabsContent value="hr" className="mt-0">
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.2 }}
-                      >
+                      ) : (
                         <HRKnowledgeHubPreview />
-                      </motion.div>
-                    </TabsContent>
+                      )}
+                    </motion.div>
                   </AnimatePresence>
                 </div>
               </Card>

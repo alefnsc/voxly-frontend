@@ -43,13 +43,6 @@
 - Credit restoration for technical issues (mic failures)
 - Real-time credit display in UI
 
-### 📝 Contact Us (Formspree)
-- Floating contact button on Home and Feedback pages
-- Protected - only visible to signed-in users
-- Google reCAPTCHA v3 spam protection
-- Message validation (50-250 characters)
-- Thank you page with auto-redirect
-
 ### 📈 Feedback & Reports
 - **AI-generated feedback** analyzing interview performance
 - **Star rating** visualization (1-5 scale)
@@ -97,7 +90,7 @@ App runs at http://localhost:3000
 Create a `.env` file in the project root:
 
 ```env
-# Google reCAPTCHA v3 (Required for Contact Form)
+# Google reCAPTCHA v3
 # Get keys at: https://www.google.com/recaptcha/admin
 REACT_APP_RECAPTCHA_SITE_KEY=your_site_key_here
 
@@ -123,7 +116,6 @@ REACT_APP_API_URL=http://localhost:3001
 | Styling | Tailwind CSS |
 | Authentication | First-party sessions (cookies) |
 | Payments | MercadoPago SDK |
-| Contact Form | Formspree + reCAPTCHA v3 |
 | Voice Calls | Retell Web Client |
 | 3D Graphics | Three.js + React Three Fiber |
 | PDF Generation | jsPDF |
@@ -135,7 +127,6 @@ REACT_APP_API_URL=http://localhost:3001
 src/
 ├── components/
 │   ├── audio-visualizer/     # 3D audio visualization
-│   ├── contact-button/       # Floating contact form
 │   ├── credit-packages/      # Payment packages UI
 │   ├── credits-modal/        # Credits purchase modal
 │   ├── input-form/           # Interview setup form
@@ -235,15 +226,6 @@ Frontend polls for credit update → UI refreshes
 | Intermediate | 10 | $5.99 | R$ 35.94 | $0.60 |
 | Professional | 15 | $7.99 | R$ 47.94 | $0.53 |
 
-### Contact Form (Formspree)
-
-- **Form ID**: Configured in `contact-button/index.tsx`
-- **reCAPTCHA**: v3 with invisible verification
-- **Validation**: 50-250 character message, email required
-- **Visibility**: Only on `/` and `/feedback` pages, only for signed-in users
-
----
-
 ## Testing
 
 ### Unit Tests
@@ -299,15 +281,6 @@ vercel --prod
    - `localhost` (for development)
    - Your production domain
 4. Copy Site Key to `REACT_APP_RECAPTCHA_SITE_KEY`
-5. Add Secret Key to Formspree dashboard
-
-### Formspree Setup
-
-1. Create form at [Formspree](https://formspree.io/)
-2. Enable reCAPTCHA in form settings
-3. Add your reCAPTCHA Secret Key
-4. Set domain restrictions to your production URL
-5. Update form ID in `contact-button/index.tsx`
 
 ---
 
@@ -327,12 +300,6 @@ vercel --prod
 3. Look for errors in browser console
 4. Verify ngrok tunnel (if using for webhooks)
 
-### Contact Form Errors
-
-- **403 Forbidden**: Domain not allowed in Formspree settings
-- **400 Bad Request**: Missing required fields or reCAPTCHA failure
-- Check browser console for detailed error messages
-
 ### Credits Not Updating
 
 1. Ensure backend webhook received payment notification
@@ -344,7 +311,6 @@ vercel --prod
 
 - Never commit `.env` files
 - Use test keys for development, live keys for production
-- reCAPTCHA protects contact form from spam
 - All payments processed securely via MercadoPago
 - User sessions are managed server-side
 
